@@ -1,0 +1,102 @@
+---
+import "../styles/NuevoInicio.css";
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Iniciar sesión — Yatina Ampara</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  </head>
+
+  <body>
+    <video autoplay loop muted playsinline id="bg-video">
+      <source src="/Video 4.mp4" type="video/mp4" />
+      Tu navegador no soporta videos HTML5.
+    </video>
+
+    <div class="auth-wrap">
+      <div class="auth-hero" aria-hidden="true">
+        <div class="auth-hero-content">
+          <div>
+            <div class="logo">
+              <img src="/Yatina-remove.png" alt="Logo Yatina Ampara" />
+              <div>
+                <div style="font-weight:700">Yatina Ampara</div>
+                <div style="font-size:0.9rem;opacity:.95">Plataforma Educativa</div>
+              </div>
+            </div>
+            <h1>Bienvenida de nuevo</h1>
+            <p class="lead">Has llegado al lugar correcto para continuar tu aprendizaje.</p>
+          </div>
+
+          <!-- Carrusel -->
+          <div class="carousel-container">
+            <div class="carousel-track" id="carousel-track">
+              <div class="carousel-slide">
+                <img src="https://d3t4nwcgmfrp9x.cloudfront.net/upload/tendencias-futuro-tecnologia-2024.jpg" alt="Tendencias tecnológicas" />
+              </div>
+              <div class="carousel-slide">
+                <img src="https://anglodurango.edu.mx/web/image/11003/close-up-women-working-with-devices.jpg" alt="Estudiantes" />
+              </div>
+              <div class="carousel-slide">
+                <img src="https://www.rededuca.net/sites/default/files/2024-09/cursos-contenidos-digitales-educativos.jpg" alt="Contenidos digitales" />
+              </div>
+            </div>
+            <div class="carousel-dots" id="carousel-dots">
+              <div class="carousel-dot active" data-slide="0"></div>
+              <div class="carousel-dot" data-slide="1"></div>
+              <div class="carousel-dot" data-slide="2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <div class="card">
+        <div class="card-header-actions">
+          <div>
+            <h1 id="login-title">Iniciar sesión</h1>
+            <div class="muted-text">Accede con tu correo y contraseña</div>
+          </div>
+        </div>
+
+        <div id="login-msg" class="msg" role="alert" aria-live="polite"></div>
+
+        <form id="login-form" autocomplete="on">
+          <div class="form-row">
+            <label for="login-email">Correo electrónico</label>
+            <input id="login-email" class="input" type="email" placeholder="tu@ejemplo.com" required />
+          </div>
+
+          <div class="form-row input-with-icon">
+            <label for="login-pass">Contraseña</label>
+            <input id="login-pass" class="input" type="password" placeholder="Contraseña" required />
+            <i class="fa-solid fa-eye" id="toggle-login-pass" title="Mostrar contraseña"></i>
+          </div>
+
+          <div class="form-options">
+            <label>
+              <input id="remember" type="checkbox" />
+              <span>Recordarme</span>
+            </label>
+            <button type="button" class="small-link" id="forgot-btn">¿Olvidaste tu contraseña?</button>
+          </div>
+
+          <button class="btn" type="submit">Iniciar sesión</button>
+        </form>
+
+
+        <div class="card-footer">
+          <p>¿No tienes cuenta? <button type="button" class="small-link" id="to-register">Crear cuenta</button></p>
+        </div>
+      </div>
+    </div>
+
+    <script src="/scripts/login.js" type="module"></script>
+  </body>
+</html>

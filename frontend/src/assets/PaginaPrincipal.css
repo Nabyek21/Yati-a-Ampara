@@ -1,0 +1,52 @@
+/* Paleta brand — coincidente con tailwind.config.cjs */
+:root{
+  --brand-0: #ffffff;
+  --brand-50: #F1E7FE;
+  --brand-100: #D9BBFC;
+  --brand-200: #C18FFA;
+  --brand-300: #A863F8;
+  --brand-400: #9037F6;
+  --brand-500: #780BF4;
+  --brand-600: #5708B3;
+  --brand-700: #4D079C;
+  --brand-800: #370570;
+  --brand-900: #220344;
+}
+
+/* hero */
+.hero-gradient-bg{
+  background: radial-gradient(circle at top right, var(--brand-500), var(--brand-800));
+}
+
+/* cta */
+.gradient-bg{
+  background: linear-gradient(135deg, var(--brand-800), var(--brand-500));
+}
+
+/* tarjetas */
+.card-hover{
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.card-hover:hover{
+  transform: translateY(-10px);
+  box-shadow: 0 18px 30px rgba(55,5,112,0.14);
+}
+
+/* reveal */
+.reveal{ opacity:0; transform: translateY(24px); transition: all .7s cubic-bezier(.2,.9,.2,1);}
+.reveal.visible{ opacity:1; transform: translateY(0); }
+
+/* chat */
+#chat-simulation{ background: #fff; border-radius: 10px; padding: 10px; }
+.chat-bubble{ max-width: 78%; word-wrap: break-word; line-height: 1.4; display: inline-block; }
+
+/* small screens */
+@media (max-width:768px){
+  .hero-gradient-bg{ padding-top: 20rem; } /* ya tienes pt-32 en markup pero ajusta si necesario */
+}
+
+/* accesibilidad: forzar color contrast en botones si se requiere */
+a[role="button"], a.btn{ outline-offset: 3px; }
+
+/* Optional: small helper to avoid content hidden under fixed header */
+body > main { padding-top: 4rem; } /* si tu header es fixed, ajusta el padding-top si necesario */

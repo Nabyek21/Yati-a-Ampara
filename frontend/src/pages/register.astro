@@ -1,0 +1,102 @@
+---
+import "../styles/NuevoRegistro.css";
+---
+
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Crear cuenta — Yatiña Ampara</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+
+  <!-- VIDEO DE FONDO -->
+  <video autoplay loop muted playsinline id="bg-video">
+    <source src="/Video 4.mp4" type="video/mp4" />
+  </video>
+
+  <div class="auth-wrap">
+
+    <div class="card" role="form" aria-labelledby="register-title">
+      <div class="card-header-actions">
+        <div>
+          <h1 id="register-title">Crear cuenta</h1>
+          <div class="muted-text">Completa tus datos para registrarte</div>
+        </div>
+      </div>
+
+      <div id="register-msg" class="msg" role="alert" aria-live="polite"></div>
+
+      <form id="register-form" autocomplete="on">
+
+        <!-- Número de documento -->
+        <div class="form-row">
+            <label for="doc-number">Número de documento</label>
+            <input id="doc-number" class="input" type="text" placeholder="N° documento" required />
+          </div>
+
+        <!-- Nombres y apellidos -->
+        <div class="form-row-flex">
+          <div class="form-row">
+            <label for="reg-nombres">Nombres</label>
+            <input id="reg-nombres" class="input" type="text" placeholder="Nombres" required />
+          </div>
+
+          <div class="form-row">
+            <label for="reg-apellidos">Apellidos</label>
+            <input id="reg-apellidos" class="input" type="text" placeholder="Apellidos" required />
+          </div>
+        </div>
+
+        <!-- Teléfono -->
+        <div class="form-row-flex">
+          <div class="form-row prefix-select">
+            <label for="phone-prefix">Prefijo</label>
+            <select id="phone-prefix" class="input">
+              <option value="51">+51</option>
+              <option value="58">+58</option>
+              <option value="57">+57</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label for="phone-number">Número de celular</label>
+            <input id="phone-number" class="input" type="tel" placeholder="987654321" required />
+          </div>
+        </div>
+
+        <!-- Correo -->
+        <div class="form-row">
+          <label for="reg-email">Correo electrónico</label>
+          <input id="reg-email" class="input" type="email" placeholder="tu@ejemplo.com" required />
+        </div>
+
+        <!-- Contraseña -->
+        <div class="form-row input-with-icon">
+          <label for="reg-pass">Contraseña</label>
+          <input id="reg-pass" class="input" type="password" placeholder="Crea una contraseña segura" required />
+          <i class="fa-solid fa-eye" id="toggle-reg-pass"></i>
+        </div>
+
+        <button class="btn" type="submit">Registrarme</button>
+      </form>
+
+      <div class="card-footer">
+        <p>¿Ya tienes cuenta? 
+          <a href="/login" class="small-link">Iniciar sesión</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- PANEL DERECHO -->
+    <div class="static-image-hero" aria-hidden="true"></div>
+  </div>
+
+  <script type="module" src="/scripts/register.js"></script>
+
+</body>
+</html>

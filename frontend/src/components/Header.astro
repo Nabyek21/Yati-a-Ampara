@@ -1,0 +1,45 @@
+<header class="bg-brand-0/90 backdrop-blur-md fixed top-0 left-0 w-full z-50 shadow-sm">
+  <nav class="container mx-auto px-6 py-3 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-3">
+      <img src="/Yatina-remove.png" alt="Yatiña" class="h-10 w-auto" />
+    </a>
+
+    <div class="hidden lg:flex items-center space-x-8">
+      <a href="#viaje" class="text-brand-700 hover:text-brand-500 transition">Tu Viaje</a>
+      <a href="#cursos" class="text-brand-700 hover:text-brand-500 transition">Cursos</a>
+      <a href="#amparia-demo" class="text-brand-700 hover:text-brand-500 transition">AmparIA</a>
+      <a href="#testimonios" class="text-brand-700 hover:text-brand-500 transition">Testimonios</a>
+    </div>
+
+    <!-- 🔥 Rutas corregidas -->
+    <div class="hidden lg:flex items-center space-x-4">
+      <a href="/login" class="text-brand-600 font-semibold hover:text-brand-500">Iniciar Sesion</a>
+      <a href="/register" class="bg-brand-500 text-white py-2 px-5 rounded-full font-semibold hover:bg-brand-600 transition">Registrate</a>
+    </div>
+
+    <button id="mobile-menu-btn" class="lg:hidden text-brand-600">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+      </svg>
+    </button>
+  </nav>
+
+  <!-- 🔥 Rutas corregidas menú móvil -->
+  <div id="mobile-menu" class="hidden lg:hidden bg-brand-0 shadow-md">
+    <div class="flex flex-col p-4 space-y-3">
+      <a href="#viaje" class="block text-brand-700">Tu Viaje</a>
+      <a href="#cursos" class="block text-brand-700">Cursos</a>
+      <a href="#amparia-demo" class="block text-brand-700">AmparIA</a>
+      <a href="#testimonios" class="block text-brand-700">Testimonios</a>
+
+      <!-- aquí estaba el error: /registro -->
+      <a href="/register" class="block text-center bg-brand-500 text-white py-2 rounded-full">Regístrate</a>
+    </div>
+  </div>
+
+  <script>
+    const btn = document.getElementById('mobile-menu-btn');
+    const menu = document.getElementById('mobile-menu');
+    btn?.addEventListener('click', () => menu.classList.toggle('hidden'));
+  </script>
+</header>

@@ -1,0 +1,354 @@
+ /* ==============================
+      VARIABLES GLOBALES Y RESET
+    ============================== */
+    :root {
+        --color-0: #ffffff;
+        --color-50: #F1E7FE;
+        --color-100: #D9BBFC;
+        --color-200: #C18FFA;
+        --color-300: #A863F8;
+        --color-400: #9037F6;
+        --color-500: #780BF4;
+        --color-600: #5708B3;
+        --color-700: #4D079C;
+        --color-800: #370570;
+        --color-900: #220344;
+        --glass: rgba(255, 255, 255, 0.6);
+        --accent: var(--color-500);
+        --muted: #8b6fa8;
+        --success: #2aa84f;
+        --danger: #e74c3c;
+        --shadow: 0 8px 30px rgba(55, 5, 112, 0.12);
+        --radius: 16px; 
+        --max-width: 980px; /* Ancho total (Form + Imagen) */
+      }
+  
+      * {
+        box-sizing: border-box;
+      }
+  
+      html, body {
+        height: 100%;
+      }
+  
+      body {
+        font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background-color: var(--color-800); 
+        color: var(--color-900);
+        overflow: hidden; 
+      }
+  
+      /* ==============================
+        CONTENEDOR PRINCIPAL (2 Columnas)
+      ============================== */
+      .auth-wrap {
+        width: 100%;
+        max-width: var(--max-width);
+        display: grid;
+        grid-template-columns: 1fr 400px; /* Formulario flexible, Imagen fija */
+        align-items: stretch;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeUp 0.7s forwards 0.2s;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        border-radius: var(--radius);
+        overflow: hidden; 
+        /* Altura fija para el contenedor, evita que el form crezca mucho */
+        height: 650px; 
+        max-height: 90vh;
+      }
+  
+      @keyframes fadeUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+  
+      /* ==============================
+        FORMULARIO (IZQUIERDA) - COMPACTADO
+      ============================== */
+      .card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        padding: 2rem; /* Relleno reducido */
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem; /* Espaciado de filas reducido */
+        overflow-y: auto; /* Scroll si el contenido excede */
+      }
+  
+      .card h1 {
+        font-size: 1.6rem; /* Tamaño de título reducido */
+        margin: 0;
+        color: var(--color-800);
+      }
+      .card .muted-text {
+        font-size: 0.95rem; /* Texto reducido */
+        color: var(--muted);
+        margin-bottom: 0.5rem;
+      }
+      
+      .card-header-actions {
+          display: flex;
+      }
+      
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem; /* Espaciado entre filas reducido (antes 0.75rem) */
+      }
+  
+      .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem; /* Espacio reducido entre label e input */
+      }
+  
+      label {
+        font-size: 0.85rem; /* Labels reducidos */
+        font-weight: 600;
+        color: var(--color-700);
+      }
+  
+      .input, select.input {
+        width: 100%;
+        padding: 0.7rem 0.9rem; /* Relleno de input reducido */
+        border-radius: 8px; /* Bordes más sutiles */
+        border: 1px solid var(--color-100);
+        background: rgba(241, 231, 254, 0.7); 
+        transition: all 0.2s;
+        outline: none;
+        font-size: 0.9rem; /* Fuente de input reducida */
+      }
+      
+      select.input {
+          appearance: none; 
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+          background-position: right 0.5rem center;
+          background-repeat: no-repeat;
+          background-size: 1.5em 1.5em;
+          padding-right: 2.5rem;
+      }
+  
+  
+      .input:focus, select.input:focus {
+        box-shadow: 0 0 0 3px var(--color-100);
+        border-color: var(--color-400);
+        background: rgba(255, 255, 255, 0.9); 
+      }
+      
+      input:read-only, select:disabled {
+          background-color: rgba(220, 220, 220, 0.7) !important;
+          color: var(--color-700);
+          cursor: not-allowed;
+          border-style: dashed;
+      }
+  
+      .input-with-icon {
+        position: relative;
+      }
+  
+      .input-with-icon .input {
+        padding-right: 2.5rem;
+      }
+  
+      .input-with-icon i {
+        position: absolute;
+        right: 0.8rem;
+        top: 50%;
+        transform: translateY(0px); /* Ajuste por label */
+        color: var(--muted);
+        cursor: pointer;
+        transition: color 0.25s;
+      }
+      .input-with-icon i:hover {
+        color: var(--color-500);
+      }
+      .input-with-icon .fa-eye,
+      .input-with-icon .fa-eye-slash {
+        top: calc(50% + 8px); /* Ajuste por label */
+      }
+      .input-with-icon input:read-only ~ i {
+          display: none;
+      }
+  
+  
+      /* ACCIONES Y BOTONES */
+      .small-link {
+        font-size: 0.85rem; /* Reducido */
+        color: var(--color-600);
+        text-decoration: none;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+        font-family: inherit;
+      }
+      .small-link:hover {
+        text-decoration: underline;
+      }
+  
+      .btn {
+        padding: 0.75rem 1rem; /* Botón principal reducido */
+        border-radius: 8px;
+        border: 0;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.95rem; /* Fuente reducida */
+        background: linear-gradient(90deg, var(--color-500), var(--color-600));
+        color: white;
+        box-shadow: 0 8px 24px rgba(120, 11, 244, 0.14);
+        transition: all 0.25s;
+        width: 100%; 
+        margin-top: 0.5rem;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(120, 11, 244, 0.25);
+      }
+  
+      
+      /* FILA FLEXIBLE (Documento y Teléfono) */
+      .form-row-flex {
+          display: flex;
+          gap: 0.5rem; /* Espacio reducido */
+          align-items: flex-end; 
+      }
+      .form-row-flex .form-row {
+          flex: 1; /* El input principal ocupa el espacio */
+          margin-bottom: 0;
+      }
+      .form-row.prefix-select {
+          flex: 0 0 100px; /* Ancho para prefijo de país */
+      }
+      .form-row.doc-type-select {
+          flex: 0 0 110px; /* Ancho para DNI/Pasaporte */
+      }
+      .btn-small {
+          padding: 0.7rem 0.8rem; /* Botón 'Verificar' reducido */
+          font-size: 0.8rem;
+          font-weight: 600;
+          margin-bottom: 1px; 
+          flex-shrink: 0; /* No se encoge */
+          flex-grow: 0; /* No crece */
+          height: fit-content;
+          background: var(--color-700);
+          border-radius: 8px;
+      }
+      .btn-small:hover {
+          background: var(--color-800);
+      }
+      .helper-text {
+          font-size: 0.75rem; /* Texto de ayuda reducido */
+          color: var(--muted);
+          margin-top: 2px; 
+      }
+      
+      /* FOOTER DE LA TARJETA */
+      .card-footer {
+        margin-top: 1rem; 
+        text-align: center;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0,0,0,0.1);
+      }
+      .card-footer p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem; /* Reducido */
+      }
+      
+      /* MENSAJES DE FEEDBACK */
+      .msg {
+        padding: 0.6rem 0.8rem; /* Reducido */
+        border-radius: 8px;
+        font-size: 0.85rem; /* Reducido */
+        display: none;
+        opacity: 0;
+        transform: translateY(-6px);
+        transition: all 0.4s ease;
+        font-weight: 600;
+        margin-bottom: -0.25rem; 
+      }
+      .msg.show { display: block; opacity: 1; transform: translateY(0); }
+      .msg.success { background: rgba(44,160,95,0.08); color:var(--success); border:1px solid rgba(44,160,95,0.12); }
+      .msg.error { background: rgba(231,76,60,0.06); color:var(--danger); border:1px solid rgba(231,76,60,0.08); }
+  
+      /* ==============================
+        PANEL DE IMAGEN DERECHO
+      ============================== */
+      .static-image-hero {
+          background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)),
+                      url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1471&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+          background-size: cover;
+          background-position: center;
+          border-radius: 0;
+          /* Efecto de vidrio sutil (opcional) */
+          /* backdrop-filter: blur(2px); */
+      }
+  
+  
+      /* RESPONSIVE */
+      @media (max-width:900px) {
+        body {
+          padding: 0;
+          align-items: flex-start; 
+        }
+        .auth-wrap {
+          grid-template-columns: 1fr; /* Columna única */
+          border-radius: 0;
+          box-shadow: none;
+          max-width: none;
+          min-height: 100vh;
+          height: auto; /* Altura automática */
+          max-height: none;
+        }
+        /* Ocultamos el panel de imagen en móvil */
+        .static-image-hero {
+          display: none; 
+        }
+        .card {
+          min-height: 100vh;
+          border-radius: 0;
+          padding: 2rem 1.5rem;
+          max-width: none;
+          max-height: none;
+          box-shadow: none;
+          animation: none; 
+          opacity: 1;
+        }
+      }
+  
+      @media (max-width:480px) {
+        .form-row-flex {
+          flex-direction: column;
+          gap: 0.75rem; 
+          align-items: stretch; 
+        }
+        .form-row.prefix-select, .form-row.doc-type-select {
+            flex: 1; 
+        }
+        .btn-small {
+            margin-top: 0; 
+            width: 100%;
+        }
+      }
+  
+      #bg-video {
+        position: fixed; 
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%); 
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        z-index: -1; 
+        object-fit: cover; 
+        filter: blur(3px) brightness(0.8);
+      }

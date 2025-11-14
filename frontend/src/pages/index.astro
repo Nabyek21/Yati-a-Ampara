@@ -1,0 +1,224 @@
+---
+import "../assets/PaginaPrincipal.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<Header />
+
+<main class="bg-brand-50 text-brand-800 font-sans">
+
+  <!-- Hero Section -->
+  <section class="hero-gradient-bg text-white pt-32 pb-20 overflow-hidden">
+    <div class="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+      <div class="text-center md:text-left">
+        <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-4">
+          El Ecosistema de Conocimiento para la Mujer Peruana
+        </h1>
+        <p class="text-lg md:text-xl text-brand-100 mb-8">
+          Unificamos los mejores cursos gratuitos, te guiamos con inteligencia artificial y te conectamos con una comunidad que te impulsa a crecer.
+        </p>
+        <a href="#" class="bg-brand-0 text-brand-600 py-3 px-8 rounded-full font-bold text-lg hover:bg-brand-100 transition duration-300 shadow-2xl inline-block">
+          Explorar Cursos
+        </a>
+      </div>
+      <div class="flex justify-center items-center">
+        <img src="/Yati.png" alt="Yatina" class="rounded-2xl shadow-2xl mx-auto transform hover:scale-105 transition-transform duration-500 max-w-xs md:max-w-sm">
+      </div>
+    </div>
+  </section>
+
+  <!-- Tu Viaje Section -->
+  <section id="viaje" class="py-20 bg-brand-0">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-brand-800 mb-2 reveal">Tu Viaje hacia el Exito en 3 Pasos</h2>
+        <p class="text-lg text-brand-700 max-w-2xl mx-auto reveal" style="transition-delay:0.2s;">
+          Estaremos contigo en cada etapa de tu crecimiento profesional con un camino claro y lleno de apoyo.
+        </p>
+      </div>
+
+      <div class="relative grid md:grid-cols-3 gap-8">
+        <div class="hidden md:block absolute top-10 left-0 w-full h-px bg-brand-200 z-0"></div>
+
+        <div class="relative text-center reveal z-10" style="transition-delay:0.3s;">
+          <div class="mb-4 bg-brand-500 text-white rounded-full w-20 h-20 flex items-center justify-center mx-auto text-3xl font-bold shadow-lg border-4 border-white">1</div>
+          <h3 class="text-2xl font-bold text-brand-700 mb-2">Descubre</h3>
+          <p class="text-brand-600">
+            Explora nuestro catalogo centralizado y encuentra el curso perfecto para ti entre las mejores ofertas gratuitas de todo el Peru.
+          </p>
+        </div>
+
+        <div class="relative text-center reveal z-10" style="transition-delay:0.5s;">
+          <div class="mb-4 bg-brand-500 text-white rounded-full w-20 h-20 flex items-center justify-center mx-auto text-3xl font-bold shadow-lg border-4 border-white">2</div>
+          <h3 class="text-2xl font-bold text-brand-700 mb-2">Aprende</h3>
+          <p class="text-brand-600">Sumergete en el conocimiento con el apoyo de AmparIA y la guia de mentoras expertas.</p>
+        </div>
+
+        <div class="relative text-center reveal z-10" style="transition-delay:0.7s;">
+          <div class="mb-4 bg-brand-500 text-white rounded-full w-20 h-20 flex items-center justify-center mx-auto text-3xl font-bold shadow-lg border-4 border-white">3</div>
+          <h3 class="text-2xl font-bold text-brand-700 mb-2">Crece</h3>
+          <p class="text-brand-600">
+            Obten tu certificado, unete a nuestra comunidad de exalumnas y aplica tus nuevas habilidades para transformar tu futuro.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cursos Section -->
+  <section id="cursos" class="py-20 bg-brand-50">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-brand-800 mb-2 reveal">Convocatorias Abiertas</h2>
+        <p class="text-lg text-brand-700 max-w-2xl mx-auto reveal" style="transition-delay:0.2s;">
+          Estos cursos estan por iniciar o tienen sus ultimos cupos disponibles. !No pierdas tu oportunidad!
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="bg-white rounded-2xl shadow-lg card-hover border border-brand-100 overflow-hidden reveal">
+          <div class="relative">
+            <img src="/Barra/Finanzas.jpg" alt="Curso Finanzas" class="w-full h-48 object-cover">
+            <span class="absolute top-4 left-4 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase">!Ultimos Cupos!</span>
+          </div>
+          <div class="p-6">
+            <h3 class="font-bold text-xl mb-2 text-brand-800">Finanzas para Emprendedoras</h3>
+            <p class="text-brand-700 text-sm mb-5">
+              Aprende a gestionar el dinero de tu negocio, crear presupuestos y buscar financiamiento.
+            </p>
+            <a href="#" class="mt-6 inline-block bg-brand-500 text-white py-2 px-5 rounded-full font-semibold hover:bg-brand-600 transition duration-300">
+              Inscribete Ahora
+            </a>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg card-hover border border-brand-100 overflow-hidden reveal">
+          <div class="relative">
+            <img src="/Barra/Marketing digital.jpg" alt="Curso Marketing" class="w-full h-48 object-cover">
+            <span class="absolute top-4 left-4 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase">Nueva Convocatoria</span>
+          </div>
+          <div class="p-6">
+            <h3 class="font-bold text-xl mb-2 text-brand-800">Marketing Digital desde Cero</h3>
+            <p class="text-brand-700 text-sm mb-5">
+              Domina las redes sociales, crea contenido atractivo y lanza tus primeras campañas publicitarias.
+            </p>
+            <a href="#" class="mt-6 inline-block bg-brand-500 text-white py-2 px-5 rounded-full font-semibold hover:bg-brand-600 transition duration-300">
+              Ver Detalles
+            </a>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg card-hover border border-brand-100 overflow-hidden reveal">
+          <div class="relative">
+            <img src="/Barra/Liderazgo.jpg" alt="Curso Liderazgo" class="w-full h-48 object-cover">
+            <span class="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase">Proximamente</span>
+          </div>
+          <div class="p-6">
+            <h3 class="font-bold text-xl mb-2 text-brand-800">Liderazgo y Habilidades Blandas</h3>
+            <p class="text-brand-700 text-sm mb-5">
+              Desarrolla tu capacidad de comunicacion, negociacion y trabajo en equipo para liderar con exito.
+            </p>
+            <a href="#" class="mt-6 inline-block bg-brand-300 text-white py-2 px-5 rounded-full font-semibold cursor-not-allowed">
+              Notificarme
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AmparIA Section -->
+  <section id="amparia-demo" class="py-20 bg-brand-800 text-white">
+    <div class="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+      <div class="reveal">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Conoce a AmparIA, tu Asistente Personal</h2>
+        <p class="text-lg text-brand-100 mb-6">
+          AmparIA no es solo un chatbot, es tu compañera de aprendizaje. Esta diseñada para entender tus necesidades, recomendarte los mejores cursos y resolver tus dudas al instante, 24/7.
+        </p>
+        <a href="#" class="bg-brand-500 text-white py-3 px-8 rounded-full font-semibold hover:bg-brand-600 transition">Hablar con AmparIA</a>
+      </div>
+      <div class="bg-white p-6 rounded-2xl shadow-xl border border-brand-100 reveal">
+        <div class="h-96 flex flex-col space-y-4 overflow-y-auto p-4" id="chat-simulation"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonios -->
+  <section id="testimonios" class="py-20 bg-brand-0 overflow-hidden">
+    <div class="container mx-auto px-6">
+      <h2 class="text-3xl md:text-4xl font-bold text-brand-800 text-center mb-16 reveal">Historias que Inspiran</h2>
+      <div class="relative flex justify-center items-center">
+        <button id="prev-testimonial" class="absolute left-0 md:-left-8 z-20 bg-white rounded-full p-2 shadow-lg hover:bg-brand-50 transition">←</button>
+        <div id="testimonial-carousel" class="flex items-center justify-center w-full gap-4 md:gap-8"></div>
+        <button id="next-testimonial" class="absolute right-0 md:-right-8 z-20 bg-white rounded-full p-2 shadow-lg hover:bg-brand-50 transition">→</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Final -->
+  <section class="gradient-bg text-white">
+    <div class="container mx-auto px-6 py-20 text-center">
+      <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Tu punto de partida es ahora.</h2>
+      <p class="text-lg text-brand-100 mb-8 max-w-2xl mx-auto">
+        Unete a miles de mujeres que estan construyendo el futuro que merecen.
+      </p>
+      <a href="#" class="bg-brand-0 text-brand-600 py-3 px-8 rounded-full font-bold text-lg hover:bg-brand-100 transition duration-300 shadow-2xl inline-block">
+        Crear mi cuenta gratis
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<Footer />
+
+<script>
+  // Animacion Reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Testimonios
+  const testimonials = [
+    { quote: "Yatiña Ampara cambio mi vida.", name: "Maria Quispe", image: "https://placehold.co/100x100" },
+    { quote: "Gracias a la comunidad, ahora gestiono redes locales.", name: "Ana Garcia", image: "https://placehold.co/100x100" },
+    { quote: "La plataforma es facil y AmparIA me acompaño todo el tiempo.", name: "Lucia Torres", image: "https://placehold.co/100x100" }
+  ];
+  const carousel = document.getElementById('testimonial-carousel');
+  const render = () => {
+    carousel.innerHTML = testimonials.map(t => `
+      <div class="text-center p-6 bg-white rounded-2xl shadow-lg border border-brand-100 transition-transform duration-500 hover:scale-105">
+        <img src="${t.image}" alt="${t.name}" class="w-20 h-20 rounded-full mx-auto mb-4">
+        <p class="italic text-brand-700 mb-4">"${t.quote}"</p>
+        <div class="font-bold text-brand-600">${t.name}</div>
+      </div>
+    `).join('');
+  };
+  document.getElementById('next-testimonial').onclick = () => testimonials.push(testimonials.shift());
+  document.getElementById('prev-testimonial').onclick = () => testimonials.unshift(testimonials.pop());
+  render();
+
+  // Chat Simulado con animacion
+  const chat = document.getElementById('chat-simulation');
+  const msgs = [
+    { from: 'user', text: 'Hola, ¿que cursos de emprendimiento tienen?' },
+    { from: 'ai', text: 'Tenemos varias opciones para ti:' },
+    { from: 'ai', text: '<strong>1. Finanzas para Emprendedoras</strong><br><strong>2. Marketing Digital desde Cero</strong>' },
+    { from: 'ai', text: '¿Te gustaria ver los detalles de alguno?' }
+  ];
+  let delay = 1000;
+  msgs.forEach(m => {
+    setTimeout(() => {
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble ${m.from === 'ai' ? 'bg-brand-50 text-brand-800 self-start' : 'bg-brand-500 text-white self-end'} rounded-2xl p-3 mb-2 fade-in`;
+      bubble.innerHTML = m.text;
+      chat.appendChild(bubble);
+      chat.scrollTop = chat.scrollHeight;
+    }, delay);
+    delay += 2000;
+  });
+</script>

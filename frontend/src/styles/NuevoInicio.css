@@ -1,0 +1,600 @@
+/* ==============================
+      VARIABLES GLOBALES Y RESET
+    ============================== */
+    :root {
+        --color-0: #ffffff;
+        --color-50: #F1E7FE;
+        --color-100: #D9BBFC;
+        --color-200: #C18FFA;
+        --color-300: #A863F8;
+        --color-400: #9037F6;
+        --color-500: #780BF4;
+        --color-600: #5708B3;
+        --color-700: #4D079C;
+        --color-800: #370570;
+        --color-900: #220344;
+        --glass: rgba(255, 255, 255, 0.6);
+        --accent: var(--color-500);
+        --muted: #8b6fa8;
+        --success: #2aa84f;
+        --danger: #e74c3c;
+        --shadow: 0 8px 30px rgba(55, 5, 112, 0.12);
+        --radius: 16px; /* Aumentado para un look más suave */
+        --max-width: 980px;
+      }
+  
+      * {
+        box-sizing: border-box;
+      }
+  
+      html, body {
+        height: 100%;
+      }
+  
+      body {
+        font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        /* Eliminamos el fondo gradiente para poner el video */
+        /* background: linear-gradient(270deg, var(--color-400), var(--color-500), var(--color-600)); */
+        /* background-size: 600% 600%; */
+        /* animation: gradientBG 15s ease infinite; */
+        background-color: var(--color-800); /* Fondo de fallback si el video no carga */
+        color: var(--color-900);
+        overflow: hidden; /* Evita que el video genere scroll */
+      }
+  
+      /* Eliminamos la animación de fondo que ya no se usa */
+      /* @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      } */
+  
+      /* ==============================
+        CONTENEDOR PRINCIPAL
+      ============================== */
+      .auth-wrap {
+        width: 100%;
+        max-width: var(--max-width);
+        display: grid;
+        grid-template-columns: 1fr 440px; /* Ajuste de columna */
+        align-items: stretch;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeUp 0.7s forwards 0.2s;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        border-radius: var(--radius);
+        overflow: hidden; /* Clave para los bordes redondeados */
+      }
+  
+      @keyframes fadeUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+  
+      /* ==============================
+        HERO (IZQUIERDA) - AHORA CON CARRUSEL
+      ============================== */
+      .auth-hero {
+        border-radius: 0; /* Controlado por el wrapper */
+        /* Hacemos el panel translúcido (efecto vidrio) */
+        /* background: linear-gradient(135deg, var(--color-700), var(--color-500)); */
+        background: rgba(87, 8, 179, 0.7); /* --color-600 con 70% de opacidad */
+        backdrop-filter: blur(12px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil */
+        color: var(--color-0);
+        padding: 2.5rem;
+        display: flex;
+        flex-direction: column;
+        /* justify-content: space-between; <- Lo quitamos para controlar con flex-grow */
+        min-height: 500px;
+        position: relative;
+        overflow: hidden; /* Para las formas abstractas y carrusel */
+      }
+      
+      /* Fondo con formas abstractas */
+      .auth-hero::before,
+      .auth-hero::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        z-index: 1;
+        filter: blur(10px);
+      }
+      .auth-hero::before {
+        width: 200px;
+        height: 200px;
+        bottom: -80px;
+        left: -80px;
+      }
+      .auth-hero::after {
+        width: 300px;
+        height: 300px;
+        top: -100px;
+        right: -120px;
+      }
+  
+      /* Contenido del Hero sobre las formas */
+      .auth-hero-content {
+        position: relative;
+        z-index: 2;
+        /* Añadimos flex para separar el contenido del carrusel */
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        justify-content: space-between;
+      }
+      
+      .auth-hero .logo {
+        display: flex;
+        gap: 0.85rem;
+        align-items: center;
+        margin-bottom: 2rem; /* Espacio para el texto */
+      }
+  
+      .auth-hero .logo img {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        object-fit: cover;
+        background: white;
+      }
+  
+      .auth-hero h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        line-height: 1.2;
+      }
+  
+      .auth-hero p.lead {
+        margin: 0.5rem 0 1rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+        max-width: 30ch; /* Mejora la legibilidad */
+      }
+  
+      /* Carrusel de imágenes/videos */
+      .carousel-container {
+          position: relative;
+          width: 100%;
+          height: 280px; /* <- Agrandamos el carrusel */
+          overflow: hidden;
+          border-radius: var(--radius);
+          /* margin-top: 1.5rem; <- Quitado para que 'space-between' lo empuje abajo */
+      }
+  
+      .carousel-track {
+          display: flex;
+          width: 300%; /* 3 slides */
+          height: 100%;
+          transition: transform 0.5s ease-in-out;
+      }
+  
+      .carousel-slide {
+          width: calc(100% / 3); /* Cada slide ocupa un tercio del track */
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0; /* Asegura que no se encoja */
+          background-color: rgba(255,255,255,0.1);
+          border-radius: var(--radius);
+          overflow: hidden;
+      }
+      .carousel-slide img, .carousel-slide video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+      }
+  
+      .carousel-dots {
+          position: absolute;
+          bottom: 15px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 8px;
+          z-index: 3;
+      }
+  
+      .carousel-dot {
+          width: 10px;
+          height: 10px;
+          background-color: rgba(255, 255, 255, 0.4);
+          border-radius: 50%;
+          cursor: pointer;
+          transition: background-color 0.3s;
+      }
+  
+      .carousel-dot.active {
+          background-color: var(--color-0);
+      }
+  
+  
+      /* ==============================
+        FORMULARIO (DERECHA)
+      ============================== */
+      .card {
+        /* Hacemos el panel translúcido (efecto vidrio) */
+        /* background: var(--color-0); */
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        padding: 2.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem; /* Espaciado uniforme */
+        min-height: 500px;
+      }
+  
+      .card h1 {
+        font-size: 1.75rem;
+        margin: 0;
+        color: var(--color-800);
+      }
+      .card .muted-text {
+        font-size: 1rem;
+        color: var(--muted);
+        margin-bottom: 0.5rem;
+      }
+      
+      .card-header-actions {
+          display: flex;
+          /* justify-content: space-between; <-- Eliminamos esto */
+          /* align-items: baseline; <-- Eliminamos esto */
+      }
+      
+      /* Eliminamos el estilo de botón de aquí */
+      /* .card-header-actions .small-link { ... } */
+      /* .card-header-actions .small-link:hover { ... } */
+  
+  
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+  
+      .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+  
+      label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-700);
+      }
+  
+      .input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        border: 1px solid var(--color-100);
+        /* background: var(--color-50); */
+        background: rgba(241, 231, 254, 0.7); /* --color-50 translúcido */
+        transition: all 0.2s;
+        outline: none;
+        font-size: 0.95rem;
+      }
+  
+      .input:focus {
+        box-shadow: 0 0 0 3px var(--color-100);
+        border-color: var(--color-400);
+        /* background: var(--color-0); */
+        background: rgba(255, 255, 255, 0.9); /* Blanco translúcido */
+      }
+  
+      .input-with-icon {
+        position: relative;
+      }
+  
+      .input-with-icon .input {
+        padding-right: 2.5rem;
+      }
+  
+      .input-with-icon i {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(2px); /* Ajuste por el label */
+        color: var(--muted);
+        cursor: pointer;
+        transition: color 0.25s;
+      }
+      .input-with-icon i:hover {
+        color: var(--color-500);
+      }
+      .form-row.input-with-icon label {
+        margin-bottom: 0.1rem;
+      }
+      .input-with-icon .fa-eye,
+      .input-with-icon .fa-eye-slash {
+        top: calc(50% + 10px); /* Ajuste para alinear con input */
+      }
+  
+  
+      /* ACCIONES Y BOTONES */
+      .form-options {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 0.2rem;
+      }
+  
+      .form-options label {
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+        font-size: 0.9rem;
+        color: var(--muted);
+        font-weight: 400;
+      }
+      
+      .small-link {
+        font-size: 0.9rem;
+        color: var(--color-600);
+        text-decoration: none;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+        font-family: inherit;
+      }
+      .small-link:hover {
+        text-decoration: underline;
+      }
+  
+      .btn {
+        padding: 0.8rem 1rem;
+        border-radius: 10px;
+        border: 0;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 1rem;
+        background: linear-gradient(90deg, var(--color-500), var(--color-600));
+        color: white;
+        box-shadow: 0 8px 24px rgba(120, 11, 244, 0.14);
+        transition: all 0.25s;
+        width: 100%; /* Botón principal a full width */
+        margin-top: 0.5rem;
+      }
+  
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(120, 11, 244, 0.25);
+      }
+  
+      .btn:active {
+        transform: translateY(1px);
+        box-shadow: 0 6px 12px rgba(120, 11, 244, 0.2);
+      }
+  
+      /* BOTONES SOCIALES Y DIVISOR */
+      .social-section {
+        margin-top: 0.5rem;
+      }
+  
+      .divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+      }
+      .divider::before,
+      .divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid var(--color-100);
+      }
+      .divider:not(:empty)::before { margin-right: .5em; }
+      .divider:not(:empty)::after { margin-left: .5em; }
+  
+      .socials {
+        display: flex;
+        gap: 0.75rem;
+      }
+  
+      .social {
+        flex: 1;
+        padding: 0.65rem;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: 1px solid var(--color-200);
+        transition: all 0.25s;
+      }
+  
+      .social.google {
+        background: linear-gradient(180deg, #fff, #f9f8ff);
+        color: var(--color-800);
+      }
+  
+      .social.facebook {
+        background: #3b5998;
+        color: white;
+        border-color: #3b5998;
+      }
+  
+      .social:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+      }
+      
+      .social i {
+        margin-right: 0.4rem;
+      }
+  
+      /* NUEVOS ESTILOS PARA EL FOOTER DE LA TARJETA */
+      .card-footer {
+        margin-top: 1.5rem; /* Margen ajustado */
+        /* padding-top: 1.25rem; <-- Eliminado */
+        /* border-top: 1px solid rgba(0, 0, 0, 0.1); <-- Línea eliminada */
+        text-align: center;
+        /* display: flex; <-- Eliminado */
+        /* justify-content: center; <-- Eliminado */
+        /* align-items: center; <-- Eliminado */
+        /* gap: 0.75rem; <-- Eliminado */
+      }
+      .card-footer p {
+        /* Estilos restaurados para el párrafo */
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      /* Estilos para .btn-create-account eliminados, ahora usa .small-link */
+      /* .btn-create-account { ... } */
+      /* .btn-create-account:hover { ... } */
+      
+      /* FIN DE NUEVOS ESTILOS */
+  
+      /* MENSAJES DE FEEDBACK */
+      .msg {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        display: none;
+        opacity: 0;
+        transform: translateY(-6px);
+        transition: all 0.4s ease;
+        font-weight: 600;
+        margin-bottom: -0.25rem; /* Ajuste de espacio */
+      }
+  
+      .msg.show {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+      }
+  
+      .msg.success {
+        background: rgba(44, 160, 95, 0.08);
+        color: var(--success);
+        border: 1px solid rgba(44, 160, 95, 0.12);
+      }
+  
+      .msg.error {
+        background: rgba(231, 76, 60, 0.06);
+        color: var(--danger);
+        border: 1px solid rgba(231, 76, 60, 0.08);
+      }
+  
+      /* MODAL RECUPERACIÓN (Sin cambios, ya estaba bien) */
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(10, 10, 10, 0.35);
+        z-index: 9999;
+        padding: 1rem;
+      }
+      .modal.show {
+        display: flex; /* Usar flex para centrar */
+      }
+      
+      .modal-card {
+        width: 100%;
+        max-width: 420px;
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        transform: translateY(-20px);
+        opacity: 0;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .modal.show .modal-card {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      
+      .modal-card h3 {
+        margin: 0;
+      }
+      
+      .modal-card .btn {
+        width: auto;
+        font-size: 0.9rem;
+      }
+      .modal-card .btn.ghost {
+        background: transparent;
+        color: var(--color-700);
+        border: 1px solid var(--color-200);
+        font-weight: 600;
+      }
+      .modal-card .btn.ghost:hover {
+        background: var(--color-50);
+        transform: translateY(0);
+        box-shadow: none;
+      }
+      
+      #step1, #step2 {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+  
+      /* RESPONSIVE */
+      @media (max-width:900px) {
+        body {
+          padding: 0;
+          align-items: flex-start; /* Alinea al inicio en móvil */
+        }
+        .auth-wrap {
+          grid-template-columns: 1fr;
+          border-radius: 0;
+          box-shadow: none;
+          max-width: none;
+          min-height: 100vh;
+        }
+        .auth-hero {
+          /* Oculta el hero en móvil para enfocar en el login */
+          display: none; 
+        }
+        .card {
+          min-height: 100vh;
+          border-radius: 0;
+          padding: 2rem 1.5rem;
+        }
+      }
+  
+      @media (max-width:480px) {
+        .socials {
+          flex-direction: column;
+        }
+      }
+   
+      #bg-video {
+        position: fixed; /* Fijo a la ventana */
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%); /* Centrado perfecto */
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        z-index: -1; /* Detrás de todo el contenido */
+        object-fit: cover; /* Cubre toda la pantalla sin distorsión */
+        
+        /* Filtro sutil para que no distraiga del formulario */
+        filter: blur(3px) brightness(0.8);
+
+    }
+  

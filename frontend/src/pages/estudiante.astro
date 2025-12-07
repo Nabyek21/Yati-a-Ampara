@@ -1,0 +1,169 @@
+---
+import EstudianteLayout from '../../layouts/EstudianteLayout.astro';
+import EstudianteHeader from '../../components/EstudianteHeader.astro';
+---
+
+<EstudianteLayout title="Mis Cursos - Yatiña">
+  <EstudianteHeader>Mis Cursos</EstudianteHeader>
+  <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <!-- Encabezado de bienvenida -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 mb-6 text-white">
+      <h2 class="text-2xl font-bold mb-2">¡Bienvenido!</h2>
+      <p class="text-blue-100">Aquí puedes acceder a todos tus cursos, contenido y actividades.</p>
+    </div>
+
+    <!-- Lista de cursos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="cursos-container">
+      <div class="col-span-full text-center text-gray-500 py-8">
+        <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+        <p>Cargando tus cursos...</p>
+      </div>
+    </div>
+  </main>
+</EstudianteLayout>
+
+<script type="module">
+  import { getMatriculasByUsuario, deleteMatricula } from '../../public/services/matriculaService.js';
+  import { getCursos } from '../../public/services/cursoService.js';
+  import { getSecciones } from '../../public/services/seccionService.js';
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const user = localStorage.getItem('user');
+      if (!user) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const userData = JSON.parse(user);
+      const idUsuario = userData.id_usuario;
+      console.log('👤 Usuario actual:', idUsuario);
+
+      // Obtener matrículas del estudiante
+      const matriculas = await getMatriculasByUsuario(idUsuario);
+      console.log('📚 Matrículas recibidas:', matriculas);
+
+      if (!matriculas || matriculas.length === 0) {
+        document.getElementById('cursos-container').innerHTML = `
+          <div class="col-span-full text-center text-gray-500 py-8">
+            <i class="fas fa-inbox text-4xl mb-4 text-gray-300"></i>
+            <p>No estás inscrito en ningún curso aún</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Agrupar matrículas por curso (para evitar duplicados)
+      const cursosMap = new Map();
+      matriculas.forEach(matricula => {
+        console.log('📖 Procesando matrícula:', {
+          id_curso: matricula.id_curso,
+          nombre_curso: matricula.nombre_curso,
+          nombres_docente: matricula.nombres_docente,
+          apellidos_docente: matricula.apellidos_docente
+        });
+        if (!cursosMap.has(matricula.id_curso)) {
+          cursosMap.set(matricula.id_curso, matricula);
+        }
+      });
+
+      // Renderizar cursos
+      const container = document.getElementById('cursos-container');
+      container.innerHTML = Array.from(cursosMap.values()).map((matricula, idx) => {
+        const fechaInicio = matricula.fecha_inicio 
+          ? new Date(matricula.fecha_inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+          : 'N/A';
+        
+        // Obtener nombre del docente de la matricula
+        const nombresDocente = (matricula.nombres_docente || '').trim();
+        const apellidosDocente = (matricula.apellidos_docente || '').trim();
+        const nombreDocente = (nombresDocente && apellidosDocente)
+          ? `${nombresDocente} ${apellidosDocente}`
+          : (nombresDocente || (apellidosDocente || 'Sin docente asignado'));
+
+        console.log('👨‍🏫 Docente para curso:', nombreDocente);
+
+        const avatarDocente = nombreDocente
+          .split(' ')
+          .filter(n => n.length > 0)
+          .map(n => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
+        
+        return `
+          <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow border-l-4 border-blue-500">
+            <div class="p-6">
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex-1">
+                  <h3 class="text-xl font-bold text-gray-900">${matricula.nombre_curso}</h3>
+                  <p class="text-xs text-gray-500 mt-1">Sección: <strong>${matricula.nombre_seccion}</strong></p>
+                </div>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold whitespace-nowrap ml-2">
+                  ${matricula.nombre_modalidad || 'N/A'}
+                </span>
+              </div>
+
+              <p class="text-gray-600 text-sm mb-4">${matricula.descripcion_curso || 'Sin descripción'}</p>
+
+              <!-- INFORMACIÓN DEL DOCENTE - DESTACADA -->
+              <div class="bg-purple-50 rounded-lg p-4 mb-4 border-2 border-purple-200">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    ${avatarDocente}
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-xs font-semibold text-purple-700 uppercase tracking-wide">Docente</p>
+                    <p class="text-lg font-bold text-gray-800">${nombreDocente}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center text-xs text-gray-500 space-x-3 mb-4">
+                <span><i class="fas fa-calendar-alt mr-1"></i>${fechaInicio}</span>
+                ${matricula.horario ? `<span><i class="fas fa-clock mr-1"></i>${matricula.horario}</span>` : ''}
+              </div>
+
+              <div class="flex gap-3">
+                <a href="/estudiante/curso/${matricula.id_curso}" class="flex-1 inline-flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold text-sm">
+                  <i class="fas fa-book mr-2"></i>
+                  Ver Módulos
+                </a>
+                <button onclick="salirDelCurso(${matricula.id_matricula}, '${matricula.nombre_curso}')" class="px-4 py-3 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors font-semibold text-sm flex items-center gap-2">
+                  <i class="fas fa-sign-out-alt"></i>
+                  Salir
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Función global para salir del curso
+      window.salirDelCurso = async function(idMatricula, nombreCurso) {
+        if (!confirm(`¿Estás seguro de que deseas salirte de "${nombreCurso}"? Esta acción no se puede deshacer.`)) {
+          return;
+        }
+        
+        try {
+          await deleteMatricula(idMatricula);
+          alert('✅ Te has salido del curso correctamente.');
+          // Recargar la página para actualizar la lista
+          window.location.reload();
+        } catch (error) {
+          alert('❌ Error al salirte del curso: ' + error.message);
+          console.error(error);
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Error al cargar cursos:', error);
+      document.getElementById('cursos-container').innerHTML = `
+        <div class="col-span-full text-center text-red-500 py-8">
+          <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+          <p>Error al cargar tus cursos. Por favor intenta de nuevo.</p>
+        </div>
+      `;
+    }
+  });
+</script>

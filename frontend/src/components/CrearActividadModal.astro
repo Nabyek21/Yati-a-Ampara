@@ -1,0 +1,168 @@
+<div id="crearActividadModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+  <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <h2 class="text-2xl font-bold text-gray-800">Crear Actividad</h2>
+      <button id="closeActividadModal" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+    </div>
+
+    <!-- Formulario -->
+    <form id="crearActividadForm" class="p-6 space-y-4">
+      <!-- Módulo y Sección -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="id_modulo" class="block text-sm font-medium text-gray-700 mb-2">Módulo *</label>
+          <select id="id_modulo" name="id_modulo" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Seleccionar módulo...</option>
+          </select>
+        </div>
+        <div>
+          <label for="id_seccion" class="block text-sm font-medium text-gray-700 mb-2">Sección *</label>
+          <select id="id_seccion" name="id_seccion" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Seleccionar sección...</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tipo de Actividad -->
+      <div>
+        <label for="tipo" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Actividad *</label>
+        <select id="tipo" name="tipo" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Seleccionar tipo...</option>
+          <option value="tarea">Tarea (40%)</option>
+          <option value="examen">Examen (50%)</option>
+          <option value="quiz">Quiz (10%)</option>
+        </select>
+      </div>
+
+      <!-- Título -->
+      <div>
+        <label for="titulo" class="block text-sm font-medium text-gray-700 mb-2">Título *</label>
+        <input type="text" id="titulo" name="titulo" placeholder="Ej: Tarea de React" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+
+      <!-- Descripción -->
+      <div>
+        <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+        <textarea id="descripcion" name="descripcion" placeholder="Describe la actividad..." rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+
+      <!-- Puntaje Máximo y Fecha de Entrega -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="puntaje_max" class="block text-sm font-medium text-gray-700 mb-2">Puntaje Máximo</label>
+          <input type="number" id="puntaje_max" name="puntaje_max" value="20" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label for="fecha_entrega" class="block text-sm font-medium text-gray-700 mb-2">Fecha de Entrega</label>
+          <input type="datetime-local" id="fecha_entrega" name="fecha_entrega" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end gap-3 pt-4">
+        <button type="button" id="cancelarActividad" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition">
+          Cancelar
+        </button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+          Crear Actividad
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Importar servicios
+  import { getModulosBySeccion, getActividadesBySeccion, createActividad } from '/services/moduloService.js';
+  
+  const modal = document.getElementById('crearActividadModal');
+  const closeBtn = document.getElementById('closeActividadModal');
+  const cancelBtn = document.getElementById('cancelarActividad');
+  const form = document.getElementById('crearActividadForm');
+  const seccionSelect = document.getElementById('id_seccion');
+  const moduloSelect = document.getElementById('id_modulo');
+
+  // Cerrar modal
+  closeBtn?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  cancelBtn?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  // Cargar módulos cuando se selecciona sección
+  seccionSelect?.addEventListener('change', async (e) => {
+    const id_seccion = e.target.value;
+    if (!id_seccion) {
+      moduloSelect.innerHTML = '<option value="">Seleccionar módulo...</option>';
+      return;
+    }
+
+    try {
+      const modulos = await getModulosBySeccion(id_seccion);
+      moduloSelect.innerHTML = '<option value="">Seleccionar módulo...</option>';
+      if (Array.isArray(modulos)) {
+        modulos.forEach(mod => {
+          const option = document.createElement('option');
+          option.value = mod.id_modulo;
+          option.textContent = mod.titulo;
+          moduloSelect.appendChild(option);
+        });
+      }
+    } catch (error) {
+      console.error('Error cargando módulos:', error);
+    }
+  });
+
+  // Enviar formulario
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    try {
+      const formData = {
+        id_modulo: parseInt(document.getElementById('id_modulo').value),
+        id_seccion: parseInt(document.getElementById('id_seccion').value),
+        id_docente_perfil: parseInt(localStorage.getItem('id_docente_perfil') || '0'),
+        titulo: document.getElementById('titulo').value,
+        tipo: document.getElementById('tipo').value,
+        descripcion: document.getElementById('descripcion').value || null,
+        fecha_entrega: document.getElementById('fecha_entrega').value || null,
+        puntaje_max: parseInt(document.getElementById('puntaje_max').value) || 20,
+        id_estado: 1
+      };
+
+      await createActividad(formData);
+      alert('Actividad creada correctamente');
+      form.reset();
+      modal.classList.add('hidden');
+      
+      // Dispara evento personalizado para actualizar lista
+      window.dispatchEvent(new CustomEvent('actividadCreada'));
+    } catch (error) {
+      console.error('Error creando actividad:', error);
+      alert('Error al crear actividad: ' + error.message);
+    }
+  });
+
+  // Exponer función para abrir modal desde otros componentes
+  window.abrirCrearActividadModal = () => {
+    modal.classList.remove('hidden');
+  };
+</script>
+
+<style>
+  .modal {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+</style>

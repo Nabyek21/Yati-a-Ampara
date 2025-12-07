@@ -1,0 +1,114 @@
+---
+import '../styles/global.css';
+import IAHeaderButton from '../components/IAHeaderButton.astro';
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Dashboard Usuario" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <!-- Font Awesome para los iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    
+    <style>
+      .sidebar {
+        transition: width 0.3s ease-in-out;
+      }
+      .sidebar-item-text {
+        transition: opacity 0.3s ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="flex h-screen bg-gray-100">
+      <!-- Sidebar -->
+      <aside id="sidebar" class="w-64 bg-purple-800 text-white flex flex-col sidebar">
+        <div class="p-4 text-2xl font-bold border-b border-purple-700 flex items-center justify-between">
+          <button id="sidebar-toggle" class="text-white focus:outline-none">
+            <i class="fas fa-bars"></i>
+          </button>
+          <img src="/Yatina.png" alt="Logo Yatiña" class="h-10 w-auto ml-4" id="sidebar-logo-img" />
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+          <a href="/usuario" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700 active:bg-purple-700">
+            <i class="fas fa-book"></i>
+            <span class="sidebar-item-text">Cursos</span>
+          </a>
+          <a href="/horario" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="sidebar-item-text">Horario</span>
+          </a>
+          <a href="/usuario/foros" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700">
+            <i class="fas fa-comments"></i>
+            <span class="sidebar-item-text">Foros</span>
+          </a>
+          <a href="/usuario/calificaciones" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700">
+            <i class="fas fa-clipboard-check"></i>
+            <span class="sidebar-item-text">Calificaciones</span>
+          </a>
+          <a href="/usuario/correo" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700">
+            <i class="fas fa-envelope"></i>
+            <span class="sidebar-item-text">Correo</span>
+          </a>
+          <a href="/usuario/biblioteca" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700">
+            <i class="fas fa-book-open"></i>
+            <span class="sidebar-item-text">Biblioteca</span>
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Contenido Principal -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <slot />
+      </div>
+    </div>
+
+    <!-- Botón del Agente IA (Esquina Superior Derecha) -->
+    <IAHeaderButton />
+
+    <script>
+      const sidebar = document.getElementById('sidebar');
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const sidebarItemsText = document.querySelectorAll('.sidebar-item-text');
+      const sidebarLogoImg = document.getElementById('sidebar-logo-img');
+      const toggleIcon = sidebarToggle.querySelector('i');
+
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('w-64');
+        sidebar.classList.toggle('w-20');
+
+        sidebarLogoImg.classList.toggle('hidden');
+
+        sidebarItemsText.forEach(span => {
+          span.classList.toggle('hidden');
+        });
+
+        if (sidebar.classList.contains('w-20')) {
+          toggleIcon.classList.remove('fa-bars');
+          toggleIcon.classList.add('fa-chevron-right');
+        } else {
+          toggleIcon.classList.remove('fa-chevron-right');
+          toggleIcon.classList.add('fa-bars');
+        }
+      });
+
+      if (sidebar.classList.contains('w-20')) {
+        sidebarLogoImg.classList.add('hidden');
+        sidebarItemsText.forEach(span => span.classList.add('hidden'));
+        toggleIcon.classList.remove('fa-bars');
+        toggleIcon.classList.add('fa-chevron-right');
+      }
+    </script>
+  </body>
+</html>
+

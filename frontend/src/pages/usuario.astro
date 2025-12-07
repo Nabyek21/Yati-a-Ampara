@@ -1,0 +1,221 @@
+---
+import UsuarioLayout from '../layouts/UsuarioLayout.astro';
+import UsuarioHeader from '../components/UsuarioHeader.astro';
+---
+
+<UsuarioLayout title="Dashboard Usuario - Yatiña">
+  <UsuarioHeader />
+  <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <!-- Sección de Bienvenida -->
+    <div class="bg-purple-600 rounded-lg shadow-lg p-6 mb-6 text-white">
+      <h2 class="text-2xl font-bold mb-2">¡Bienvenida de nuevo, <span id="usuario-nombre"></span>!</h2>
+      <p class="text-purple-100 mb-4">Aquí tienes un resumen de tu actividad.</p>
+      
+      <!-- Tarjetas de Resumen -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div class="bg-purple-700 rounded-lg p-4 flex items-center space-x-3">
+          <div class="bg-purple-800 rounded-full p-3">
+            <i class="fas fa-book text-2xl"></i>
+          </div>
+          <div>
+            <p class="text-2xl font-bold" id="cursos-activos">0</p>
+            <p class="text-sm text-purple-200">Cursos Matriculados</p>
+          </div>
+        </div>
+        
+        <div class="bg-purple-700 rounded-lg p-4 flex items-center space-x-3">
+          <div class="bg-purple-800 rounded-full p-3">
+            <i class="fas fa-exclamation-triangle text-2xl"></i>
+          </div>
+          <div>
+            <p class="text-2xl font-bold" id="tareas-pendientes">0</p>
+            <p class="text-sm text-purple-200">Tareas Pendientes</p>
+          </div>
+        </div>
+        
+        <div class="bg-purple-700 rounded-lg p-4 flex items-center space-x-3">
+          <div class="bg-purple-800 rounded-full p-3">
+            <i class="fas fa-calendar-check text-2xl"></i>
+          </div>
+          <div>
+            <p class="text-2xl font-bold" id="proxima-entrega">-</p>
+            <p class="text-sm text-purple-200">Próxima Entrega</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de Cursos -->
+    <div class="mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-2xl font-bold text-purple-800">Mis cursos</h3>
+        <div class="flex items-center space-x-4">
+          <!-- Tabs -->
+          <div class="flex space-x-2 bg-white rounded-lg p-1">
+            <button class="px-4 py-2 rounded-md bg-purple-600 text-white text-sm font-medium" id="tab-todos">Todos</button>
+            <button class="px-4 py-2 rounded-md text-purple-600 text-sm font-medium hover:bg-purple-50" id="tab-activos">Activos</button>
+            <button class="px-4 py-2 rounded-md text-purple-600 text-sm font-medium hover:bg-purple-50" id="tab-completados">Completados</button>
+          </div>
+          <a href="/cursos" class="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-purple-700">
+            <i class="fas fa-plus"></i>
+            <span>Inscribir Nuevo Curso</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="cursos-container">
+        <!-- Los cursos se cargarán dinámicamente -->
+      </div>
+    </div>
+  </main>
+</UsuarioLayout>
+
+<script type="module">
+  import { getMatriculasByUsuario, deleteMatricula } from '../services/matriculaService.js';
+  import { getTareasPendientes, getProximaEntrega } from '../services/actividadService.js';
+
+  window.addEventListener('load', async () => {
+    // Obtener nombre del usuario
+    const user = localStorage.getItem('user');
+    if (user) {
+      const userData = JSON.parse(user);
+      document.getElementById('usuario-nombre').textContent = userData.nombres;
+    }
+
+    let currentFilter = 'todos';
+    let allCursos = [];
+
+    // Manejar tabs
+    const tabs = {
+      todos: document.getElementById('tab-todos'),
+      activos: document.getElementById('tab-activos'),
+      completados: document.getElementById('tab-completados')
+    };
+
+    const renderCursos = (cursos) => {
+      const cursosContainer = document.getElementById('cursos-container');
+      
+      if (cursos.length === 0) {
+        cursosContainer.innerHTML = `
+          <div class="col-span-full bg-white rounded-lg shadow p-6">
+            <p class="text-gray-500 text-center">No estás inscrito en ningún curso aún</p>
+          </div>
+        `;
+        return;
+      }
+
+      cursosContainer.innerHTML = cursos.map(curso => {
+        const porcentaje = curso.progreso || 0;
+        const nombreCurso = curso.nombre_curso || 'Curso';
+        const primeraPalabra = nombreCurso.split(' ')[0];
+        const restoNombre = nombreCurso.substring(primeraPalabra.length).trim();
+        const descripcion = curso.descripcion_curso || 'Sin descripción disponible';
+        const especialidad = curso.nombre_especialidad || 'Especialidad no especificada';
+        const modalidad = curso.nombre_modalidad || 'Presencial';
+        const seccion = curso.nombre_seccion || 'Sección no especificada';
+        const nombresDocente = (curso.nombres_docente || '').trim();
+        const apellidosDocente = (curso.apellidos_docente || '').trim();
+        const nombreDocente = (nombresDocente || apellidosDocente) ? `${nombresDocente} ${apellidosDocente}`.trim() : 'Sin docente asignado';
+        
+        return `
+          <a href="/curso/${curso.id_curso}?matriculado=1" class="block no-underline text-inherit">
+            <div class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden flex flex-col h-full">
+              <div class="bg-purple-600 p-6 text-white relative min-h-[120px] flex flex-col justify-between">
+                <div class="absolute top-4 right-4 bg-white bg-opacity-20 rounded-full px-3 py-1 text-sm font-semibold">
+                  ${porcentaje}%
+                </div>
+                <h4 class="text-3xl font-bold">${primeraPalabra}</h4>
+                <p class="text-sm text-purple-100 mt-2">${restoNombre || nombreCurso}</p>
+              </div>
+              <div class="p-6 flex-1 flex flex-col">
+                <p class="text-gray-800 font-semibold mb-2">${especialidad}</p>
+                <p class="text-sm text-gray-600 mb-3 flex-1">${descripcion}</p>
+                <!-- Docente -->
+                <div class="mb-3">
+                  <p class="text-xs text-gray-500"><strong>Docente:</strong> ${nombreDocente}</p>
+                </div>
+                <div class="border-t pt-3 mb-3">
+                  <p class="text-xs text-gray-700 mb-2"><strong>Sección:</strong> ${seccion}</p>
+                  <p class="text-xs text-gray-700 mb-2"><strong>Modalidad:</strong> ${modalidad}</p>
+                  <p class="text-xs text-gray-500"><strong>Código:</strong> ${curso.codigo_curso || curso.id_curso}</p>
+                </div>
+
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div class="bg-purple-600 h-2 rounded-full" style="width: ${porcentaje}%"></div>
+                </div>
+                <p class="text-xs text-gray-600 text-center">Progreso: ${porcentaje}%</p>
+
+
+              </div>
+            </div>
+          </a>
+        `;
+      }).join('');
+
+
+    };
+
+    Object.entries(tabs).forEach(([key, tab]) => {
+      tab.addEventListener('click', () => {
+        currentFilter = key;
+        Object.values(tabs).forEach(t => {
+          t.classList.remove('bg-purple-600', 'text-white');
+          t.classList.add('text-purple-600', 'hover:bg-purple-50');
+        });
+        tab.classList.add('bg-purple-600', 'text-white');
+        tab.classList.remove('text-purple-600', 'hover:bg-purple-50');
+        
+        let filteredCursos = allCursos;
+        if (key === 'activos') {
+          filteredCursos = allCursos.filter(c => c.estado_academico === 'en_curso');
+        } else if (key === 'completados') {
+          filteredCursos = allCursos.filter(c => c.estado_academico === 'aprobado' || c.estado_academico === 'desaprobado');
+        }
+        renderCursos(filteredCursos);
+      });
+    });
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+      const user = JSON.parse(localStorage.getItem('user'));
+      const id_usuario = user.id_usuario;
+
+      allCursos = await getMatriculasByUsuario(id_usuario);
+      
+      document.getElementById('cursos-activos').textContent = allCursos.length;
+      
+      try {
+        const tareasPendientes = await getTareasPendientes(id_usuario);
+        // Si es un array, contar, si es un número usarlo directamente
+        const numTareas = Array.isArray(tareasPendientes) ? tareasPendientes.length : tareasPendientes;
+        document.getElementById('tareas-pendientes').textContent = numTareas;
+      } catch (err) {
+        console.warn('No se pudo obtener tareas pendientes:', err);
+        document.getElementById('tareas-pendientes').textContent = 0;
+      }
+      
+      try {
+        const proximaEntrega = await getProximaEntrega(id_usuario);
+        document.getElementById('proxima-entrega').textContent = proximaEntrega || '-';
+      } catch (err) {
+        console.warn('No se pudo obtener próxima entrega:', err);
+        document.getElementById('proxima-entrega').textContent = '-';
+      }
+
+      renderCursos(allCursos);
+    } catch (error) {
+      console.error('Error al cargar datos del usuario:', error);
+      const cursosContainer = document.getElementById('cursos-container');
+      cursosContainer.innerHTML = `
+        <div class="col-span-full bg-white rounded-lg shadow p-6">
+          <p class="text-red-500 text-center">Error al cargar los datos. Por favor, intenta de nuevo.</p>
+        </div>
+      `;
+    }
+  });
+</script>
+

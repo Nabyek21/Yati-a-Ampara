@@ -1,0 +1,93 @@
+---
+// EstudianteLayout.astro
+import '../styles/global.css';
+import IAHeaderButton from '../components/IAHeaderButton.astro';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  </head>
+  <body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+      <!-- Sidebar -->
+      <aside class="w-64 bg-blue-600 text-white shadow-lg">
+        <div class="p-4 border-b border-blue-500">
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-graduation-cap text-2xl"></i>
+            <div>
+              <h2 class="text-xl font-bold">YATIÑA</h2>
+              <p class="text-xs text-blue-200">Estudiante</p>
+            </div>
+          </div>
+        </div>
+
+        <nav class="p-4 space-y-2">
+          <a href="/estudiante" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+            <i class="fas fa-home"></i>
+            <span>Mis Cursos</span>
+          </a>
+          <a href="/estudiante/calificaciones" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+            <i class="fas fa-chart-bar"></i>
+            <span>Mis Calificaciones</span>
+          </a>
+          <a href="/estudiante/actividades" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+            <i class="fas fa-tasks"></i>
+            <span>Actividades Pendientes</span>
+          </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-500">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-semibold" id="estudiante-nombre">Estudiante</p>
+              <p class="text-xs text-blue-200">Cuenta</p>
+            </div>
+            <button onclick="logout()" class="text-blue-200 hover:text-white">
+              <i class="fas fa-sign-out-alt"></i>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="flex-1 flex flex-col">
+        <slot />
+      </div>
+    </div>
+
+    <!-- Botón del Agente IA (Esquina Superior Derecha) -->
+    <IAHeaderButton />
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const user = localStorage.getItem('user');
+        if (user) {
+          const userData = JSON.parse(user);
+          document.getElementById('estudiante-nombre').textContent = `${userData.nombres} ${userData.apellidos}`;
+        } else {
+          window.location.href = '/login';
+        }
+      });
+
+      function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    </script>
+  </body>
+</html>

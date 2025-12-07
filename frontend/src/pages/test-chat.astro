@@ -1,0 +1,285 @@
+---
+// Página de prueba para el chatbot
+import N8NChatWidget from '../components/N8NChatWidget.astro';
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Chat N8N</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+    }
+    
+    h1 {
+      color: #7c3aed;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .info {
+      background: #f3f4f6;
+      border-left: 4px solid #7c3aed;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+    
+    .info p {
+      color: #1f2937;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+    
+    .console {
+      background: #1f2937;
+      color: #10b981;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      max-height: 300px;
+      overflow-y: auto;
+      margin: 20px 0;
+    }
+    
+    .console-line {
+      margin: 5px 0;
+      line-height: 1.4;
+    }
+    
+    .info-line { color: #60a5fa; }
+    .success-line { color: #10b981; }
+    .error-line { color: #ef4444; }
+    .warn-line { color: #f59e0b; }
+    
+    .status {
+      text-align: center;
+      padding: 20px;
+      background: #eff6ff;
+      border: 2px dashed #3b82f6;
+      border-radius: 6px;
+      margin: 20px 0;
+    }
+    
+    .status.loading {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .icon {
+      font-size: 32px;
+      display: inline-block;
+      margin-right: 10px;
+    }
+    
+    button {
+      background: #7c3aed;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      margin: 10px 5px;
+      transition: all 0.2s ease;
+    }
+    
+    button:hover {
+      background: #6d28d9;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+    
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🤖 Test Chat N8N - AmparIA</h1>
+    
+    <div class="info">
+      <p><strong>✅ Verificación de Carga:</strong></p>
+      <p>Esta página prueba que el widget de N8N cargue correctamente.</p>
+      <p id="status-text">Cargando información...</p>
+    </div>
+    
+    <div class="status loading">
+      <div class="icon">⏳</div>
+      <p>Buscando el widget del chat...</p>
+      <p id="widget-status">Esperando...</p>
+    </div>
+    
+    <div class="console" id="console">
+      <div class="console-line info-line">📂 Console Output:</div>
+    </div>
+    
+    <div class="button-group">
+      <button onclick="checkChat()">🔍 Verificar Chat</button>
+      <button onclick="clearConsole()">🗑️ Limpiar Console</button>
+      <button onclick="reloadChat()">🔄 Recargar</button>
+    </div>
+  </div>
+
+  <N8NChatWidget />
+
+  <script>
+    const consoleElement = document.getElementById('console');
+    
+    function addLog(message, type = 'info') {
+      const line = document.createElement('div');
+      line.className = `console-line ${type}-line`;
+      
+      // Añadir timestamp
+      const timestamp = new Date().toLocaleTimeString('es-ES');
+      line.textContent = `[${timestamp}] ${message}`;
+      
+      consoleElement.appendChild(line);
+      consoleElement.scrollTop = consoleElement.scrollHeight;
+    }
+    
+    function clearConsole() {
+      consoleElement.innerHTML = '<div class="console-line info-line">📂 Console Output (Limpiado):</div>';
+    }
+    
+    function checkChat() {
+      addLog('🔍 Verificando elementos del chat...', 'info');
+      
+      // Buscar el wrapper
+      const wrapper = document.getElementById('n8n-chat-wrapper');
+      if (wrapper) {
+        addLog('✅ Wrapper encontrado', 'success');
+      } else {
+        addLog('❌ Wrapper NO encontrado', 'error');
+        return;
+      }
+      
+      // Buscar botón del chat
+      const chatButton = document.querySelector('[class*="chat-toggle"]');
+      if (chatButton) {
+        addLog('✅ Botón del chat encontrado', 'success');
+        addLog(`  └─ Visible: ${chatButton.offsetHeight > 0}`, 'info');
+      } else {
+        addLog('❌ Botón del chat NO encontrado', 'warn');
+      }
+      
+      // Buscar contenedor del chat
+      const chatContainer = document.querySelector('[class*="chat-container"]');
+      if (chatContainer) {
+        addLog('✅ Contenedor del chat encontrado', 'success');
+      } else {
+        addLog('⚠️ Contenedor del chat NO encontrado (puede estar oculto)', 'warn');
+      }
+      
+      // Buscar elementos con clase "chat"
+      const chatElements = document.querySelectorAll('[class*="chat"]');
+      addLog(`📊 Total elementos con "chat": ${chatElements.length}`, 'info');
+      
+      // CSS cargado
+      const cssLink = document.querySelector('link[href*="n8n/chat"]');
+      if (cssLink) {
+        addLog('✅ CSS de N8N cargado', 'success');
+      } else {
+        addLog('❌ CSS de N8N NO cargado', 'error');
+      }
+      
+      // Módulo cargado
+      if (window.createChat) {
+        addLog('✅ Módulo createChat disponible', 'success');
+      } else {
+        addLog('❌ Módulo createChat NO disponible', 'warn');
+      }
+    }
+    
+    function reloadChat() {
+      addLog('🔄 Recargando página...', 'info');
+      location.reload();
+    }
+    
+    // Interceptar logs del navegador
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      const message = args.join(' ');
+      
+      if (message.includes('✅')) {
+        addLog(message, 'success');
+      } else if (message.includes('❌')) {
+        addLog(message, 'error');
+      } else if (message.includes('⚠️')) {
+        addLog(message, 'warn');
+      } else if (message.includes('🚀') || message.includes('📍') || message.includes('🔗')) {
+        addLog(message, 'info');
+      }
+    };
+    
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      addLog(args.join(' '), 'error');
+    };
+    
+    console.warn = function(...args) {
+      originalWarn.apply(console, args);
+      addLog(args.join(' '), 'warn');
+    };
+    
+    // Verificar al cargar
+    addLog('🚀 Página de test cargada', 'success');
+    addLog('⏳ Esperando 2 segundos para que N8N se cargue...', 'info');
+    
+    setTimeout(() => {
+      checkChat();
+    }, 2000);
+    
+    // Auto-check cada 3 segundos
+    setInterval(() => {
+      const wrapper = document.getElementById('n8n-chat-wrapper');
+      const hasChat = document.querySelector('[class*="chat-toggle"]') !== null;
+      if (hasChat) {
+        document.getElementById('widget-status').textContent = '✅ Widget detectado!';
+        document.querySelector('.status').style.borderColor = '#10b981';
+        document.querySelector('.status').style.background = '#ecfdf5';
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

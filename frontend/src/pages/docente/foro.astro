@@ -1,0 +1,461 @@
+---
+import DocenteLayout from '../../layouts/DocenteLayout.astro';
+import DocenteHeader from '../../components/DocenteHeader.astro';
+
+export const prerender = false;
+---
+
+<DocenteLayout title="Foros - Yatiña">
+  <DocenteHeader>Foros</DocenteHeader>
+  <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <div class="max-w-6xl mx-auto">
+      <!-- Selector de Sección -->
+      <div class="mb-6 bg-white rounded-lg shadow p-4">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          <i class="fas fa-layer-group text-purple-600 mr-2"></i>Selecciona una Sección
+        </label>
+        <select id="selector-seccion" class="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+          <option value="">Cargando secciones...</option>
+        </select>
+      </div>
+
+      <!-- Contenedor principal de foros -->
+      <div id="contenedor-foros" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Panel de Temas (izquierda) -->
+        <div class="lg:col-span-1 bg-white rounded-lg shadow">
+          <div class="p-4 border-b border-gray-200">
+            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-comments text-purple-600"></i>
+              Temas
+            </h3>
+          </div>
+          <div class="divide-y max-h-96 overflow-y-auto" id="lista-temas">
+            <div class="p-4 text-center text-gray-500">
+              <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+              <p class="text-sm">Cargando temas...</p>
+            </div>
+          </div>
+          <div class="p-4 border-t border-gray-200">
+            <button onclick="abrirModalNuevoTema()" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">
+              <i class="fas fa-plus mr-2"></i>Nuevo Tema
+            </button>
+          </div>
+        </div>
+
+        <!-- Panel de Respuestas (derecha) -->
+        <div class="lg:col-span-2 bg-white rounded-lg shadow">
+          <div id="detalle-tema" class="h-full flex items-center justify-center text-gray-500">
+            <div class="text-center">
+              <i class="fas fa-comments text-6xl mb-4 text-gray-300"></i>
+              <p class="text-lg font-semibold">Selecciona un tema para ver las respuestas</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para crear nuevo tema -->
+  <div id="modal-nuevo-tema" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 p-6 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-white">Crear Nuevo Tema</h2>
+        <button onclick="cerrarModalNuevoTema()" class="text-white hover:text-gray-200 transition text-2xl">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <form id="form-nuevo-tema" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-heading text-purple-600 mr-2"></i>Título del Tema (requerido)
+          </label>
+          <input 
+            id="input-titulo-tema"
+            type="text" 
+            placeholder="Ej: Dudas sobre la evaluación..." 
+            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-align-left text-purple-600 mr-2"></i>Descripción
+          </label>
+          <textarea 
+            id="input-descripcion-tema"
+            placeholder="Describe el tema de discusión..." 
+            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition resize-none"
+            rows="4"
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4">
+          <button 
+            type="button"
+            onclick="cerrarModalNuevoTema()" 
+            class="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition">
+            <i class="fas fa-times mr-2"></i>Cancelar
+          </button>
+          <button 
+            type="submit"
+            class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition">
+            <i class="fas fa-save mr-2"></i>Crear Tema
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para agregar respuesta -->
+  <div id="modal-nueva-respuesta" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 p-6 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-white">Agregar Respuesta</h2>
+        <button onclick="cerrarModalNuevaRespuesta()" class="text-white hover:text-gray-200 transition text-2xl">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <form id="form-nueva-respuesta" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-align-left text-purple-600 mr-2"></i>Tu Respuesta
+          </label>
+          <textarea 
+            id="input-contenido-respuesta"
+            placeholder="Escribe tu respuesta..." 
+            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition resize-none"
+            rows="4"
+            required
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4">
+          <button 
+            type="button"
+            onclick="cerrarModalNuevaRespuesta()" 
+            class="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition">
+            <i class="fas fa-times mr-2"></i>Cancelar
+          </button>
+          <button 
+            type="submit"
+            class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition">
+            <i class="fas fa-paper-plane mr-2"></i>Enviar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</DocenteLayout>
+
+<script type="module">
+  const API_URL = 'http://localhost:4000/api';
+  let temasActuales = [];
+  let temaSeleccionado = null;
+  let seccionSeleccionada = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    await cargarSecciones();
+    
+    // Event listeners
+    document.getElementById('selector-seccion').addEventListener('change', async (e) => {
+      seccionSeleccionada = e.target.value;
+      if (seccionSeleccionada) {
+        await cargarTemas();
+      }
+    });
+
+    document.getElementById('form-nuevo-tema').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await guardarNuevoTema();
+    });
+
+    document.getElementById('form-nueva-respuesta').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await guardarNuevaRespuesta();
+    });
+  });
+
+  async function cargarSecciones() {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/secciones/docente/mis-secciones`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Error al cargar secciones');
+
+      const secciones = await response.json();
+      const selector = document.getElementById('selector-seccion');
+      
+      selector.innerHTML = '<option value="">Selecciona una sección...</option>' + 
+        secciones.map(s => `<option value="${s.id_seccion}">${s.nombre_curso} - ${s.nombre_seccion}</option>`).join('');
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al cargar secciones');
+    }
+  }
+
+  async function cargarTemas() {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/foro/seccion/${seccionSeleccionada}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Error al cargar temas');
+
+      temasActuales = await response.json();
+      renderizarTemas();
+    } catch (error) {
+      console.error('Error:', error);
+      document.getElementById('lista-temas').innerHTML = `
+        <div class="p-4 text-center text-red-600">
+          <p>Error al cargar temas</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderizarTemas() {
+    const lista = document.getElementById('lista-temas');
+    
+    if (temasActuales.length === 0) {
+      lista.innerHTML = `
+        <div class="p-4 text-center text-gray-500">
+          <i class="fas fa-inbox text-2xl mb-2"></i>
+          <p class="text-sm">No hay temas aún</p>
+        </div>
+      `;
+      return;
+    }
+
+    lista.innerHTML = temasActuales.map(tema => `
+      <div onclick="seleccionarTema(${tema.id_tema})" class="p-3 cursor-pointer hover:bg-purple-50 transition border-l-4 border-transparent hover:border-purple-600 ${temaSeleccionado?.id_tema === tema.id_tema ? 'bg-purple-50 border-purple-600' : ''}">
+        <h4 class="font-semibold text-gray-800 line-clamp-2">${tema.titulo}</h4>
+        <p class="text-xs text-gray-600 mt-1">
+          <i class="fas fa-user mr-1"></i>${tema.nombres_usuario || 'Docente'}
+        </p>
+        <p class="text-xs text-gray-500 mt-1">
+          <i class="fas fa-clock mr-1"></i>${new Date(tema.fecha_creacion).toLocaleDateString('es-ES')}
+        </p>
+        <p class="text-xs text-purple-600 mt-1">
+          <i class="fas fa-reply mr-1"></i>${tema.total_respuestas || 0} respuesta${(tema.total_respuestas || 0) !== 1 ? 's' : ''}
+        </p>
+      </div>
+    `).join('');
+  }
+
+  window.seleccionarTema = async function(idTema) {
+    temaSeleccionado = temasActuales.find(t => t.id_tema === idTema);
+    renderizarTemas();
+    await cargarDetallesTema(idTema);
+  };
+
+  async function cargarDetallesTema(idTema) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/foro/tema/${idTema}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Error al cargar tema');
+
+      const tema = await response.json();
+      renderizarDetallesTema(tema);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function renderizarDetallesTema(tema) {
+    const detalle = document.getElementById('detalle-tema');
+    
+    const html = `
+      <div class="w-full h-full flex flex-col">
+        <!-- Encabezado del Tema -->
+        <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">${tema.titulo}</h2>
+          <div class="flex items-center gap-4 text-sm text-gray-600">
+            <span><i class="fas fa-user mr-1 text-purple-600"></i>${tema.nombres_usuario || 'Docente'}</span>
+            <span><i class="fas fa-calendar mr-1 text-purple-600"></i>${new Date(tema.fecha_creacion).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
+          ${tema.descripcion ? `<p class="text-gray-700 mt-3">${tema.descripcion}</p>` : ''}
+        </div>
+
+        <!-- Respuestas -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4" id="contenedor-respuestas">
+          <div class="text-center text-gray-500">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+            <p>Cargando respuestas...</p>
+          </div>
+        </div>
+
+        <!-- Botón para agregar respuesta -->
+        <div class="p-6 border-t border-gray-200 bg-gray-50">
+          <button onclick="abrirModalNuevaRespuesta(${tema.id_tema})" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">
+            <i class="fas fa-reply mr-2"></i>Agregar Respuesta
+          </button>
+        </div>
+      </div>
+    `;
+
+    detalle.innerHTML = html;
+    cargarRespuestas(tema.id_tema);
+  }
+
+  async function cargarRespuestas(idTema) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/foro/tema/${idTema}/respuestas`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Error al cargar respuestas');
+
+      const respuestas = await response.json();
+      renderizarRespuestas(respuestas);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function renderizarRespuestas(respuestas) {
+    const contenedor = document.getElementById('contenedor-respuestas');
+    
+    if (!respuestas || respuestas.length === 0) {
+      contenedor.innerHTML = `
+        <div class="text-center text-gray-500 py-8">
+          <i class="fas fa-comments text-3xl mb-2 text-gray-300"></i>
+          <p>No hay respuestas aún. ¡Sé el primero en responder!</p>
+        </div>
+      `;
+      return;
+    }
+
+    contenedor.innerHTML = respuestas.map(respuesta => `
+      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-purple-300 transition">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-semibold text-gray-900">${respuesta.nombres_usuario || 'Usuario'}</div>
+          <div class="text-xs text-gray-500">
+            ${new Date(respuesta.fecha_respuesta).toLocaleDateString('es-ES')} ${new Date(respuesta.fecha_respuesta).toLocaleTimeString('es-ES')}
+          </div>
+        </div>
+        <p class="text-gray-700 whitespace-pre-wrap">${respuesta.contenido_respuesta}</p>
+      </div>
+    `).join('');
+  }
+
+  window.abrirModalNuevoTema = function() {
+    if (!seccionSeleccionada) {
+      alert('Selecciona una sección primero');
+      return;
+    }
+    document.getElementById('modal-nuevo-tema').classList.remove('hidden');
+  };
+
+  window.cerrarModalNuevoTema = function() {
+    document.getElementById('modal-nuevo-tema').classList.add('hidden');
+    document.getElementById('form-nuevo-tema').reset();
+  };
+
+  async function guardarNuevoTema() {
+    try {
+      const titulo = document.getElementById('input-titulo-tema').value.trim();
+      const descripcion = document.getElementById('input-descripcion-tema').value.trim();
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`${API_URL}/foro/tema`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id_seccion: parseInt(seccionSeleccionada),
+          titulo,
+          descripcion
+        })
+      });
+
+      if (!response.ok) throw new Error('Error al crear tema');
+
+      cerrarModalNuevoTema();
+      await cargarTemas();
+      alert('✅ Tema creado exitosamente');
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error: ' + error.message);
+    }
+  }
+
+  window.abrirModalNuevaRespuesta = function(idTema) {
+    document.getElementById('modal-nueva-respuesta').classList.remove('hidden');
+  };
+
+  window.cerrarModalNuevaRespuesta = function() {
+    document.getElementById('modal-nueva-respuesta').classList.add('hidden');
+    document.getElementById('form-nueva-respuesta').reset();
+  };
+
+  async function guardarNuevaRespuesta() {
+    try {
+      if (!temaSeleccionado) {
+        alert('Selecciona un tema primero');
+        return;
+      }
+
+      const contenido = document.getElementById('input-contenido-respuesta').value.trim();
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`${API_URL}/foro/tema/${temaSeleccionado.id_tema}/respuesta`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contenido_respuesta: contenido
+        })
+      });
+
+      if (!response.ok) throw new Error('Error al crear respuesta');
+
+      cerrarModalNuevaRespuesta();
+      await cargarRespuestas(temaSeleccionado.id_tema);
+      alert('✅ Respuesta agregada exitosamente');
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error: ' + error.message);
+    }
+  }
+
+  // Cerrar modales al hacer click fuera
+  window.addEventListener('click', (e) => {
+    const modalTema = document.getElementById('modal-nuevo-tema');
+    const modalRespuesta = document.getElementById('modal-nueva-respuesta');
+    
+    if (e.target === modalTema) cerrarModalNuevoTema();
+    if (e.target === modalRespuesta) cerrarModalNuevaRespuesta();
+  });
+</script>
+
+<style>
+  #detalle-tema {
+    min-height: 500px;
+  }
+</style>

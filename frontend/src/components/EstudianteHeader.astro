@@ -1,0 +1,12 @@
+---
+// EstudianteHeader.astro
+interface Props {
+  children: any;
+}
+
+const { children } = Astro.props;
+---
+
+<div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 shadow-lg">
+  <h1 class="text-2xl font-bold">{children}</h1>
+</div>

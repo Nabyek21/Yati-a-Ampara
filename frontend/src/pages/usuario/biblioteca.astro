@@ -1,0 +1,295 @@
+---
+import UsuarioHeader from '../../components/UsuarioHeader.astro';
+import UsuarioLayout from '../../layouts/UsuarioLayout.astro';
+---
+
+<UsuarioLayout title="Biblioteca - Yatiña">
+  <UsuarioHeader>Biblioteca</UsuarioHeader>
+
+  <main class="flex-1 overflow-auto p-6 bg-gradient-to-br from-purple-50 to-indigo-50">
+    <div class="max-w-7xl mx-auto">
+      <!-- Encabezado con búsqueda y filtros -->
+      <div class="mb-6">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Biblioteca Yatiña</h1>
+        <p class="text-gray-600">Explora recursos educativos compartidos por los administradores</p>
+      </div>
+
+      <!-- Barra de búsqueda y filtros -->
+      <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <i class="fas fa-search text-purple-600 mr-2"></i>Buscar
+            </label>
+            <input 
+              id="input-busqueda"
+              type="text" 
+              placeholder="Buscar por título, autor..." 
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <i class="fas fa-layer-group text-purple-600 mr-2"></i>Tipo
+            </label>
+            <select 
+              id="select-tipo"
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition bg-white">
+              <option value="">-- Todos los tipos --</option>
+            </select>
+          </div>
+
+          <div class="flex items-end gap-2">
+            <button 
+              onclick="buscarRecursos()" 
+              class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition">
+              <i class="fas fa-search mr-2"></i>Buscar
+            </button>
+            <button 
+              onclick="limpiarFiltros()" 
+              class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition">
+              <i class="fas fa-redo mr-2"></i>Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenedor de recursos -->
+      <div id="contenedor-recursos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Se cargará dinámicamente -->
+        <div class="col-span-full text-center py-12 text-gray-500">
+          <i class="fas fa-spinner fa-spin text-5xl mb-4"></i>
+          <p class="text-lg">Cargando recursos...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para ver detalles -->
+  <div id="modal-recurso" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 p-6 flex items-center justify-between">
+        <h2 id="modal-titulo" class="text-2xl font-bold text-white">Recurso</h2>
+        <button onclick="cerrarModalRecurso()" class="text-white hover:text-gray-200 transition">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+      
+      <div id="modal-contenido" class="p-6 space-y-4">
+        <!-- Se cargará dinámicamente -->
+      </div>
+    </div>
+  </div>
+</UsuarioLayout>
+
+<script type="module">
+  import { obtenerRecursos, obtenerTipos } from '../../../../public/services/bibliotecaService.js';
+
+  let recursosActuales = [];
+
+  // Cargar datos al iniciar
+  document.addEventListener('DOMContentLoaded', async () => {
+    await cargarRecursos();
+    await cargarTipos();
+    
+    // Event listeners
+    document.getElementById('input-busqueda').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') buscarRecursos();
+    });
+  });
+
+  async function cargarRecursos(filtros = {}) {
+    try {
+      const container = document.getElementById('contenedor-recursos');
+      container.innerHTML = `
+        <div class="col-span-full text-center py-12 text-gray-500">
+          <i class="fas fa-spinner fa-spin text-5xl mb-4"></i>
+          <p class="text-lg">Cargando recursos...</p>
+        </div>
+      `;
+
+      recursosActuales = await obtenerRecursos(filtros);
+      renderizarRecursos(recursosActuales);
+    } catch (error) {
+      console.error('Error al cargar recursos:', error);
+      document.getElementById('contenedor-recursos').innerHTML = `
+        <div class="col-span-full bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <i class="fas fa-exclamation-triangle text-red-600 text-3xl mb-3"></i>
+          <p class="text-red-700 font-semibold">Error al cargar los recursos</p>
+          <p class="text-red-600 text-sm mt-1">${error.message}</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderizarRecursos(recursos) {
+    const container = document.getElementById('contenedor-recursos');
+
+    if (recursos.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full text-center py-12 text-gray-500">
+          <i class="fas fa-inbox text-5xl mb-3 opacity-30"></i>
+          <p class="text-lg font-semibold">No hay recursos disponibles</p>
+          <p class="text-sm mt-2">Intenta con otros filtros</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = recursos.map(recurso => `
+      <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition border-l-4 border-purple-500 cursor-pointer"
+           onclick="abrirModalRecurso(${recurso.id_recurso})">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <span class="inline-block px-3 py-1 bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 text-xs font-bold rounded-full mb-2">
+              ${recurso.tipo}
+            </span>
+            <h3 class="text-lg font-bold text-gray-900 mb-1">${recurso.titulo}</h3>
+          </div>
+        </div>
+        
+        ${recurso.autor ? `<p class="text-sm text-gray-600 mb-2"><i class="fas fa-user mr-1 text-purple-600"></i><strong>Autor:</strong> ${recurso.autor}</p>` : ''}
+        
+        <p class="text-gray-600 text-sm mb-4 line-clamp-2">${recurso.descripcion || 'Sin descripción'}</p>
+        
+        <div class="flex justify-between items-center text-xs text-gray-500 pt-4 border-t border-gray-200">
+          <span><i class="fas fa-calendar mr-1"></i>${new Date(recurso.fecha_publicacion).toLocaleDateString('es-ES')}</span>
+          <button class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition font-semibold">
+            <i class="fas fa-external-link-alt mr-1"></i>Ver más
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function cargarTipos() {
+    try {
+      const tipos = await obtenerTipos();
+      const select = document.getElementById('select-tipo');
+      
+      tipos.forEach(tipo => {
+        const option = document.createElement('option');
+        option.value = tipo;
+        option.textContent = tipo;
+        select.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error al cargar tipos:', error);
+    }
+  }
+
+  window.buscarRecursos = function() {
+    const busqueda = document.getElementById('input-busqueda').value;
+    const tipo = document.getElementById('select-tipo').value;
+    
+    cargarRecursos({
+      busqueda: busqueda || undefined,
+      tipo: tipo || undefined
+    });
+  };
+
+  window.limpiarFiltros = function() {
+    document.getElementById('input-busqueda').value = '';
+    document.getElementById('select-tipo').value = '';
+    cargarRecursos();
+  };
+
+  window.abrirModalRecurso = async function(id_recurso) {
+    try {
+      const recurso = recursosActuales.find(r => r.id_recurso === id_recurso);
+      
+      if (!recurso) return;
+
+      const modal = document.getElementById('modal-recurso');
+      document.getElementById('modal-titulo').textContent = recurso.titulo;
+      
+      const contenido = `
+        <div class="space-y-4">
+          <div>
+            <span class="inline-block px-3 py-1 bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 text-xs font-bold rounded-full">
+              ${recurso.tipo}
+            </span>
+          </div>
+
+          ${recurso.autor ? `
+            <div>
+              <h4 class="text-sm font-semibold text-gray-700 mb-1">Autor</h4>
+              <p class="text-gray-900">${recurso.autor}</p>
+            </div>
+          ` : ''}
+
+          ${recurso.descripcion ? `
+            <div>
+              <h4 class="text-sm font-semibold text-gray-700 mb-1">Descripción</h4>
+              <p class="text-gray-900">${recurso.descripcion}</p>
+            </div>
+          ` : ''}
+
+          <div>
+            <h4 class="text-sm font-semibold text-gray-700 mb-1">Compartido por</h4>
+            <p class="text-gray-900">${recurso.nombres || 'Admin'} ${recurso.apellidos || ''}</p>
+          </div>
+
+          <div>
+            <h4 class="text-sm font-semibold text-gray-700 mb-1">Fecha de publicación</h4>
+            <p class="text-gray-900">${new Date(recurso.fecha_publicacion).toLocaleString('es-ES')}</p>
+          </div>
+
+          ${recurso.url_recurso ? `
+            <div class="pt-4 border-t border-gray-200">
+              <a href="${recurso.url_recurso}" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition">
+                <i class="fas fa-download mr-2"></i>Descargar / Abrir Recurso
+              </a>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      
+      document.getElementById('modal-contenido').innerHTML = contenido;
+      modal.classList.remove('hidden');
+    } catch (error) {
+      console.error('Error al abrir modal:', error);
+    }
+  };
+
+  window.cerrarModalRecurso = function() {
+    document.getElementById('modal-recurso').classList.add('hidden');
+  };
+
+  // Cerrar modal al hacer click fuera
+  window.addEventListener('click', (e) => {
+    const modal = document.getElementById('modal-recurso');
+    if (e.target === modal) {
+      cerrarModalRecurso();
+    }
+  });
+</script>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  #modal-recurso {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  #modal-recurso.hidden {
+    display: none;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+</style>

@@ -1,0 +1,26 @@
+---
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+}
+
+const { isOpen, onClose, title } = Astro.props;
+
+// Para controlar la visibilidad del modal con Tailwind
+const modalClass = isOpen ? 'block' : 'hidden';
+---
+
+<div class={`fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full ${modalClass}`} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="modal-title">{title}</h3>
+      <button onclick={onClose} class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="mt-2 py-3">
+      <slot />
+    </div>
+  </div>
+</div>

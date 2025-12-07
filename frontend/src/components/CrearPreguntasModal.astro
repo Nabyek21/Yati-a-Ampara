@@ -1,0 +1,368 @@
+<div id="crearPreguntasModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center overflow-y-auto">
+  <div class="bg-white rounded-lg shadow-lg max-w-3xl w-full mx-4 my-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <h2 class="text-2xl font-bold text-gray-800">Agregar Preguntas a Actividad</h2>
+      <button id="closePreguntasModal" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+    </div>
+
+    <!-- Contenido -->
+    <div class="p-6">
+      <!-- Información de actividad -->
+      <div id="actividadInfo" class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+        <p class="text-sm text-gray-700"><strong>Actividad:</strong> <span id="actividadTitulo">-</span></p>
+        <p class="text-sm text-gray-700"><strong>Tipo:</strong> <span id="actividadTipo">-</span></p>
+      </div>
+
+      <!-- Agregar nueva pregunta -->
+      <form id="crearPreguntaForm" class="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Nueva Pregunta</h3>
+
+        <!-- Tipo de pregunta -->
+        <div class="mb-4">
+          <label for="tipoPregunta" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Pregunta *</label>
+          <select id="tipoPregunta" name="tipo" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Seleccionar tipo...</option>
+            <option value="opcion">Opción Múltiple</option>
+            <option value="texto">Respuesta de Texto</option>
+          </select>
+        </div>
+
+        <!-- Enunciado -->
+        <div class="mb-4">
+          <label for="enunciado" class="block text-sm font-medium text-gray-700 mb-2">Enunciado *</label>
+          <textarea id="enunciado" name="enunciado" placeholder="Escribe la pregunta..." rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+
+        <!-- Puntaje -->
+        <div class="mb-4">
+          <label for="puntaje" class="block text-sm font-medium text-gray-700 mb-2">Puntaje</label>
+          <input type="number" id="puntaje" name="puntaje" value="1" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <!-- Opciones (solo para múltiple opción) -->
+        <div id="opcionesContainer" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Opciones de Respuesta *</label>
+          <div id="opcionesLista" class="space-y-3 mb-3"></div>
+          <button type="button" id="agregarOpcion" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition text-sm">
+            + Agregar Opción
+          </button>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex justify-end gap-3 mt-6">
+          <button type="reset" class="px-4 py-2 text-gray-700 bg-gray-300 rounded-md hover:bg-gray-400 transition">
+            Limpiar
+          </button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+            Guardar Pregunta
+          </button>
+        </div>
+      </form>
+
+      <!-- Lista de preguntas agregadas -->
+      <div id="preguntasAgregadas" class="mt-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Preguntas Agregadas</h3>
+        <div id="preguntasLista" class="space-y-4"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-3 p-6 border-t border-gray-200">
+      <button id="cancelarPreguntas" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition">
+        Cancelar
+      </button>
+      <button id="finalizarPreguntas" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
+        Finalizar
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .modal {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .opcion-card {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+  }
+
+  .opcion-card input[type="text"] {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+  }
+
+  .opcion-card input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+  }
+
+  .opcion-card button {
+    padding: 0.25rem 0.5rem;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+  }
+
+  .opcion-card button:hover {
+    background: #dc2626;
+  }
+
+  .pregunta-item {
+    padding: 1rem;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    position: relative;
+  }
+
+  .pregunta-item h4 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .pregunta-item p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+  }
+
+  .pregunta-delete {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 1.5rem;
+    height: 1.5rem;
+    cursor: pointer;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .pregunta-delete:hover {
+    background: #dc2626;
+  }
+</style>
+
+<script>
+  import { createPregunta } from '/services/moduloService.js';
+
+  let id_actividad = null;
+  let preguntasTemporales = [];
+  let numeroOpciones = 0;
+
+  const modal = document.getElementById('crearPreguntasModal');
+  const closeBtn = document.getElementById('closePreguntasModal');
+  const cancelBtn = document.getElementById('cancelarPreguntas');
+  const finalizarBtn = document.getElementById('finalizarPreguntas');
+  const form = document.getElementById('crearPreguntaForm');
+  const tipoPreguntaSelect = document.getElementById('tipoPregunta');
+  const opcionesContainer = document.getElementById('opcionesContainer');
+  const agregarOpcionBtn = document.getElementById('agregarOpcion');
+  const opcionesLista = document.getElementById('opcionesLista');
+  const preguntasAgregadasDiv = document.getElementById('preguntasAgregadas');
+  const preguntasLista = document.getElementById('preguntasLista');
+
+  // Cerrar modal
+  closeBtn?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  cancelBtn?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  // Mostrar/ocultar opciones según tipo
+  tipoPreguntaSelect?.addEventListener('change', (e) => {
+    if (e.target.value === 'opcion') {
+      opcionesContainer.classList.remove('hidden');
+      if (opcionesLista.children.length === 0) {
+        agregarOpcion();
+        agregarOpcion();
+      }
+    } else {
+      opcionesContainer.classList.add('hidden');
+    }
+  });
+
+  // Agregar nueva opción
+  agregarOpcionBtn?.addEventListener('click', () => {
+    agregarOpcion();
+  });
+
+  function agregarOpcion() {
+    numeroOpciones++;
+    const div = document.createElement('div');
+    div.className = 'opcion-card';
+    div.innerHTML = `
+      <input type="text" placeholder="Opción ${numeroOpciones}" class="opcion-texto" />
+      <label style="display: flex; align-items: center; gap: 0.25rem;">
+        <input type="checkbox" class="es-correcta" />
+        <span style="font-size: 0.75rem;">Correcta</span>
+      </label>
+      <button type="button" class="eliminar-opcion">Eliminar</button>
+    `;
+    div.querySelector('.eliminar-opcion').addEventListener('click', () => {
+      div.remove();
+    });
+    opcionesLista.appendChild(div);
+  }
+
+  // Guardar pregunta
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const tipo = document.getElementById('tipoPregunta').value;
+    const enunciado = document.getElementById('enunciado').value;
+    const puntaje = parseInt(document.getElementById('puntaje').value) || 1;
+
+    if (!tipo || !enunciado) {
+      alert('Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    // Preparar opciones si es múltiple opción
+    let opciones = [];
+    if (tipo === 'opcion') {
+      const opcionElements = opcionesLista.querySelectorAll('.opcion-card');
+      if (opcionElements.length === 0) {
+        alert('Debes agregar al menos una opción');
+        return;
+      }
+
+      opcionElements.forEach(el => {
+        const texto = el.querySelector('.opcion-texto').value;
+        const esCorrecta = el.querySelector('.es-correcta').checked;
+        if (texto.trim()) {
+          opciones.push({ texto: texto.trim(), es_correcta: esCorrecta });
+        }
+      });
+
+      if (opciones.length === 0) {
+        alert('Debes agregar al menos una opción con texto');
+        return;
+      }
+
+      if (!opciones.some(o => o.es_correcta)) {
+        alert('Debes marcar al menos una opción como correcta');
+        return;
+      }
+    }
+
+    // Agregar a temporal
+    preguntasTemporales.push({
+      tipo,
+      enunciado,
+      puntaje,
+      opciones
+    });
+
+    // Actualizar lista visual
+    actualizarPreguntasLista();
+
+    // Limpiar formulario
+    form.reset();
+    opcionesContainer.classList.add('hidden');
+    opcionesLista.innerHTML = '';
+    numeroOpciones = 0;
+  });
+
+  function actualizarPreguntasLista() {
+    preguntasLista.innerHTML = '';
+    preguntasTemporales.forEach((preg, idx) => {
+      const div = document.createElement('div');
+      div.className = 'pregunta-item';
+      div.innerHTML = `
+        <button class="pregunta-delete" data-idx="${idx}">×</button>
+        <h4>${preg.enunciado}</h4>
+        <p><strong>Tipo:</strong> ${preg.tipo === 'opcion' ? 'Opción Múltiple' : 'Texto'}</p>
+        <p><strong>Puntaje:</strong> ${preg.puntaje}</p>
+        ${preg.opciones.length > 0 ? `
+          <p><strong>Opciones:</strong></p>
+          <ul style="margin-left: 1rem; font-size: 0.875rem;">
+            ${preg.opciones.map(op => `
+              <li>${op.texto} ${op.es_correcta ? '<span style="color: green; font-weight: bold;">✓</span>' : ''}</li>
+            `).join('')}
+          </ul>
+        ` : ''}
+      `;
+      div.querySelector('.pregunta-delete').addEventListener('click', (e) => {
+        preguntasTemporales.splice(parseInt(e.target.dataset.idx), 1);
+        actualizarPreguntasLista();
+      });
+      preguntasLista.appendChild(div);
+    });
+  }
+
+  // Finalizar y guardar todas las preguntas
+  finalizarBtn?.addEventListener('click', async () => {
+    if (preguntasTemporales.length === 0) {
+      alert('Debes agregar al menos una pregunta');
+      return;
+    }
+
+    try {
+      for (const preg of preguntasTemporales) {
+        const payload = {
+          id_actividad,
+          tipo: preg.tipo,
+          enunciado: preg.enunciado,
+          puntaje: preg.puntaje,
+          opciones: preg.opciones
+        };
+        await createPregunta(payload);
+      }
+
+      alert('Preguntas guardadas correctamente');
+      modal.classList.add('hidden');
+      preguntasTemporales = [];
+      preguntasLista.innerHTML = '';
+      form.reset();
+      window.dispatchEvent(new CustomEvent('preguntasAgregadas'));
+    } catch (error) {
+      console.error('Error guardando preguntas:', error);
+      alert('Error al guardar preguntas: ' + error.message);
+    }
+  });
+
+  // Exponer función para abrir modal
+  window.abrirCrearPreguntasModal = (actId, actTitulo, actTipo) => {
+    id_actividad = actId;
+    document.getElementById('actividadTitulo').textContent = actTitulo;
+    document.getElementById('actividadTipo').textContent = actTipo;
+    preguntasTemporales = [];
+    preguntasLista.innerHTML = '';
+    form.reset();
+    modal.classList.remove('hidden');
+  };
+</script>

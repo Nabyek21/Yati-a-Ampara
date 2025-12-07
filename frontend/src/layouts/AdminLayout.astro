@@ -1,0 +1,118 @@
+---
+import '../styles/global.css'; // Asegúrate de tener un archivo global.css o similar
+// Importar Tailwind CSS si no está globalmente
+// import '../styles/tailwind.css';
+import IAHeaderButton from '../components/IAHeaderButton.astro';
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Admin Dashboard" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <!-- Font Awesome para los iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <!-- Tailwind CSS CDN, si no lo tienes configurado en Astro -->
+    
+    <style>
+      /* Clases para transiciones personalizadas si Tailwind no es suficiente */
+      .sidebar {
+        transition: width 0.3s ease-in-out;
+      }
+      .sidebar-item-text {
+        transition: opacity 0.3s ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="flex h-screen bg-gray-100">
+      <!-- Sidebar -->
+      <aside id="sidebar" class="w-64 bg-purple-800 text-white flex flex-col sidebar">
+        <div class="p-4 text-2xl font-bold border-b border-purple-700 flex items-center justify-between">
+          <button id="sidebar-toggle" class="text-white focus:outline-none">
+            <i class="fas fa-bars"></i>
+          </button>
+          <img src="/Yatina.png" alt="Logo Yatiña" class="h-10 w-auto ml-4" id="sidebar-logo-img" />
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+          <a href="/admin" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700 active:bg-purple-700">
+            <i class="fas fa-tachometer-alt"></i>
+            <span class="sidebar-item-text">Dashboard</span>
+          </a>
+          <a href="/admin/users" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700">
+            <i class="fas fa-users"></i>
+            <span class="sidebar-item-text">Usuarios</span>
+          </a>
+          <a href="/admin/docentes" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span class="sidebar-item-text">Docentes</span>
+          </a>
+          <a href="/admin/courses" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700">
+            <i class="fas fa-book"></i>
+            <span class="sidebar-item-text">Cursos</span>
+          </a>
+          <a href="/admin/biblioteca" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-purple-700">
+            <i class="fas fa-book-open"></i>
+            <span class="sidebar-item-text">Biblioteca</span>
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Contenido Principal -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <slot />
+      </div>
+    </div>
+
+    <!-- IA Header Button -->
+    <IAHeaderButton />
+
+    <script>
+      const sidebar = document.getElementById('sidebar');
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const sidebarItemsText = document.querySelectorAll('.sidebar-item-text');
+      const sidebarLogoImg = document.getElementById('sidebar-logo-img'); // Ahora es un img
+      const toggleIcon = sidebarToggle.querySelector('i');
+
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('w-64');
+        sidebar.classList.toggle('w-20');
+
+        // Toggle visibility of the logo image
+        sidebarLogoImg.classList.toggle('hidden');
+
+        // Ocultar/mostrar el texto de los ítems
+        sidebarItemsText.forEach(span => {
+          span.classList.toggle('hidden');
+        });
+
+        // Cambiar el icono del botón de toggle
+        if (sidebar.classList.contains('w-20')) {
+          toggleIcon.classList.remove('fa-bars');
+          toggleIcon.classList.add('fa-chevron-right'); // O fa-bars si quieres que se mantenga
+        } else {
+          toggleIcon.classList.remove('fa-chevron-right'); // O fa-bars
+          toggleIcon.classList.add('fa-bars');
+        }
+      });
+
+      // Inicializar el estado del sidebar al cargar la página si ya está achicado
+      // Asegurar que el logo de texto se oculte al inicio si el sidebar está achicado
+      if (sidebar.classList.contains('w-20')) {
+        sidebarLogoImg.classList.add('hidden');
+        sidebarItemsText.forEach(span => span.classList.add('hidden'));
+        toggleIcon.classList.remove('fa-bars');
+        toggleIcon.classList.add('fa-chevron-right'); // O fa-bars
+      }
+    </script>
+  </body>
+</html>

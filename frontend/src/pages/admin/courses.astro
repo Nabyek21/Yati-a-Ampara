@@ -1,0 +1,1208 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminHeader from '../../components/AdminHeader.astro';
+---
+
+<AdminLayout title="Gestión de Cursos - Yatiña Ampara">
+  <AdminHeader>Gestión de Cursos</AdminHeader>
+
+  <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <div class="bg-white rounded-lg shadow p-4">
+      <div class="flex justify-end mb-4">
+        <button id="add-curso-button" class="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-purple-700">
+          <i class="fas fa-plus"></i>
+          <span>Nuevo Curso</span>
+        </button>
+      </div>
+      <!-- Filtros y barra de búsqueda -->
+      <div class="bg-purple-50 p-4 rounded-lg mb-6 flex flex-wrap items-center space-x-4">
+        <input type="text" id="search-input" placeholder="Buscar por Nombre, Descripción, Especialidad..." class="flex-1 border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white px-3 py-2" />
+        <select id="especialidad-filter" class="border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white px-3 py-2">
+          <option value="">Todas las Especialidades</option>
+          <!-- Opciones de especialidades se cargarán dinámicamente -->
+        </select>
+        <select id="modalidad-filter" class="border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white px-3 py-2">
+          <option value="">Todas las Modalidades</option>
+          <!-- Opciones de modalidades se cargarán dinámicamente -->
+        </select>
+        <select id="state-filter" class="border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white px-3 py-2">
+          <option value="">Todos los estados</option>
+          <!-- Opciones de estados se cargarán dinámicamente -->
+        </select>
+      </div>
+      <!-- Tabla de cursos -->
+      <h2 class="text-2xl font-semibold text-purple-800 mb-4">Todos los Cursos</h2>
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-purple-100">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">NOMBRE</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">DESCRIPCIÓN</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">ESPECIALIDAD</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">DURACIÓN (SEMANAS)</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">ESTADO</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody id="cursos-table-body" class="bg-white divide-y divide-gray-200">
+          <!-- Los cursos se cargarán aquí dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+</AdminLayout>
+
+<!-- HTML del CursoFormModal integrado directamente -->
+<div id="curso-form-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="modal-title"></h3> <!-- Título dinámico -->
+      <button id="close-curso-modal-button" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="mt-4">
+      <form id="curso-form">
+        <input type="hidden" id="curso-id" />
+
+        <div class="mb-4">
+          <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre del Curso</label>
+          <input type="text" id="nombre" name="nombre" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="mb-4">
+          <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+          <textarea id="descripcion" name="descripcion" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+        </div>
+        <div class="mb-4">
+          <label for="modal-id_especialidad" class="block text-sm font-medium text-gray-700">Especialidad</label>
+          <select id="modal-id_especialidad" name="id_especialidad" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+            <option value="">Selecciona una especialidad</option>
+            <!-- Opciones de especialidades se cargarán dinámicamente -->
+          </select>
+        </div>
+        <div class="mb-4">
+          <label for="duracion_semanas" class="block text-sm font-medium text-gray-700">Duración (Semanas)</label>
+          <input type="number" id="duracion_semanas" name="duracion_semanas" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" value="8" />
+        </div>
+        <div class="mb-4">
+          <label for="modal-id_estado" class="block text-sm font-medium text-gray-700">Estado</label>
+          <select id="modal-id_estado" name="id_estado" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+            <!-- Opciones de estados se cargarán dinámicamente -->
+          </select>
+        </div>
+
+        <div class="flex justify-end space-x-2 mt-6">
+          <button type="button" id="cancel-curso-modal-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancelar</button>
+          <button type="submit" id="submit-curso-form-button" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+            Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- HTML del Modal de Gestión de Secciones integrado directamente -->
+<div id="secciones-management-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-40" role="dialog" aria-modal="true" aria-labelledby="secciones-modal-title">
+  <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="secciones-modal-title">Gestionar Secciones para: <span id="current-curso-name" class="font-normal"></span></h3>
+      <button id="close-secciones-modal-button" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="mt-4">
+      <div class="flex justify-end mb-4 space-x-4">
+        <button id="manage-horarios-button" class="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700">
+          <i class="fas fa-clock"></i>
+          <span>Gestionar Horarios</span>
+        </button>
+        <button id="add-seccion-button" class="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-purple-700">
+          <i class="fas fa-plus"></i>
+          <span>Nueva Sección</span>
+        </button>
+      </div>
+
+      <!-- Tabla de Secciones -->
+      <h4 class="text-lg font-semibold text-gray-800 mb-2">Secciones Existentes</h4>
+      <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg mb-6">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NOMBRE</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOCENTE</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MODALIDAD</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INICIO</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FIN</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HORARIO</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESTADO</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody id="secciones-table-body" class="bg-white divide-y divide-gray-200">
+          <!-- Las secciones se cargarán aquí dinámicamente -->
+        </tbody>
+      </table>
+    
+      <!-- HTML del Formulario de Sección integrado directamente (dentro del modal de gestión) -->
+      <div id="seccion-form-container" class="hidden mb-6 p-4 border rounded-md bg-gray-50">
+        <h4 class="text-lg font-bold text-gray-900 mb-4" id="seccion-form-title">Añadir Sección</h4>
+        <form id="seccion-form">
+          <input type="hidden" id="seccion-id" name="seccion-id" />
+          <input type="hidden" id="seccion-curso-id" name="seccion_curso_id" />
+
+          <div class="mb-4">
+            <label for="nombre_seccion" class="block text-sm font-medium text-gray-700">Nombre de la Sección</label>
+            <input type="text" id="nombre_seccion" name="nombre_seccion" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+          </div>
+          <div class="mb-4">
+            <label for="id_docente_perfil" class="block text-sm font-medium text-gray-700">Docente</label>
+            <select id="id_docente_perfil" name="id_docente_perfil" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+              <option value="">Selecciona un docente</option>
+              <!-- Opciones de docentes se cargarán dinámicamente -->
+            </select>
+          </div>
+          <div class="mb-4">
+            <label for="id_modalidad" class="block text-sm font-medium text-gray-700">Modalidad</label>
+            <select id="id_modalidad" name="id_modalidad" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+              <option value="">Selecciona una modalidad</option>
+              <!-- Opciones de modalidades se cargarán dinámicamente -->
+            </select>
+          </div>
+          <div class="mb-4">
+            <label for="fecha_inicio" class="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+            <input type="date" id="fecha_inicio" name="fecha_inicio" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+          </div>
+          <div class="mb-4">
+            <label for="fecha_fin" class="block text-sm font-medium text-gray-700">Fecha de Fin</label>
+            <input type="date" id="fecha_fin" name="fecha_fin" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+          </div>
+          <div class="mb-4">
+            <label for="horario" class="block text-sm font-medium text-gray-700">Horario (Texto descriptivo)</label>
+            <input type="text" id="horario" name="horario" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="Ej: Lunes y Miércoles 14:00-16:00" />
+          </div>
+          <div class="mb-4">
+            <label for="horas_clase_select" class="block text-sm font-medium text-gray-700">Horarios de Clase (Selecciona los horarios para generar clases automáticamente)</label>
+            <select id="horas_clase_select" name="horas_clase" multiple class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" size="5">
+              <!-- Opciones de horas de clase se cargarán dinámicamente -->
+            </select>
+            <p class="mt-1 text-xs text-gray-500">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples horarios</p>
+          </div>
+          <div class="mb-4">
+            <label for="id_estado_seccion" class="block text-sm font-medium text-gray-700">Estado</label>
+            <select id="id_estado_seccion" name="id_estado" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+              <!-- Opciones de estados se cargarán dinámicamente -->
+            </select>
+          </div>
+
+          <div class="flex justify-end space-x-2">
+            <button type="button" id="cancel-seccion-form-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancelar</button>
+            <button type="submit" id="submit-seccion-form-button" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+              Añadir Sección
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HTML del Modal de Gestión de Clases integrado directamente -->
+<div id="clases-management-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" aria-labelledby="clases-modal-title">
+  <div class="relative top-10 mx-auto p-5 border w-full max-w-6xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="clases-modal-title">Gestionar Clases - Sección: <span id="current-seccion-name" class="font-normal"></span></h3>
+      <button id="close-clases-modal-button" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="mt-4">
+      <div class="flex justify-end mb-4">
+        <button id="add-clase-button" class="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-purple-700">
+          <i class="fas fa-plus"></i>
+          <span>Nueva Clase</span>
+        </button>
+      </div>
+      <div id="clases-table-container" class="max-h-96 overflow-y-auto">
+        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+          <thead class="bg-gray-50 sticky top-0">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Módulo</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Día</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="clases-table-body" class="bg-white divide-y divide-gray-200">
+            <!-- Las clases se cargarán aquí dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para crear/editar clase -->
+<div id="edit-clase-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="edit-clase-modal-title">Reprogramar Clase</h3>
+      <button id="close-edit-clase-modal-button" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form id="edit-clase-form" class="mt-4">
+      <input type="hidden" id="edit-clase-id" />
+      <div class="mb-4">
+        <label for="edit-clase-modulo" class="block text-sm font-medium text-gray-700">Módulo</label>
+        <select id="edit-clase-modulo" name="id_modulo" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+          <option value="">Selecciona un módulo</option>
+          <!-- Opciones de módulos se cargarán dinámicamente -->
+        </select>
+      </div>
+      <div class="mb-4">
+        <label for="edit-clase-fecha" class="block text-sm font-medium text-gray-700">Fecha de la Clase</label>
+        <input type="date" id="edit-clase-fecha" name="fecha_clase" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+      </div>
+      <div class="mb-4">
+        <label for="edit-clase-hora" class="block text-sm font-medium text-gray-700">Horario</label>
+        <select id="edit-clase-hora" name="id_hora" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+          <option value="">Selecciona un horario</option>
+          <!-- Opciones de horarios se cargarán dinámicamente -->
+        </select>
+      </div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button type="button" id="cancel-edit-clase-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancelar</button>
+        <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700" id="submit-clase-button">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- HTML del Modal de Gestión de Horarios integrado directamente -->
+<div id="horarios-management-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" aria-labelledby="horarios-modal-title">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="horarios-modal-title">Gestionar Horarios de Clase</h3>
+      <button id="close-horarios-modal-button" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="mt-4">
+      <!-- Formulario para añadir/editar horario -->
+      <form id="horario-form" class="mb-6 p-4 border rounded-md bg-gray-50">
+        <input type="hidden" id="horario-id" />
+        <div class="mb-4">
+          <label for="horario-dia_semana" class="block text-sm font-medium text-gray-700">Día de la Semana</label>
+          <select id="horario-dia_semana" name="dia_semana" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+            <option value="">Selecciona un día</option>
+            <option value="Lunes">Lunes</option>
+            <option value="Martes">Martes</option>
+            <option value="Miercoles">Miércoles</option>
+            <option value="Jueves">Jueves</option>
+            <option value="Viernes">Viernes</option>
+            <option value="Sabado">Sábado</option>
+            <option value="Domingo">Domingo</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label for="horario-hora_inicio" class="block text-sm font-medium text-gray-700">Hora de Inicio</label>
+          <input type="time" id="horario-hora_inicio" name="hora_inicio" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="mb-4">
+          <label for="horario-hora_fin" class="block text-sm font-medium text-gray-700">Hora de Fin</label>
+          <input type="time" id="horario-hora_fin" name="hora_fin" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="flex justify-end space-x-2">
+          <button type="button" id="cancel-horario-form-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancelar</button>
+          <button type="submit" id="submit-horario-form-button" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+            Añadir Horario
+          </button>
+        </div>
+      </form>
+
+      <!-- Tabla de horarios existentes -->
+      <h4 class="text-lg font-semibold text-gray-800 mb-2">Horarios Existentes</h4>
+      <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Día</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora Inicio</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora Fin</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="horarios-table-body" class="bg-white divide-y divide-gray-200">
+          <!-- Los horarios se cargarán aquí dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // Importar servicios 
+  import { getCursos, createCurso, updateCurso, deactivateCurso } from '../../public/services/cursoService.js';
+  import { getEstados } from '../../public/services/estadoService.js';
+  import { getEspecialidades } from '../../public/services/especialidadService.js';
+  import { getModalidades } from '../../public/services/modalidadService.js';
+  import { getSecciones, createSeccion, updateSeccion, deactivateSeccion } from '../../public/services/seccionService.js';
+  import { getDocentes } from '../../public/services/docenteService.js'; // Para poblar el selector de docentes
+  import { getHorasClase, createHoraClase, updateHoraClase, deleteHoraClase } from '../../public/services/horaClaseService.js'; // Para gestionar horas de clase
+  import { generateClasesForSeccion, getClases, createClase, updateClase, deleteClase } from '../../public/services/claseService.js'; // Para gestionar clases
+  import { getModulosByCurso } from '../../public/services/moduloService.js'; // Para obtener módulos
+  import { getSeccionById } from '../../public/services/seccionService.js'; // Para obtener información de sección
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Script de admin/courses.astro cargado y DOMContentLoaded disparado.');
+    const cursosTableBody = document.getElementById('cursos-table-body');
+    const searchInput = document.getElementById('search-input');
+    const especialidadFilter = document.getElementById('especialidad-filter');
+    const modalidadFilter = document.getElementById('modalidad-filter');
+    const stateFilter = document.getElementById('state-filter');
+
+    // Referencias a elementos del modal de Cursos
+    const cursoFormModal = document.getElementById('curso-form-modal');
+    const modalTitle = cursoFormModal.querySelector('#modal-title');
+    const closeCursoModalButton = cursoFormModal.querySelector('#close-curso-modal-button');
+    const cancelCursoModalButton = cursoFormModal.querySelector('#cancel-curso-modal-button');
+    const cursoForm = cursoFormModal.querySelector('#curso-form');
+    const cursoIdField = cursoForm.querySelector('#curso-id');
+    const nombreField = cursoForm.querySelector('#nombre');
+    const descripcionField = cursoForm.querySelector('#descripcion');
+    const modalEspecialidadSelect = cursoForm.querySelector('#modal-id_especialidad');
+    const duracionSemanasField = cursoForm.querySelector('#duracion_semanas');
+    const modalEstadoSelect = cursoForm.querySelector('#modal-id_estado');
+    const submitCursoFormButton = cursoForm.querySelector('#submit-curso-form-button');
+
+    let isEditingCurso = false; 
+
+    const currentFilters = {
+      search: '',
+      id_especialidad: '',
+      id_modalidad: '',
+      id_estado: '',
+    };
+
+    const fetchAndRenderCursos = async () => {
+      cursosTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">Cargando cursos...</td></tr>`;
+      try {
+        const cursos = await getCursos(currentFilters);
+
+        if (cursos.length === 0) {
+          cursosTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">No hay cursos registrados con los filtros actuales.</td></tr>`;
+          return;
+        }
+
+        cursosTableBody.innerHTML = cursos.map(curso => {
+          // Truncar descripción a 60 caracteres
+          const descripcionCompleta = curso.descripcion || 'N/A';
+          const descripcionTruncada = descripcionCompleta.length > 60 
+            ? descripcionCompleta.substring(0, 60) + '...' 
+            : descripcionCompleta;
+          
+          return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">${curso.nombre}</td>
+            <td class="px-6 py-4 max-w-xs" title="${descripcionCompleta}">
+              <div class="truncate">${descripcionTruncada}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">${curso.nombre_especialidad || 'N/A'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${curso.duracion_semanas}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${curso.id_estado === 1 ? 'bg-green-100 text-green-800' : curso.id_estado === 4 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}">
+                ${curso.nombre_estado || 'Desconocido'}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <button class="text-blue-600 hover:text-blue-900 mr-2 manage-secciones-button" data-id="${curso.id_curso}" data-nombre="${curso.nombre}"><i class="fas fa-list-alt"></i> Secciones</button>
+              <button class="text-yellow-600 hover:text-yellow-900 mr-2 edit-curso-button" data-id="${curso.id_curso}" data-curso='${encodeURIComponent(JSON.stringify(curso))}'><i class="fas fa-edit"></i></button>
+              <button class="text-red-600 hover:text-red-900 deactivate-curso-button" data-id="${curso.id_curso}"><i class="fas fa-archive"></i></button>
+            </td>
+          </tr>
+        `;
+        }).join('');
+
+      } catch (error) {
+        console.error('Error al cargar cursos:', error);
+        cursosTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 whitespace-nowrap text-center text-red-500">Error al cargar los cursos: ${error.message}.</td></tr>`;
+      }
+    };
+
+    const populateStatesFilter = async () => {
+      try {
+        const estados = await getEstados();
+        stateFilter.innerHTML = '<option value="">Todos los estados</option>' + 
+                                estados.map(estado => `<option value="${estado.id_estado}">${estado.nombre}</option>`).join('');
+        modalEstadoSelect.innerHTML = estados.map(estado => `<option value="${estado.id_estado}">${estado.nombre}</option>`).join('');
+        // Poblar el selector de estados en el formulario de sección
+        const modalEstadoSeccionSelect = document.getElementById('id_estado_seccion');
+        if (modalEstadoSeccionSelect) {
+          modalEstadoSeccionSelect.innerHTML = estados.map(estado => `<option value="${estado.id_estado}">${estado.nombre}</option>`).join('');
+        }
+      } catch (error) {
+        console.error('Error al cargar estados para filtro:', error);
+      }
+    };
+
+    const populateEspecialidadesFilter = async () => {
+      try {
+        const especialidades = await getEspecialidades();
+        especialidadFilter.innerHTML = '<option value="">Todas las Especialidades</option>' + 
+                                       especialidades.map(esp => `<option value="${esp.id_especialidad}">${esp.nombre}</option>`).join('');
+        modalEspecialidadSelect.innerHTML = especialidades.map(esp => `<option value="${esp.id_especialidad}">${esp.nombre}</option>`).join('');
+      } catch (error) {
+        console.error('Error al cargar especialidades:', error);
+      }
+    };
+
+    const populateModalidadesFilter = async () => { 
+      try {
+        const modalidades = await getModalidades();
+        modalidadFilter.innerHTML = '<option value="">Todas las Modalidades</option>' + 
+                                    modalidades.map(mod => `<option value="${mod.id_modalidad}">${mod.nombre}</option>`).join('');
+        // Poblar el selector de modalidades en el formulario de sección
+        const idModalidadSeccionSelect = document.getElementById('id_modalidad');
+        if (idModalidadSeccionSelect) {
+          idModalidadSeccionSelect.innerHTML = '<option value="">Selecciona una modalidad</option>' + 
+                                               modalidades.map(mod => `<option value="${mod.id_modalidad}">${mod.nombre}</option>`).join('');
+        }
+      } catch (error) {
+        console.error('Error al cargar modalidades:', error);
+      }
+    };
+
+    const populateDocentesSelect = async (selectElement) => {
+      try {
+        const docentes = await getDocentes(); // Asume que getDocentes trae todos los docentes
+        selectElement.innerHTML = '<option value="">Selecciona un docente</option>' +
+                                  docentes.map(docente => `<option value="${docente.id_docente_perfil}">${docente.nombres} ${docente.apellidos}</option>`).join('');
+      } catch (error) {
+        console.error('Error al cargar docentes para el selector:', error);
+      }
+    };
+
+    const populateHorasClaseSelect = async () => {
+      try {
+        const horas = await getHorasClase();
+        horasClaseSelect.innerHTML = horas.map(hora => 
+          `<option value="${hora.id_hora}">${hora.dia_semana} - ${hora.hora_inicio} a ${hora.hora_fin}</option>`
+        ).join('');
+      } catch (error) {
+        console.error('Error al cargar horas de clase para el selector:', error);
+      }
+    };
+
+
+    const openCursoModal = (isEditingMode = false, cursoData = {}) => {
+      isEditingCurso = isEditingMode;
+      cursoForm.reset();
+
+      modalTitle.textContent = isEditingMode ? 'Editar Curso' : 'Nuevo Curso';
+      submitCursoFormButton.textContent = isEditingMode ? 'Guardar Cambios' : 'Añadir Curso';
+
+      if (isEditingMode) {
+        cursoIdField.value = cursoData.id_curso || '';
+        nombreField.value = cursoData.nombre || '';
+        descripcionField.value = cursoData.descripcion || '';
+        modalEspecialidadSelect.value = cursoData.id_especialidad || '';
+        duracionSemanasField.value = cursoData.duracion_semanas || '8';
+        modalEstadoSelect.value = cursoData.id_estado || '1';
+      } else {
+        duracionSemanasField.value = '8'; // Default para nuevos cursos
+        modalEspecialidadSelect.value = '';
+        modalEstadoSelect.value = '1'; // Default a Activo/Publicado
+      }
+
+      cursoFormModal.classList.remove('hidden'); 
+    };
+
+    const closeCursoModal = () => {
+      cursoFormModal.classList.add('hidden'); 
+      cursoForm.reset(); 
+      isEditingCurso = false;
+    };
+
+    const handleCursoFormSubmit = async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(cursoForm);
+      const data = {};
+      for (const [key, value] of formData.entries()) {
+        data[key] = value;
+      }
+
+      // Asegurarse de que los IDs sean números
+      if (data.id_especialidad) {
+        data.id_especialidad = parseInt(data.id_especialidad);
+      }
+      if (data.duracion_semanas) {
+        data.duracion_semanas = parseInt(data.duracion_semanas);
+      }
+      if (data.id_estado) {
+        data.id_estado = parseInt(data.id_estado);
+      }
+
+      const id_curso = cursoIdField.value ? parseInt(cursoIdField.value) : undefined;
+
+      try {
+        if (isEditingCurso) {
+          await updateCurso(id_curso, data);
+          alert('Curso actualizado correctamente!');
+        } else {
+          await createCurso(data);
+          alert('Curso añadido correctamente!');
+        }
+        closeCursoModal();
+        fetchAndRenderCursos(); 
+      } catch (error) {
+        console.error('Error al guardar curso:', error);
+        alert(`Error al guardar curso: ${error.message}`);
+      }
+    };
+
+    // Referencias a elementos del modal de Gestión de Secciones
+    const seccionesManagementModal = document.getElementById('secciones-management-modal');
+    const closeSeccionesModalButton = document.getElementById('close-secciones-modal-button');
+    const currentCursoNameSpan = document.getElementById('current-curso-name');
+    const seccionesTableBody = document.getElementById('secciones-table-body');
+    const addSeccionButton = document.getElementById('add-seccion-button');
+
+    // Referencias a elementos del formulario de Sección (dentro del modal de gestión)
+    const seccionFormContainer = document.getElementById('seccion-form-container');
+    const seccionFormTitle = document.getElementById('seccion-form-title');
+    const seccionForm = document.getElementById('seccion-form');
+    const seccionIdField = document.getElementById('seccion-id');
+    const seccionCursoIdField = document.getElementById('seccion-curso-id');
+    const nombreSeccionField = document.getElementById('nombre_seccion');
+    const idDocentePerfilSelect = document.getElementById('id_docente_perfil');
+    const idModalidadSeccionSelect = document.getElementById('id_modalidad');
+    const fechaInicioSeccionField = document.getElementById('fecha_inicio');
+    const fechaFinSeccionField = document.getElementById('fecha_fin');
+    const horarioSeccionField = document.getElementById('horario');
+    const horasClaseSelect = document.getElementById('horas_clase_select');
+    const modalEstadoSeccionSelect = document.getElementById('id_estado_seccion');
+    const submitSeccionFormButton = document.getElementById('submit-seccion-form-button');
+    const cancelSeccionFormButton = document.getElementById('cancel-seccion-form-button');
+
+    let currentCursoIdForSections = null;
+    let isEditingSeccion = false;
+
+    // Funciones para el modal de Gestión de Secciones
+    const openSectionsManagementModal = async (cursoId, cursoNombre) => {
+      currentCursoIdForSections = cursoId;
+      currentCursoNameSpan.textContent = cursoNombre;
+      seccionesManagementModal.classList.remove('hidden');
+      await fetchAndRenderSections(cursoId);
+      populateDocentesSelect(idDocentePerfilSelect);
+      populateModalidadesFilter(); // Reutilizamos el de cursos, o creamos uno nuevo si es necesario para el modal
+      populateStatesFilter(); // Reutilizamos el de cursos, o creamos uno nuevo si es necesario para el modal
+      populateHorasClaseSelect(); // Poblar el selector de horas de clase
+    };
+
+    const closeSectionsManagementModal = () => {
+      seccionesManagementModal.classList.add('hidden');
+      currentCursoIdForSections = null;
+      seccionFormContainer.classList.add('hidden'); // Ocultar el formulario de sección al cerrar el modal principal
+      seccionForm.reset();
+      isEditingSeccion = false;
+    };
+
+    const fetchAndRenderSections = async (cursoId) => {
+      seccionesTableBody.innerHTML = `<tr><td colspan="8" class="px-4 py-2 text-center text-gray-500">Cargando secciones...</td></tr>`;
+      try {
+        const secciones = await getSecciones({ id_curso: cursoId });
+        if (secciones.length === 0) {
+          seccionesTableBody.innerHTML = `<tr><td colspan="8" class="px-4 py-2 text-center text-gray-500">No hay secciones para este curso.</td></tr>`;
+          return;
+        }
+        seccionesTableBody.innerHTML = secciones.map(seccion => `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2 whitespace-nowrap">${seccion.nombre_seccion}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${seccion.nombres_docente} ${seccion.apellidos_docente}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${seccion.nombre_modalidad}</td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm">${seccion.fecha_inicio ? new Date(seccion.fecha_inicio).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}</td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm">${seccion.fecha_fin ? new Date(seccion.fecha_fin).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${seccion.horario || 'N/A'}</td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${seccion.id_estado === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                ${seccion.nombre_estado || 'Desconocido'}
+              </span>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+              <button class="text-blue-600 hover:text-blue-900 mr-2 view-clases-button" data-id="${seccion.id_seccion}" data-nombre="${seccion.nombre_seccion}"><i class="fas fa-calendar-alt"></i> Clases</button>
+              <button class="text-yellow-600 hover:text-yellow-900 mr-2 edit-seccion-button" data-id="${seccion.id_seccion}" data-seccion='${encodeURIComponent(JSON.stringify(seccion))}'><i class="fas fa-edit"></i></button>
+              <button class="text-red-600 hover:text-red-900 deactivate-seccion-button" data-id="${seccion.id_seccion}"><i class="fas fa-minus-circle"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Error al cargar secciones:', error);
+        seccionesTableBody.innerHTML = `<tr><td colspan="8" class="px-4 py-2 text-center text-red-500">Error al cargar las secciones: ${error.message}.</td></tr>`;
+      }
+    };
+
+    // Funciones para el formulario de Sección
+    const openSeccionFormModal = (isEditing = false, seccionData = {}, cursoId = currentCursoIdForSections) => {
+      isEditingSeccion = isEditing;
+      seccionForm.reset();
+      seccionFormContainer.classList.remove('hidden');
+      seccionFormTitle.textContent = isEditing ? 'Editar Sección' : 'Nueva Sección';
+      submitSeccionFormButton.textContent = isEditing ? 'Guardar Cambios' : 'Añadir Sección';
+      seccionCursoIdField.value = cursoId; // Asegurarse de que el id_curso siempre esté seteado
+
+      if (isEditing) {
+        seccionIdField.value = seccionData.id_seccion || '';
+        nombreSeccionField.value = seccionData.nombre_seccion || '';
+        idDocentePerfilSelect.value = seccionData.id_docente_perfil || '';
+        idModalidadSeccionSelect.value = seccionData.id_modalidad || '';
+        fechaInicioSeccionField.value = seccionData.fecha_inicio ? new Date(seccionData.fecha_inicio).toISOString().split('T')[0] : '';
+        fechaFinSeccionField.value = seccionData.fecha_fin ? new Date(seccionData.fecha_fin).toISOString().split('T')[0] : '';
+        horarioSeccionField.value = seccionData.horario || '';
+        // Limpiar selección de horas_clase en modo edición (no se regeneran clases al editar)
+        Array.from(horasClaseSelect.options).forEach(option => option.selected = false);
+        modalEstadoSeccionSelect.value = seccionData.id_estado || '1';
+      } else {
+        // Defaults para nueva sección
+        nombreSeccionField.value = '';
+        idDocentePerfilSelect.value = '';
+        idModalidadSeccionSelect.value = '';
+        fechaInicioSeccionField.value = '';
+        fechaFinSeccionField.value = '';
+        horarioSeccionField.value = '';
+        Array.from(horasClaseSelect.options).forEach(option => option.selected = false);
+        modalEstadoSeccionSelect.value = '1';
+      }
+    };
+
+    const closeSeccionFormModal = () => {
+      seccionFormContainer.classList.add('hidden');
+      seccionForm.reset();
+      isEditingSeccion = false;
+    };
+
+    const handleSeccionFormSubmit = async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(seccionForm);
+      const data = {};
+      for (const [key, value] of formData.entries()) {
+        data[key] = value;
+      }
+
+      // Obtener las horas de clase seleccionadas (múltiple select)
+      const horasSeleccionadas = Array.from(horasClaseSelect.selectedOptions).map(option => parseInt(option.value));
+      
+      // Obtener id_curso directamente del campo oculto (por si FormData no lo captura)
+      const cursoIdValue = seccionCursoIdField.value || data.seccion_curso_id || currentCursoIdForSections;
+      if (!cursoIdValue) {
+        alert('Error: No se pudo obtener el ID del curso. Por favor, inténtalo de nuevo.');
+        return;
+      }
+      
+      // Asegurarse de que los IDs sean números
+      data.id_curso = parseInt(cursoIdValue);
+      data.id_docente_perfil = parseInt(data.id_docente_perfil);
+      data.id_modalidad = parseInt(data.id_modalidad);
+      data.id_estado = parseInt(data.id_estado);
+      // Eliminar el campo temporal y horas_clase (no se envía en el body de la sección)
+      delete data.seccion_curso_id;
+      delete data['seccion-id'];
+      delete data.horas_clase;
+
+      const id_seccion = seccionIdField.value ? parseInt(seccionIdField.value) : undefined;
+
+      try {
+        if (isEditingSeccion) {
+          await updateSeccion(id_seccion, data);
+          alert('Sección actualizada correctamente!');
+        } else {
+          const result = await createSeccion(data);
+          const newSeccionId = result.id_seccion || result.insertId || id_seccion;
+          
+          // Si hay horas seleccionadas, generar clases automáticamente
+          if (horasSeleccionadas.length > 0) {
+            try {
+              const generateResult = await generateClasesForSeccion(newSeccionId, horasSeleccionadas);
+              alert(`Sección añadida correctamente! Se generaron ${generateResult.clases_generadas || 0} clases automáticamente.`);
+            } catch (genError) {
+              console.error('Error al generar clases:', genError);
+              alert(`Sección añadida correctamente, pero hubo un error al generar las clases: ${genError.message}`);
+            }
+          } else {
+            alert('Sección añadida correctamente!');
+          }
+        }
+        closeSeccionFormModal();
+        fetchAndRenderSections(currentCursoIdForSections); 
+      } catch (error) {
+        console.error('Error al guardar sección:', error);
+        alert(`Error al guardar sección: ${error.message}`);
+      }
+    };
+
+    // Event Listeners para filtros de cursos
+    searchInput.addEventListener('input', () => {
+      currentFilters.search = searchInput.value;
+      fetchAndRenderCursos();
+    });
+
+    especialidadFilter.addEventListener('change', () => {
+      currentFilters.id_especialidad = especialidadFilter.value;
+      fetchAndRenderCursos();
+    });
+
+    modalidadFilter.addEventListener('change', () => {
+      currentFilters.id_modalidad = modalidadFilter.value;
+      fetchAndRenderCursos();
+    });
+
+    stateFilter.addEventListener('change', () => {
+      currentFilters.id_estado = stateFilter.value;
+      fetchAndRenderCursos();
+    });
+
+    // Listener para el botón "Nuevo Curso"
+    const addCursoButton = document.getElementById('add-curso-button');
+    addCursoButton.addEventListener('click', () => openCursoModal(false));
+
+    // Listeners para botones de cerrar y cancelar del modal de cursos
+    closeCursoModalButton.addEventListener('click', closeCursoModal);
+    cancelCursoModalButton.addEventListener('click', closeCursoModal);
+    cursoFormModal.addEventListener('click', (event) => {
+      if (event.target === cursoFormModal) {
+        closeCursoModal();
+      }
+    });
+
+    // Listener para el envío del formulario del modal de cursos
+    cursoForm.addEventListener('submit', handleCursoFormSubmit);
+
+    // Delegación de eventos para botones de cursos (editar, desactivar, gestionar secciones)
+    cursosTableBody.addEventListener('click', async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+
+      const cursoId = parseInt(target.dataset.id);
+      
+      if (target.classList.contains('edit-curso-button')) {
+        const cursoData = JSON.parse(decodeURIComponent(target.dataset.curso));
+        openCursoModal(true, cursoData);
+      } else if (target.classList.contains('deactivate-curso-button')) {
+        if (confirm('¿Estás segura de que quieres desactivar (finalizar) este curso?')) {
+          try {
+            await deactivateCurso(cursoId);
+            alert('Curso desactivado (finalizado) correctamente!');
+            fetchAndRenderCursos(); 
+          } catch (error) {
+            console.error('Error al desactivar curso:', error);
+            alert(`Error al desactivar curso: ${error.message}`);
+          }
+        }
+      } else if (target.classList.contains('manage-secciones-button')) {
+        const cursoNombre = target.dataset.nombre;
+        openSectionsManagementModal(cursoId, cursoNombre);
+      }
+    });
+
+    // Listeners para el modal de Gestión de Secciones
+    closeSeccionesModalButton.addEventListener('click', closeSectionsManagementModal);
+    seccionesManagementModal.addEventListener('click', (event) => {
+      if (event.target === seccionesManagementModal) {
+        closeSectionsManagementModal();
+      }
+    });
+
+    // Listeners para el formulario de Sección (dentro del modal de gestión de secciones)
+    addSeccionButton.addEventListener('click', () => openSeccionFormModal(false, {}, currentCursoIdForSections));
+    cancelSeccionFormButton.addEventListener('click', closeSeccionFormModal);
+    seccionForm.addEventListener('submit', handleSeccionFormSubmit);
+
+    // Delegación de eventos para botones de editar y desactivar en la tabla de secciones
+    seccionesTableBody.addEventListener('click', async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+
+      const seccionId = parseInt(target.dataset.id);
+      
+      if (target.classList.contains('edit-seccion-button')) {
+        const seccionData = JSON.parse(decodeURIComponent(target.dataset.seccion));
+        openSeccionFormModal(true, seccionData, currentCursoIdForSections);
+      } else if (target.classList.contains('deactivate-seccion-button')) {
+        if (confirm('¿Estás segura de que quieres desactivar esta sección?')) {
+          try {
+            await deactivateSeccion(seccionId);
+            alert('Sección desactivada correctamente!');
+            fetchAndRenderSections(currentCursoIdForSections); 
+          } catch (error) {
+            console.error('Error al desactivar sección:', error);
+            alert(`Error al desactivar sección: ${error.message}`);
+          }
+        }
+      } else if (target.classList.contains('view-clases-button')) {
+        const seccionNombre = target.dataset.nombre;
+        openClasesManagementModal(seccionId, seccionNombre);
+      }
+    });
+
+    // Referencias a elementos del modal de Gestión de Horarios
+    const horariosManagementModal = document.getElementById('horarios-management-modal');
+    const closeHorariosModalButton = document.getElementById('close-horarios-modal-button');
+    const manageHorariosButton = document.getElementById('manage-horarios-button');
+    const horarioForm = document.getElementById('horario-form');
+    const horarioIdField = document.getElementById('horario-id');
+    const horarioDiaSemanaField = document.getElementById('horario-dia_semana');
+    const horarioHoraInicioField = document.getElementById('horario-hora_inicio');
+    const horarioHoraFinField = document.getElementById('horario-hora_fin');
+    const submitHorarioFormButton = document.getElementById('submit-horario-form-button');
+    const cancelHorarioFormButton = document.getElementById('cancel-horario-form-button');
+    const horariosTableBody = document.getElementById('horarios-table-body');
+
+    let isEditingHorario = false;
+
+    // Funciones para el modal de Gestión de Horarios
+    const openHorariosManagementModal = async () => {
+      horariosManagementModal.classList.remove('hidden');
+      await fetchAndRenderHorarios();
+    };
+
+    const closeHorariosManagementModal = () => {
+      horariosManagementModal.classList.add('hidden');
+      horarioForm.reset();
+      isEditingHorario = false;
+      submitHorarioFormButton.textContent = 'Añadir Horario';
+    };
+
+    const fetchAndRenderHorarios = async () => {
+      horariosTableBody.innerHTML = `<tr><td colspan="5" class="px-4 py-2 text-center text-gray-500">Cargando horarios...</td></tr>`;
+      try {
+        const horarios = await getHorasClase();
+        if (horarios.length === 0) {
+          horariosTableBody.innerHTML = `<tr><td colspan="5" class="px-4 py-2 text-center text-gray-500">No hay horarios registrados.</td></tr>`;
+          return;
+        }
+        horariosTableBody.innerHTML = horarios.map(hora => `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2">${hora.id_hora}</td>
+            <td class="px-4 py-2">${hora.dia_semana}</td>
+            <td class="px-4 py-2">${hora.hora_inicio}</td>
+            <td class="px-4 py-2">${hora.hora_fin}</td>
+            <td class="px-4 py-2">
+              <button class="text-yellow-600 hover:text-yellow-900 mr-2 edit-horario-button" data-id="${hora.id_hora}" data-dia="${hora.dia_semana}" data-inicio="${hora.hora_inicio}" data-fin="${hora.hora_fin}"><i class="fas fa-edit"></i></button>
+              <button class="text-red-600 hover:text-red-900 delete-horario-button" data-id="${hora.id_hora}"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Error al cargar horarios para gestión:', error);
+        horariosTableBody.innerHTML = `<tr><td colspan="5" class="px-4 py-2 text-center text-red-500">Error al cargar horarios: ${error.message}.</td></tr>`;
+      }
+    };
+
+    const handleHorarioFormSubmit = async (event) => {
+      event.preventDefault();
+      const dia_semana = horarioDiaSemanaField.value;
+      const hora_inicio = horarioHoraInicioField.value;
+      const hora_fin = horarioHoraFinField.value;
+      
+      if (isEditingHorario) {
+        const id_hora = parseInt(horarioIdField.value);
+        try {
+          await updateHoraClase(id_hora, { dia_semana, hora_inicio, hora_fin });
+          alert('Horario actualizado correctamente!');
+        } catch (error) {
+          console.error('Error al actualizar horario:', error);
+          alert(`Error al actualizar horario: ${error.message}`);
+        }
+      } else {
+        try {
+          await createHoraClase({ dia_semana, hora_inicio, hora_fin });
+          alert('Horario añadido correctamente!');
+        } catch (error) {
+          console.error('Error al añadir horario:', error);
+          alert(`Error al añadir horario: ${error.message}`);
+        }
+      }
+      horarioForm.reset();
+      isEditingHorario = false;
+      submitHorarioFormButton.textContent = 'Añadir Horario';
+      await fetchAndRenderHorarios(); // Refrescar la tabla de horarios
+      populateHorasClaseSelect(); // Refrescar el selector de horarios en el formulario de sección
+    };
+
+    // Event Listeners para el modal de Gestión de Horarios
+    manageHorariosButton.addEventListener('click', openHorariosManagementModal);
+    closeHorariosModalButton.addEventListener('click', closeHorariosManagementModal);
+    horariosManagementModal.addEventListener('click', (event) => {
+      if (event.target === horariosManagementModal) {
+        closeHorariosManagementModal();
+      }
+    });
+    cancelHorarioFormButton.addEventListener('click', () => {
+      horarioForm.reset();
+      isEditingHorario = false;
+      submitHorarioFormButton.textContent = 'Añadir Horario';
+    });
+    horarioForm.addEventListener('submit', handleHorarioFormSubmit);
+
+    horariosTableBody.addEventListener('click', async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+
+      const horarioId = parseInt(target.dataset.id);
+
+      if (target.classList.contains('edit-horario-button')) {
+        isEditingHorario = true;
+        horarioIdField.value = horarioId;
+        horarioDiaSemanaField.value = target.dataset.dia;
+        horarioHoraInicioField.value = target.dataset.inicio;
+        horarioHoraFinField.value = target.dataset.fin;
+        submitHorarioFormButton.textContent = 'Actualizar Horario';
+      } else if (target.classList.contains('delete-horario-button')) {
+        if (confirm('¿Estás segura de que quieres eliminar este horario? ¡Esta acción es permanente y puede afectar a las clases asociadas!')) {
+          try {
+            await deleteHoraClase(horarioId);
+            alert('Horario eliminado correctamente!');
+            await fetchAndRenderHorarios();
+            populateHorasClaseSelect(); // Refrescar el selector de horarios en el formulario de sección
+          } catch (error) {
+            console.error('Error al eliminar horario:', error);
+            alert(`Error al eliminar horario: ${error.message}`);
+          }
+        }
+      }
+    });
+
+    // Referencias a elementos del modal de Gestión de Clases
+    const clasesManagementModal = document.getElementById('clases-management-modal');
+    const closeClasesModalButton = document.getElementById('close-clases-modal-button');
+    const clasesTableBody = document.getElementById('clases-table-body');
+    const currentSeccionNameSpan = document.getElementById('current-seccion-name');
+    let currentSeccionIdForClases = null;
+
+    // Referencias a elementos del modal de edición de clase
+    const editClaseModal = document.getElementById('edit-clase-modal');
+    const editClaseModalTitle = document.getElementById('edit-clase-modal-title');
+    const closeEditClaseModalButton = document.getElementById('close-edit-clase-modal-button');
+    const cancelEditClaseButton = document.getElementById('cancel-edit-clase-button');
+    const editClaseForm = document.getElementById('edit-clase-form');
+    const editClaseIdField = document.getElementById('edit-clase-id');
+    const editClaseModuloSelect = document.getElementById('edit-clase-modulo');
+    const editClaseFechaField = document.getElementById('edit-clase-fecha');
+    const editClaseHoraSelect = document.getElementById('edit-clase-hora');
+    const submitClaseButton = document.getElementById('submit-clase-button');
+    const addClaseButton = document.getElementById('add-clase-button');
+    
+    let isEditingClase = false;
+    let currentSeccionDataForClases = null;
+
+    // Funciones para el modal de Gestión de Clases
+    const openClasesManagementModal = async (seccionId, seccionNombre) => {
+      currentSeccionIdForClases = seccionId;
+      currentSeccionNameSpan.textContent = seccionNombre;
+      clasesManagementModal.classList.remove('hidden');
+      
+      // Obtener información completa de la sección
+      try {
+        currentSeccionDataForClases = await getSeccionById(seccionId);
+      } catch (error) {
+        console.error('Error al obtener información de la sección:', error);
+      }
+      
+      await fetchAndRenderClases(seccionId);
+    };
+
+    const closeClasesManagementModal = () => {
+      clasesManagementModal.classList.add('hidden');
+      currentSeccionIdForClases = null;
+    };
+
+    const fetchAndRenderClases = async (seccionId) => {
+      clasesTableBody.innerHTML = `<tr><td colspan="5" class="px-4 py-2 text-center text-gray-500">Cargando clases...</td></tr>`;
+      try {
+        const clases = await getClases({ id_seccion: seccionId });
+        
+        if (clases.length === 0) {
+          clasesTableBody.innerHTML = `
+            <tr>
+              <td colspan="5" class="px-4 py-2 text-center text-gray-500">
+                <p class="mb-2">No hay clases programadas para esta sección.</p>
+                <p class="text-sm">Haz clic en "Nueva Clase" para crear una clase individual.</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        // Ordenar clases por fecha y hora
+        clases.sort((a, b) => {
+          const fechaA = new Date(a.fecha_clase + ' ' + a.hora_inicio);
+          const fechaB = new Date(b.fecha_clase + ' ' + b.hora_inicio);
+          return fechaA - fechaB;
+        });
+
+        clasesTableBody.innerHTML = clases.map(clase => {
+          const fecha = new Date(clase.fecha_clase);
+          const fechaFormateada = fecha.toLocaleDateString('es-ES', { 
+            weekday: 'short', 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric' 
+          });
+          
+          return `
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2 whitespace-nowrap">${clase.nombre_modulo || `Módulo ${clase.id_modulo}`}</td>
+              <td class="px-4 py-2 whitespace-nowrap">${fechaFormateada}</td>
+              <td class="px-4 py-2 whitespace-nowrap">${clase.dia_semana}</td>
+              <td class="px-4 py-2 whitespace-nowrap">${clase.hora_inicio} - ${clase.hora_fin}</td>
+              <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+                <button class="text-yellow-600 hover:text-yellow-900 mr-2 edit-clase-button" 
+                        data-id="${clase.id_clase}" 
+                        data-fecha="${clase.fecha_clase}" 
+                        data-hora="${clase.id_hora}"
+                        data-clase='${encodeURIComponent(JSON.stringify(clase))}'>
+                  <i class="fas fa-edit"></i> Reprogramar
+                </button>
+                <button class="text-red-600 hover:text-red-900 delete-clase-button" data-id="${clase.id_clase}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error al cargar clases:', error);
+        clasesTableBody.innerHTML = `<tr><td colspan="5" class="px-4 py-2 text-center text-red-500">Error al cargar las clases: ${error.message}.</td></tr>`;
+      }
+    };
+
+    const openEditClaseModal = async (claseData = null) => {
+      isEditingClase = !!claseData;
+      editClaseModalTitle.textContent = isEditingClase ? 'Reprogramar Clase' : 'Nueva Clase';
+      submitClaseButton.textContent = isEditingClase ? 'Guardar Cambios' : 'Crear Clase';
+      
+      editClaseForm.reset();
+      
+      if (isEditingClase) {
+        editClaseIdField.value = claseData.id_clase;
+        editClaseFechaField.value = claseData.fecha_clase;
+      } else {
+        editClaseIdField.value = '';
+      }
+      
+      // Cargar módulos del curso
+      if (currentSeccionDataForClases && currentSeccionDataForClases.id_curso) {
+        const modulos = await getModulosByCurso(currentSeccionDataForClases.id_curso);
+        editClaseModuloSelect.innerHTML = '<option value="">Selecciona un módulo</option>' +
+          modulos.map(modulo => 
+            `<option value="${modulo.id_modulo}" ${claseData && claseData.id_modulo == modulo.id_modulo ? 'selected' : ''}>${modulo.titulo}</option>`
+          ).join('');
+      }
+      
+      // Cargar horarios disponibles
+      const horarios = await getHorasClase();
+      editClaseHoraSelect.innerHTML = '<option value="">Selecciona un horario</option>' +
+        horarios.map(hora => 
+          `<option value="${hora.id_hora}" ${claseData && hora.id_hora == claseData.id_hora ? 'selected' : ''}>${hora.dia_semana} - ${hora.hora_inicio} a ${hora.hora_fin}</option>`
+        ).join('');
+      
+      editClaseModal.classList.remove('hidden');
+    };
+
+    const closeEditClaseModal = () => {
+      editClaseModal.classList.add('hidden');
+      editClaseForm.reset();
+      isEditingClase = false;
+    };
+
+    const handleEditClaseFormSubmit = async (event) => {
+      event.preventDefault();
+      
+      if (!currentSeccionDataForClases) {
+        alert('Error: No se pudo obtener la información de la sección');
+        return;
+      }
+      
+      const id_modulo = parseInt(editClaseModuloSelect.value);
+      const fecha_clase = editClaseFechaField.value;
+      const id_hora = parseInt(editClaseHoraSelect.value);
+      
+      if (!id_modulo || !fecha_clase || !id_hora) {
+        alert('Por favor, completa todos los campos');
+        return;
+      }
+      
+      try {
+        if (isEditingClase) {
+          const id_clase = parseInt(editClaseIdField.value);
+          await updateClase(id_clase, { id_modulo, fecha_clase, id_hora });
+          alert('Clase reprogramada correctamente!');
+        } else {
+          await createClase({
+            id_modulo,
+            id_seccion: currentSeccionIdForClases,
+            id_docente_perfil: currentSeccionDataForClases.id_docente_perfil,
+            id_hora,
+            fecha_clase
+          });
+          alert('Clase creada correctamente!');
+        }
+        closeEditClaseModal();
+        await fetchAndRenderClases(currentSeccionIdForClases);
+      } catch (error) {
+        console.error('Error al guardar clase:', error);
+        alert(`Error: ${error.message}`);
+      }
+    };
+
+    // Event Listeners para el modal de Gestión de Clases
+    closeClasesModalButton.addEventListener('click', closeClasesManagementModal);
+    clasesManagementModal.addEventListener('click', (event) => {
+      if (event.target === clasesManagementModal) {
+        closeClasesManagementModal();
+      }
+    });
+
+    // Event Listeners para el modal de edición de clase
+    addClaseButton.addEventListener('click', () => openEditClaseModal(null));
+    closeEditClaseModalButton.addEventListener('click', closeEditClaseModal);
+    cancelEditClaseButton.addEventListener('click', closeEditClaseModal);
+    editClaseForm.addEventListener('submit', handleEditClaseFormSubmit);
+    editClaseModal.addEventListener('click', (event) => {
+      if (event.target === editClaseModal) {
+        closeEditClaseModal();
+      }
+    });
+
+    // Delegación de eventos para botones de editar y eliminar en la tabla de clases
+    clasesTableBody.addEventListener('click', async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+
+      const claseId = parseInt(target.dataset.id);
+
+      if (target.classList.contains('edit-clase-button')) {
+        const claseData = JSON.parse(decodeURIComponent(target.dataset.clase));
+        await openEditClaseModal(claseData);
+      } else if (target.classList.contains('delete-clase-button')) {
+        if (confirm('¿Estás segura de que quieres eliminar esta clase? Esta acción es permanente.')) {
+          try {
+            await deleteClase(claseId);
+            alert('Clase eliminada correctamente!');
+            await fetchAndRenderClases(currentSeccionIdForClases);
+          } catch (error) {
+            console.error('Error al eliminar clase:', error);
+            alert(`Error al eliminar clase: ${error.message}`);
+          }
+        }
+      }
+    });
+
+    // Inicializar filtros y cargar cursos al cargar la página
+    populateStatesFilter();
+    populateEspecialidadesFilter();
+    populateModalidadesFilter(); 
+    fetchAndRenderCursos();
+  });
+</script>

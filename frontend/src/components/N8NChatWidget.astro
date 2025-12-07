@@ -1,0 +1,222 @@
+---
+// Componente de Chat N8N Widget - AmparIA
+// Uso: <N8NChatWidget />
+// Configuración centralizada del chat
+
+interface Props {
+  webhookUrl?: string;
+}
+
+const {
+  webhookUrl = "http://localhost:5678/webhook/713a62c3-cfa4-4df7-af75-05c877ccf605/chat"
+} = Astro.props;
+---
+
+<div id="n8n-chat-wrapper"></div>
+
+<link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+
+<script define:vars={{ webhookUrl }}>
+  // ============================================
+  // CONFIGURACIÓN DE AmparIA
+  // ============================================
+  
+  const chatConfig = {
+    webhookUrl: webhookUrl,
+    
+    // Configuración del webhook
+    webhookConfig: {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
+      }
+    },
+    
+    // Ubicación
+    target: '#n8n-chat-wrapper',
+    mode: 'window',
+    
+    // Datos
+    chatInputKey: 'chatInput',
+    chatSessionKey: 'sessionId',
+    loadPreviousSession: true,
+    
+    // Metadatos del usuario
+    metadata: {
+      userId: localStorage.getItem('userId') || 'anonymous',
+      userRole: localStorage.getItem('userRole') || 'alumno',
+      userEmail: localStorage.getItem('email') || ''
+    },
+    
+    // Configuración de pantalla
+    showWelcomeScreen: false,
+    defaultLanguage: 'es',
+    initialMessages: [],
+    
+    // Idiomas
+    i18n: {
+      es: {
+        title: '¡Hola! Soy AmparIA 👋',
+        subtitle: 'Estoy aquí para ayudarte',
+        inputPlaceholder: 'Escribe tu pregunta...'
+      }
+    },
+    
+    // Características
+    enableStreaming: false,
+    allowFileUploads: false
+  };
+  
+  // ============================================
+  // INICIALIZAR CHAT
+  // ============================================
+  
+  function initChat() {
+    console.log('🚀 Iniciando N8N Chat con webhook:', webhookUrl);
+    
+    import('https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js')
+      .then(({ createChat }) => {
+        console.log('✅ N8N Chat módulo cargado');
+        console.log('📋 Configuración:', chatConfig);
+        
+        const instance = createChat(chatConfig);
+        
+        console.log('✅ AmparIA iniciado correctamente');
+        console.log('🔗 Webhook:', chatConfig.webhookUrl);
+        console.log('👤 Usuario:', chatConfig.metadata.userId);
+      })
+      .catch(error => {
+        console.error('❌ Error cargando N8N Chat:', error);
+      });
+  }
+  
+  // Esperar a que el DOM esté listo
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChat);
+  } else {
+    setTimeout(initChat, 0);
+  }
+</script>
+
+<style>
+  #n8n-chat-wrapper {
+    /* Contenedor fijo para el chat */
+  }
+  
+  /* Variables CSS de N8N */
+  :root {
+    /* Colores principales */
+    --chat--color--primary: #7c3aed;
+    --chat--color--primary-shade-50: #6d28d9;
+    --chat--color--primary--shade-100: #5b21b6;
+    
+    /* Colores secundarios */
+    --chat--color--secondary: #10b981;
+    --chat--color-secondary-shade-50: #059669;
+    
+    /* Colores base */
+    --chat--color-white: #ffffff;
+    --chat--color-light: #f9fafb;
+    --chat--color-light-shade-50: #f3f4f6;
+    --chat--color-light-shade-100: #e5e7eb;
+    --chat--color-dark: #1f2937;
+    
+    /* Dimensiones */
+    --chat--window--width: 420px;
+    --chat--window--height: 680px;
+    --chat--toggle--size: 64px;
+    
+    /* Espaciado */
+    --chat--spacing: 1rem;
+    --chat--border-radius: 0.5rem;
+  }
+</style>
+
+<style>
+  /* ============================================
+     VARIABLES CSS DE N8N CHAT
+     Personalización de colores y estilos
+     ============================================ */
+  :root {
+    /* 🎨 Colores Principales - Tema Púrpura Yatiña */
+    --chat--color--primary: #7c3aed;           /* Púrpura principal */
+    --chat--color--primary-shade-50: #6d28d9;  /* Púrpura oscuro */
+    --chat--color--primary--shade-100: #5b21b6; /* Púrpura más oscuro */
+    
+    /* 🟢 Colores Secundarios */
+    --chat--color--secondary: #10b981;         /* Verde (usuario) */
+    --chat--color-secondary-shade-50: #059669;
+    
+    /* ⚪ Colores Base */
+    --chat--color-white: #ffffff;
+    --chat--color-light: #f9fafb;
+    --chat--color-light-shade-50: #f3f4f6;
+    --chat--color-light-shade-100: #e5e7eb;
+    --chat--color-medium: #d1d5db;
+    --chat--color-dark: #1f2937;
+    --chat--color-typing: #6b7280;
+    
+    /* 📐 Espaciado y Bordes */
+    --chat--spacing: 1rem;
+    --chat--border-radius: 0.5rem;
+    --chat--transition-duration: 0.2s;
+    
+    /* 📏 Dimensiones de la Ventana */
+    --chat--window--width: 400px;
+    --chat--window--height: 600px;
+    
+    /* 📌 Header */
+    --chat--header-height: auto;
+    --chat--header--padding: var(--chat--spacing);
+    --chat--header--background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    --chat--header--color: var(--chat--color-white);
+    --chat--header--border-bottom: 1px solid #5b21b6;
+    --chat--heading--font-size: 1rem;
+    --chat--subtitle--font-size: 0.875rem;
+    
+    /* 💬 Mensajes */
+    --chat--message--font-size: 0.875rem;
+    --chat--message--padding: 0.75rem 1rem;
+    --chat--message--border-radius: 0.75rem;
+    --chat--message-line-height: 1.5;
+    --chat--message--bot--background: #e9d5ff;
+    --chat--message--bot--color: #1f2937;
+    --chat--message--user--background: var(--chat--color--secondary);
+    --chat--message--user--color: var(--chat--color-white);
+    
+    /* 📝 Input */
+    --chat--textarea--height: 50px;
+    
+    /* 🔘 Toggle Button */
+    --chat--toggle--background: var(--chat--color--primary);
+    --chat--toggle--hover--background: var(--chat--color--primary-shade-50);
+    --chat--toggle--active--background: var(--chat--color--primary--shade-100);
+    --chat--toggle--color: var(--chat--color-white);
+    --chat--toggle--size: 56px;
+  }
+
+  /* ============================================
+     ESTILOS ADICIONALES
+     ============================================ */
+  #n8n-chat-wrapper {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Asegurar que los elementos del chat sean visibles */
+  :global(.n8n-chat-button) {
+    position: fixed;
+    z-index: 9999;
+  }
+
+  :global(div[class*="n8n"]),
+  :global(div[id*="n8n"]) {
+    overflow: visible !important;
+  }

@@ -1,0 +1,203 @@
+---
+import UsuarioHeader from '../../components/UsuarioHeader.astro';
+import UsuarioLayout from '../../layouts/UsuarioLayout.astro';
+import ForoWidget from '../../components/ForoWidget.astro';
+---
+
+<UsuarioLayout title="Mi Perfil - Estudiante - Yatiña">
+  <UsuarioHeader>Mi Perfil</UsuarioHeader>
+
+  <!-- Content Area -->
+  <main class="flex-1 overflow-auto p-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Información del Perfil -->
+          <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-8">
+            <h2 class="text-2xl font-bold text-purple-800 mb-6">Información del Perfil</h2>
+            
+            <!-- Foto de Perfil -->
+            <div class="mb-8">
+              <label class="block text-gray-700 font-medium mb-3">Cambiar foto de perfil</label>
+              <div class="flex items-center space-x-4">
+                <div class="w-24 h-24 bg-purple-600 rounded-full flex items-center justify-center text-white text-4xl font-bold" id="profile-avatar">
+                  E
+                </div>
+                <div>
+                  <input type="file" id="photo-input" accept="image/*" class="hidden">
+                  <button id="upload-photo-btn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium">
+                    Examinar...
+                  </button>
+                  <p class="text-gray-500 text-sm mt-2" id="file-status">No se ha seleccionado ningún archivo.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Nombre Completo -->
+            <div class="mb-6">
+              <label class="block text-gray-700 font-medium mb-2">Nombre Completo</label>
+              <input type="text" id="full-name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Nombre Completo" readonly>
+            </div>
+
+            <!-- DNI -->
+            <div class="mb-6">
+              <label class="block text-gray-700 font-medium mb-2">DNI</label>
+              <input type="text" id="dni" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="DNI" readonly>
+            </div>
+
+            <!-- Correo Electrónico -->
+            <div class="mb-6">
+              <label class="block text-gray-700 font-medium mb-2">Correo Electrónico</label>
+              <input type="email" id="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="correo@ejemplo.com" readonly>
+            </div>
+
+            <!-- Celular -->
+            <div class="mb-8">
+              <label class="block text-gray-700 font-medium mb-2">Celular</label>
+              <input type="tel" id="celular" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Celular">
+            </div>
+
+            <!-- Botón Guardar -->
+            <button id="save-profile-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2">
+              <i class="fas fa-save"></i>
+              <span>Guardar Cambios</span>
+            </button>
+          </div>
+
+          <!-- Seguridad -->
+          <div class="bg-white rounded-lg shadow-md p-8">
+            <h2 class="text-2xl font-bold text-purple-800 mb-6">Seguridad</h2>
+            
+            <!-- Contraseña Actual -->
+            <div class="mb-6">
+              <label class="block text-gray-700 font-medium mb-2">Contraseña Actual</label>
+              <input type="password" id="current-password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+
+            <!-- Nueva Contraseña -->
+            <div class="mb-6">
+              <label class="block text-gray-700 font-medium mb-2">Nueva Contraseña</label>
+              <input type="password" id="new-password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+
+            <!-- Confirmar Contraseña -->
+            <div class="mb-8">
+              <label class="block text-gray-700 font-medium mb-2">Confirmar Contraseña</label>
+              <input type="password" id="confirm-password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+
+            <!-- Botón Cambiar Contraseña -->
+            <button id="change-password-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2">
+              <i class="fas fa-lock"></i>
+              <span>Cambiar Contraseña</span>
+            </button>
+
+            <!-- Sesiones Activas -->
+            <div class="mt-8 pt-8 border-t border-gray-200">
+              <h3 class="text-xl font-bold text-purple-800 mb-4">Sesiones Activas</h3>
+              <p class="text-gray-600 text-sm">Gestiona tus sesiones activas en otros dispositivos</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Widget del Foro -->
+      <div class="max-w-6xl mx-auto mt-8">
+        <ForoWidget />
+      </div>
+    </main>
+</UsuarioLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Cargar datos del estudiante
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    const fullNameInput = document.getElementById('full-name');
+    const dniInput = document.getElementById('dni');
+    const emailInput = document.getElementById('email');
+    const celularInput = document.getElementById('celular');
+    const profileAvatar = document.getElementById('profile-avatar');
+    
+    if (user.nombres && user.apellidos) {
+      fullNameInput.value = `${user.nombres} ${user.apellidos}`;
+      const initials = `${user.nombres.charAt(0)}${user.apellidos.charAt(0)}`.toUpperCase();
+      profileAvatar.textContent = initials;
+    }
+    
+    if (user.dni) {
+      dniInput.value = user.dni;
+    }
+    
+    if (user.correo) {
+      emailInput.value = user.correo;
+    }
+
+    if (user.celular) {
+      celularInput.value = user.celular;
+    }
+
+    // Manejo de foto de perfil
+    const uploadPhotoBtn = document.getElementById('upload-photo-btn');
+    const photoInput = document.getElementById('photo-input');
+    const fileStatus = document.getElementById('file-status');
+
+    uploadPhotoBtn.addEventListener('click', () => {
+      photoInput.click();
+    });
+
+    photoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        fileStatus.textContent = `Archivo seleccionado: ${file.name}`;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          profileAvatar.style.backgroundImage = `url(${event.target.result})`;
+          profileAvatar.style.backgroundSize = 'cover';
+          profileAvatar.style.backgroundPosition = 'center';
+          profileAvatar.textContent = '';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Guardar cambios
+    const saveProfileBtn = document.getElementById('save-profile-btn');
+    saveProfileBtn.addEventListener('click', () => {
+      const celular = celularInput.value;
+      if (celular) {
+        // Actualizar user en localStorage
+        const updatedUser = { ...user, celular };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        alert('Perfil actualizado exitosamente');
+      } else {
+        alert('Por favor completa el campo de celular');
+      }
+    });
+
+    // Cambiar contraseña
+    const changePasswordBtn = document.getElementById('change-password-btn');
+    changePasswordBtn.addEventListener('click', () => {
+      const currentPassword = document.getElementById('current-password').value;
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        alert('Por favor completa todos los campos');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        alert('Las contraseñas nuevas no coinciden');
+        return;
+      }
+
+      alert('Contraseña cambiada exitosamente');
+      document.getElementById('current-password').value = '';
+      document.getElementById('new-password').value = '';
+      document.getElementById('confirm-password').value = '';
+    });
+  });
+</script>

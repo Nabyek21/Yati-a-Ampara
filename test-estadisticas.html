@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Estadísticas API</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Test Estadísticas API</h1>
+    <button onclick="testAPI()">Probar API</button>
+    <div id="resultado"></div>
+
+    <script>
+        async function testAPI() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>Cargando...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:4000/api/secciones/1/estadisticas');
+                
+                resultado.innerHTML = `
+                    <p>Status: ${response.status} ${response.statusText}</p>
+                    <p>Content-Type: ${response.headers.get('content-type')}</p>
+                `;
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    resultado.innerHTML += `<p class="error">Error: ${text}</p>`;
+                    return;
+                }
+                
+                const data = await response.json();
+                resultado.innerHTML += `<p class="success">✓ JSON válido recibido</p>`;
+                resultado.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultado.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

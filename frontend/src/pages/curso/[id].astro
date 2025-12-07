@@ -1,0 +1,485 @@
+---
+import UsuarioLayout from '../../layouts/UsuarioLayout.astro';
+import UsuarioHeader from '../../components/UsuarioHeader.astro';
+
+// Esta página es una ruta dinámica que obtiene datos en tiempo de ejecución.
+// Para evitar la necesidad de exportar `getStaticPaths()` (requerido para prerender)
+// indicamos que no se prerenderice y se use SSR en desarrollo/servidor.
+export const prerender = false;
+---
+
+<UsuarioLayout title="Detalle Curso - Yatiña">
+  <UsuarioHeader />
+  <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <div class="mb-4">
+      <a id="volver-link" href="/cursos" class="text-purple-600 hover:text-purple-800 flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i>
+        <span id="volver-texto">Volver al Catálogo</span>
+      </a>
+    </div>
+
+    <section class="bg-white rounded-lg shadow p-6 mb-6">
+      <h1 id="curso-nombre" class="text-3xl font-bold text-purple-800">Cargando curso...</h1>
+      <p id="curso-descripcion" class="text-gray-600 mt-2">&nbsp;</p>
+    </section>
+
+    <!-- Módulos y Contenidos -->
+    <section class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-2xl font-semibold text-purple-800 mb-4">Contenido del Curso</h2>
+      <div id="modulos-container">
+        <p class="text-gray-600">Cargando módulos...</p>
+      </div>
+    </section>
+
+    <style>
+      .modulo-toggle {
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .modulo-toggle svg {
+        transition: transform 0.3s ease;
+      }
+      
+      .modulo-toggle.collapsed svg {
+        transform: rotate(-90deg);
+      }
+      
+      .modulo-contenidos {
+        max-height: 1000px;
+        overflow: hidden;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
+        opacity: 1;
+      }
+      
+      .modulo-contenidos.collapsed {
+        max-height: 0;
+        opacity: 0;
+      }
+    </style>
+
+    <section class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-2xl font-semibold text-purple-800 mb-4">Secciones disponibles</h2>
+      <div id="secciones-container">
+        <p class="text-gray-600">Cargando secciones...</p>
+      </div>
+    </section>
+    
+    <!-- Modal de confirmación de inscripción -->
+    <div id="seccion-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-lg w-full max-w-2xl p-6 mx-4">
+        <h3 class="text-xl font-semibold text-purple-800 mb-2" id="modal-seccion-nombre">Sección</h3>
+        <p id="modal-seccion-docente" class="text-sm text-gray-600 mb-1">Docente: </p>
+        <p id="modal-seccion-horario" class="text-sm text-gray-600 mb-1">Horario: </p>
+        <p id="modal-seccion-fechas" class="text-sm text-gray-600 mb-4">Fechas: </p>
+        <p id="modal-seccion-modalidad" class="text-sm text-gray-600 mb-4">Modalidad: </p>
+
+        <div class="flex justify-end space-x-2">
+          <button id="modal-close" class="px-4 py-2 rounded border">Cancelar</button>
+          <button id="modal-confirm" class="px-4 py-2 bg-purple-600 text-white rounded">Confirmar inscripción</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal visor de contenido (mismo sitio) -->
+    <div id="content-viewer-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
+      <div class="bg-white w-full max-w-5xl h-[80vh] rounded overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between p-3 border-b">
+          <button id="viewer-close" class="px-3 py-1 rounded border">Cerrar</button>
+          <div class="flex items-center gap-3">
+            <a id="viewer-download" class="text-sm text-blue-600 hover:underline" target="_blank">Descargar</a>
+            <a id="viewer-openraw" class="text-sm text-gray-600 hover:underline" target="_blank">Abrir en nueva pestaña</a>
+          </div>
+        </div>
+        <div class="flex-1 overflow-hidden">
+          <iframe id="viewer-iframe" src="about:blank" class="w-full h-full border-0"></iframe>
+        </div>
+      </div>
+    </div>
+  </main>
+</UsuarioLayout>
+
+<script type="module">
+  import { getSecciones } from '../../services/seccionService.js';
+  import { getCursoById } from '../../services/cursoService.js';
+  import { createMatricula, getMatriculasByUsuario } from '../../services/matriculaService.js';
+  import { getModulosByCurso, getModulosBySeccion } from '../../services/moduloService.js';
+  import { getContenidoByModulo } from '../../services/moduloContenidoService.js';
+  import { getActividades } from '../../services/actividadService.js';
+
+  async function showToast(msg) {
+    alert(msg);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('load', async () => {
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const id_curso = pathParts[pathParts.length - 1];
+
+      if (!id_curso) {
+        document.getElementById('secciones-container').innerHTML = '<p class="text-red-500">ID de curso inválido.</p>';
+        return;
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const isMatriculadoView = urlParams.get('matriculado') === '1';
+      
+      // Obtener id_usuario del localStorage
+      let id_usuario = null;
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        id_usuario = user.id_usuario;
+        console.log('👤 ID Usuario obtenido:', id_usuario);
+      } catch (err) {
+        console.warn('No se pudo obtener id_usuario del localStorage:', err);
+      }
+      
+      // Actualizar el enlace de "Volver"
+      if (isMatriculadoView) {
+        const volverLink = document.getElementById('volver-link');
+        const volverTexto = document.getElementById('volver-texto');
+        volverLink.href = '/usuario';
+        volverTexto.textContent = 'Volver a Mis Cursos';
+      }
+      
+      // Si venimos desde "Mis cursos" (matriculado), ocultar la sección de secciones disponibles
+      if (isMatriculadoView) {
+        const seccionesSection = document.getElementById('secciones-container')?.closest('section');
+        if (seccionesSection) seccionesSection.classList.add('hidden');
+      }
+
+      // Cargar info del curso
+      try {
+        const curso = await getCursoById(id_curso).catch(() => null);
+        if (curso) {
+          document.getElementById('curso-nombre').textContent = curso.nombre || `Curso ${id_curso}`;
+          document.getElementById('curso-descripcion').textContent = curso.descripcion || '';
+        }
+      } catch (err) {
+        console.warn('No se pudo obtener datos del curso:', err);
+      }
+
+      // Cargar módulos y contenidos
+      const modulosContainer = document.getElementById('modulos-container');
+      try {
+        let modulos = [];
+        let seccionId = null;
+        
+        // Si el alumno está matriculado, obtener solo módulos de su sección
+        if (isMatriculadoView && id_usuario) {
+          try {
+            console.log(`🔍 Obteniendo matrículas para usuario ${id_usuario}...`);
+            const matriculas = await getMatriculasByUsuario(id_usuario);
+            console.log(`✅ Matrículas obtenidas:`, matriculas);
+            const matriculaEnCurso = matriculas.find(m => m.id_curso == id_curso);
+            
+            if (matriculaEnCurso && matriculaEnCurso.id_seccion) {
+              console.log(`📚 Cargando módulos de sección: ${matriculaEnCurso.id_seccion}`);
+              seccionId = matriculaEnCurso.id_seccion;
+              modulos = await getModulosBySeccion(seccionId);
+              console.log(`✅ Módulos de sección cargados:`, modulos);
+            } else {
+              throw new Error('No se encontró matrícula en este curso');
+            }
+          } catch (err) {
+            console.warn('No se pudo obtener matrícula del alumno:', err);
+            // Fallback a módulos del curso
+            modulos = await getModulosByCurso(id_curso);
+          }
+        } else if (isMatriculadoView && !id_usuario) {
+          console.warn('⚠️ Modo matriculado pero sin id_usuario, usando fallback...');
+          // Fallback a módulos del curso si no tenemos id_usuario
+          modulos = await getModulosByCurso(id_curso);
+        } else {
+          // Si no está matriculado, mostrar todos los módulos del curso
+          modulos = await getModulosByCurso(id_curso);
+        }
+        
+        if (!Array.isArray(modulos) || modulos.length === 0) {
+          modulosContainer.innerHTML = '<p class="text-gray-600">No hay módulos disponibles aún.';
+        } else {
+          let modulosHTML = '';
+          for (const modulo of modulos) {
+            let contenidosList = [];
+            let actividadesList = [];
+            
+            try {
+              // Si tenemos seccionId, pasar para filtrar contenido de esa sección específica
+              const contenidos = await getContenidoByModulo(modulo.id_modulo, seccionId);
+              contenidosList = Array.isArray(contenidos) ? contenidos : [];
+            } catch (err) {
+              console.warn(`No se pudo obtener contenidos del módulo ${modulo.id_modulo}:`, err);
+            }
+
+            try {
+              // Obtener actividades del módulo (con filtro de sección si está disponible)
+              const filters = { id_modulo: modulo.id_modulo };
+              if (seccionId) filters.id_seccion = seccionId;
+              const actividades = await getActividades(filters);
+              actividadesList = Array.isArray(actividades) ? actividades : [];
+              console.log(`📋 Actividades del módulo ${modulo.id_modulo}:`, actividadesList);
+            } catch (err) {
+              console.warn(`No se pudo obtener actividades del módulo ${modulo.id_modulo}:`, err);
+            }
+
+            const contenidosHTML = contenidosList.length > 0
+              ? contenidosList.map(c => {
+                  return `
+                    <div class="ml-4 p-4 bg-gray-100 rounded mb-3 border-l-4 border-gray-400">
+                      <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                          <p class="text-sm font-semibold">📄 ${c.titulo || 'Contenido'}</p>
+                          <p class="text-xs text-gray-600 mt-1">${c.descripcion || ''}</p>
+                          ${c.tipo ? `<p class="text-xs text-gray-700 mt-2">Tipo: <strong>${c.tipo}</strong></p>` : ''}
+                        </div>
+                        <button onclick="window.location.href='/estudiante/contenido/${c.id_contenido}'" class="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-semibold whitespace-nowrap transition">
+                          <i class="fas fa-eye mr-1"></i> Ver Contenido
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')
+              : '<p class="ml-4 text-xs text-gray-500">Sin contenido</p>';
+
+            const actividadesHTML = actividadesList.length > 0
+              ? actividadesList.map(a => {
+                  const tipoEmoji = a.tipo === 'examen' ? '📝' : a.tipo === 'tarea' ? '✏️' : '📌';
+                  return `
+                    <div class="ml-4 p-4 bg-blue-50 rounded mb-3 border-l-4 border-blue-500">
+                      <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                          <p class="text-sm font-semibold">${tipoEmoji} ${a.titulo || 'Actividad'}</p>
+                          <p class="text-xs text-gray-600 mt-1">${a.descripcion || ''}</p>
+                          <div class="mt-2 flex gap-2">
+                            ${a.tipo ? `<p class="text-xs text-blue-600">Tipo: ${a.tipo}</p>` : ''}
+                            ${a.fecha_vencimiento ? `<p class="text-xs text-red-600">Vencimiento: ${new Date(a.fecha_vencimiento).toLocaleDateString('es-ES')}</p>` : ''}
+                          </div>
+                        </div>
+                        <button onclick="window.location.href='/estudiante/actividad/${a.id_actividad}'" class="ml-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs font-semibold whitespace-nowrap transition">
+                          <i class="fas fa-pen-square mr-1"></i> Responder
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')
+              : '';
+
+            const moduloId = `modulo-${modulo.id_modulo}`;
+            const contenidosId = `contenidos-${modulo.id_modulo}`;
+
+            modulosHTML += `
+              <div class="border rounded-lg p-4 mb-3">
+                <div class="flex justify-between items-start">
+                  <div class="flex-1">
+                  <div class="modulo-toggle cursor-pointer" data-modulo="${moduloId}">
+                      <svg class="w-5 h-5 text-purple-700 inline-block mr-2 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                      </svg>
+                      <h3 class="text-lg font-semibold text-purple-700 inline-block">${modulo.titulo || `Módulo ${modulo.orden}`}</h3>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">${modulo.descripcion || ''}</p>
+                  </div>
+                </div>
+                <div id="${contenidosId}" class="modulo-contenidos mt-3 collapsed hidden">
+                  <div class="mb-4">
+                    <h4 class="font-semibold text-purple-600 mb-2">📚 Contenido</h4>
+                    ${contenidosHTML}
+                  </div>
+                  ${actividadesHTML ? `
+                  <div>
+                    <h4 class="font-semibold text-purple-600 mb-2">📋 Actividades</h4>
+                    ${actividadesHTML}
+                  </div>
+                  ` : ''}
+                </div>
+              </div>
+            `;
+          }
+          modulosContainer.innerHTML = modulosHTML;
+
+          // Agregar event listeners a los toggles
+          document.querySelectorAll('.modulo-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+              const moduloId = this.getAttribute('data-modulo');
+              const contenidosId = `contenidos-${moduloId.replace('modulo-', '')}`;
+              const contenidosDiv = document.getElementById(contenidosId);
+              const arrow = this.querySelector('svg');
+
+              if (contenidosDiv.classList.contains('hidden')) {
+                contenidosDiv.classList.remove('hidden');
+                contenidosDiv.classList.remove('collapsed');
+                arrow.style.transform = 'rotate(90deg)';
+              } else {
+                contenidosDiv.classList.add('hidden');
+                contenidosDiv.classList.add('collapsed');
+                arrow.style.transform = 'rotate(0deg)';
+              }
+            });
+          });
+          // Event listeners para abrir contenidos en modal (same-window)
+          document.querySelectorAll('.open-content').forEach(link => {
+            link.addEventListener('click', async (ev) => {
+              ev.preventDefault();
+              const fileEnc = link.getAttribute('data-file');
+              if (!fileEnc) return;
+              const fileUrl = decodeURIComponent(fileEnc);
+              const modal = document.getElementById('content-viewer-modal');
+              const iframe = document.getElementById('viewer-iframe');
+              const download = document.getElementById('viewer-download');
+              const openraw = document.getElementById('viewer-openraw');
+              // Try candidates (direct file, actividades subfolder, root uploads) using HEAD to find existing
+              const candidates = [];
+              // if fileUrl already absolute include as first candidate
+              candidates.push(fileUrl);
+              // try versiones comunes
+              const filename = fileUrl.split('/').pop();
+              candidates.push(`http://localhost:5678/uploads/actividades/${filename}`);
+              candidates.push(`http://localhost:5678/uploads/${filename}`);
+
+              let found = null;
+              for (const cand of candidates) {
+                try {
+                  const res = await fetch(cand, { method: 'HEAD' });
+                  if (res.ok) { found = cand; break; }
+                } catch (e) {
+                  // ignore
+                }
+              }
+
+              if (!found) {
+                alert('No se encontró el archivo en el servidor (404).');
+                return;
+              }
+
+              iframe.src = found;
+              download.href = found;
+              download.setAttribute('download', found.split('/').pop());
+              openraw.href = found;
+              modal.classList.remove('hidden');
+              modal.classList.add('flex');
+            });
+          });
+
+          // Close viewer
+          const viewerClose = document.getElementById('viewer-close');
+          if (viewerClose) {
+            viewerClose.addEventListener('click', () => {
+              const modal = document.getElementById('content-viewer-modal');
+              const iframe = document.getElementById('viewer-iframe');
+              iframe.src = 'about:blank';
+              modal.classList.remove('flex');
+              modal.classList.add('hidden');
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error cargando módulos:', err);
+        modulosContainer.innerHTML = '<p class="text-red-500">No se pudieron obtener los módulos.</p>';
+      }
+
+      // Cargar secciones
+      const container = document.getElementById('secciones-container');
+      try {
+        let secciones = await getSecciones({ id_curso });
+        if (!Array.isArray(secciones) || secciones.length === 0) {
+          container.innerHTML = '<p class="text-gray-600">No hay secciones disponibles para este curso.</p>';
+          return;
+        }
+
+        window._seccionesCurso = secciones;
+
+        container.innerHTML = secciones.map(s => `
+          <div class="border rounded-lg p-4 mb-3 flex justify-between items-center">
+            <div>
+              <div class="text-lg font-semibold">${s.nombre_seccion || ('Sección ' + s.id_seccion)}</div>
+              <div class="text-sm text-gray-600">Docente: ${s.nombres_docente || ''} ${s.apellidos_docente || ''}</div>
+              <div class="text-sm text-gray-600">Modalidad: ${s.nombre_modalidad || ''} — Horario: ${s.horario || '-'}</div>
+              <div class="text-sm text-gray-500">Fechas: ${s.fecha_inicio || '-'} → ${s.fecha_fin || '-'}</div>
+            </div>
+            <div>
+              <button data-id="${s.id_seccion}" class="btn-inscribir bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                Inscribirme
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        const modal = document.getElementById('seccion-modal');
+        const modalNombre = document.getElementById('modal-seccion-nombre');
+        const modalDocente = document.getElementById('modal-seccion-docente');
+        const modalHorario = document.getElementById('modal-seccion-horario');
+        const modalFechas = document.getElementById('modal-seccion-fechas');
+        const modalModalidad = document.getElementById('modal-seccion-modalidad');
+        const modalClose = document.getElementById('modal-close');
+        const modalConfirm = document.getElementById('modal-confirm');
+
+        function openModal(seccion) {
+          modalNombre.textContent = seccion.nombre_seccion || ('Sección ' + seccion.id_seccion);
+          modalDocente.textContent = `Docente: ${seccion.nombres_docente || ''} ${seccion.apellidos_docente || ''}`;
+          modalHorario.textContent = `Horario: ${seccion.horario || '-'}`;
+          modalFechas.textContent = `Fechas: ${seccion.fecha_inicio || '-'} → ${seccion.fecha_fin || '-'}`;
+          modalModalidad.textContent = `Modalidad: ${seccion.nombre_modalidad || '-'}`;
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          modalConfirm.disabled = false;
+          modalConfirm.textContent = 'Confirmar inscripción';
+          modalConfirm.onclick = async () => {
+            modalConfirm.disabled = true;
+            modalConfirm.textContent = 'Inscribiendo...';
+            try {
+              const token = localStorage.getItem('token');
+              if (!token) { window.location.href = '/login'; return; }
+              const res = await createMatricula(seccion.id_seccion);
+              if (res.status === 409) {
+                showToast('Ya estás inscrito en esta sección.');
+                return;
+              }
+              if (!res.ok) {
+                const errBody = await res.text().catch(() => '');
+                console.error('Error al inscribir:', res.status, errBody);
+                showToast('Error al inscribir. Intenta más tarde.');
+                return;
+              }
+              showToast('Inscripción exitosa');
+              window.location.href = '/usuario';
+            } catch (err) {
+              console.error('Error en crear matrícula:', err);
+              showToast('Error al inscribir. Intenta más tarde.');
+            } finally {
+              modalConfirm.disabled = false;
+              modalConfirm.textContent = 'Confirmar inscripción';
+              modal.classList.remove('flex');
+              modal.classList.add('hidden');
+            }
+          };
+        }
+
+        function closeModal() {
+          modal.classList.remove('flex');
+          modal.classList.add('hidden');
+        }
+
+        modalClose.addEventListener('click', closeModal);
+
+        document.querySelectorAll('.btn-inscribir').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id_seccion = e.currentTarget.getAttribute('data-id');
+            const seccion = (window._seccionesCurso || []).find(s => String(s.id_seccion) === String(id_seccion));
+            if (!seccion) {
+              showToast('Sección no encontrada');
+              return;
+            }
+            openModal(seccion);
+          });
+        });
+
+      } catch (err) {
+        console.error('Error cargando secciones:', err);
+        container.innerHTML = '<p class="text-red-500">No se pudieron obtener las secciones. Intenta más tarde.</p>';
+      }
+    });
+  }
+</script>

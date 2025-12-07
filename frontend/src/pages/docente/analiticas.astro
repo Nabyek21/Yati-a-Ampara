@@ -1,0 +1,509 @@
+---
+import DocenteLayout from '../../layouts/DocenteLayout.astro';
+---
+
+<DocenteLayout title="Analíticas de Sección">
+  <main class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 p-8 overflow-y-auto">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Analíticas de Sección</h1>
+        <p class="text-gray-600">Monitoreo de desempeño académico de estudiantes</p>
+        <p id="seccion-titulo" class="text-sm text-purple-600 font-medium mt-2"></p>
+      </div>
+
+      <!-- Section Selector -->
+      <div class="mb-8 bg-white rounded-lg shadow-sm border-l-4 border-purple-500 p-6">
+        <label for="selector-seccion" class="block text-sm font-medium text-gray-700 mb-2">Seleccionar Sección</label>
+        <select id="selector-seccion" class="w-full md:w-64 px-4 py-2 bg-white border-2 border-purple-300 rounded-lg text-gray-700 focus:outline-none focus:border-purple-500 transition-colors">
+          <option value="">Cargando secciones...</option>
+        </select>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm border-l-4 border-purple-500 p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm font-medium">Total Estudiantes</p>
+              <p id="total-estudiantes" class="text-3xl font-bold text-purple-600 mt-2">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border-l-4 border-indigo-500 p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm font-medium">Promedio Sección</p>
+              <p id="promedio-seccion" class="text-3xl font-bold text-indigo-600 mt-2">0.0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border-l-4 border-purple-500 p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm font-medium">Tasa Asistencia</p>
+              <p id="asistencia-promedio" class="text-3xl font-bold text-purple-600 mt-2">0%</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border-l-4 border-indigo-500 p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm font-medium">En Riesgo</p>
+              <p id="en-riesgo" class="text-3xl font-bold text-red-600 mt-2">0</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Distribution Chart -->
+        <div class="bg-white rounded-lg shadow-sm border-l-4 border-purple-500 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-6">Distribución de Calificaciones</h3>
+          <div id="distribucion-chart" class="space-y-3">
+            <!-- 18-20 -->
+            <div>
+              <div class="flex justify-between mb-1">
+                <span class="text-sm font-medium text-gray-700">Excelente (18-20)</span>
+                <span id="dist-excelente" class="text-sm font-semibold text-green-600">0</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="dist-excelente-bar" class="bg-green-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+            <!-- 16-17 -->
+            <div>
+              <div class="flex justify-between mb-1">
+                <span class="text-sm font-medium text-gray-700">Bueno (16-17)</span>
+                <span id="dist-bueno" class="text-sm font-semibold text-blue-600">0</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="dist-bueno-bar" class="bg-blue-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+            <!-- 14-15 -->
+            <div>
+              <div class="flex justify-between mb-1">
+                <span class="text-sm font-medium text-gray-700">Satisfactorio (14-15)</span>
+                <span id="dist-satisfactorio" class="text-sm font-semibold text-amber-600">0</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="dist-satisfactorio-bar" class="bg-amber-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+            <!-- 12-13 -->
+            <div>
+              <div class="flex justify-between mb-1">
+                <span class="text-sm font-medium text-gray-700">Aprobado (12-13)</span>
+                <span id="dist-deficiente" class="text-sm font-semibold text-cyan-600">0</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="dist-deficiente-bar" class="bg-cyan-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+            <!-- <12 -->
+            <div>
+              <div class="flex justify-between mb-1">
+                <span class="text-sm font-medium text-gray-700">Reprobado (&lt;12)</span>
+                <span id="dist-insuficiente" class="text-sm font-semibold text-red-600">0</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="dist-insuficiente-bar" class="bg-red-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance by Type -->
+        <div class="bg-white rounded-lg shadow-sm border-l-4 border-indigo-500 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-6">Rendimiento por Tipo de Evaluación</h3>
+          <div id="evaluacion-chart" class="space-y-4">
+            <!-- Tareas -->
+            <div>
+              <div class="flex justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Tareas</span>
+                <span id="eval-tareas" class="text-sm font-semibold text-purple-600">0.0</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-3">
+                <div id="eval-tareas-bar" class="bg-purple-500 h-3 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+            <!-- Exámenes -->
+            <div>
+              <div class="flex justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Exámenes</span>
+                <span id="eval-examenes" class="text-sm font-semibold text-indigo-600">0.0</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-3">
+                <div id="eval-examenes-bar" class="bg-indigo-500 h-3 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+            <!-- Participación -->
+            <div>
+              <div class="flex justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Participación</span>
+                <span id="eval-participacion" class="text-sm font-semibold text-cyan-600">0.0</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-3">
+                <div id="eval-participacion-bar" class="bg-cyan-500 h-3 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="mb-6 flex gap-4">
+        <select id="filtro-estado" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:border-purple-500">
+          <option value="">Todos los estados</option>
+          <option value="Aprobado">Aprobado</option>
+          <option value="En Proceso">En Proceso</option>
+          <option value="En Riesgo">En Riesgo</option>
+          <option value="Sin Calificación">Sin Calificación</option>
+        </select>
+      </div>
+
+      <!-- Students Table -->
+      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
+              <tr>
+                <th class="px-6 py-4 text-left text-sm font-semibold">#</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold">Estudiante</th>
+                <th class="px-6 py-4 text-center text-sm font-semibold">Nota</th>
+                <th class="px-6 py-4 text-center text-sm font-semibold">Nota Final</th>
+                <th class="px-6 py-4 text-center text-sm font-semibold">Promedio Act.</th>
+                <th class="px-6 py-4 text-center text-sm font-semibold">Exámenes</th>
+                <th class="px-6 py-4 text-center text-sm font-semibold">Tareas</th>
+                <th class="px-6 py-4 text-center text-sm font-semibold">Asistencia</th>
+                <th class="px-6 py-4 text-center text-sm font-semibold">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="analiticas-tabla" class="divide-y divide-gray-200">
+              <tr>
+                <td colspan="9" class="px-6 py-8 text-center text-gray-500">Selecciona una sección para ver datos</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Detalles de Estudiante -->
+    <div id="modal-estudiante" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
+        <div class="sticky top-0 bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-6 flex justify-between items-center">
+          <h2 id="modal-titulo" class="text-xl font-semibold"></h2>
+          <button onclick="cerrarModalEstudiante()" class="text-2xl font-bold hover:text-gray-200">&times;</button>
+        </div>
+        <div class="p-6">
+          <div id="modal-contenido"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</DocenteLayout>
+
+<script type="module">
+const API_URL = 'http://localhost:4000/api';
+
+function getEstadoColor(estado) {
+  const estadoLower = (estado || '').toLowerCase();
+  if (estadoLower.includes('aprobado')) return 'bg-green-100 text-green-800';
+  if (estadoLower.includes('riesgo')) return 'bg-red-100 text-red-800';
+  if (estadoLower.includes('proceso')) return 'bg-amber-100 text-amber-800';
+  if (estadoLower.includes('sin calificación')) return 'bg-gray-100 text-gray-800';
+  return 'bg-gray-100 text-gray-800';
+}
+
+function getProgressColor(nota) {
+  // Nota sobre 20: 18-20 verde, 16-17 azul, 14-15 ámbar, 12-13 cian, <12 rojo
+  const n = parseFloat(nota) || 0;
+  if (n >= 18) return 'bg-green-100 text-green-700';
+  if (n >= 16) return 'bg-blue-100 text-blue-700';
+  if (n >= 14) return 'bg-amber-100 text-amber-700';
+  if (n >= 12) return 'bg-cyan-100 text-cyan-700';
+  if (n > 0) return 'bg-red-100 text-red-700';
+  return 'bg-gray-100 text-gray-700';
+}
+
+function formatEstudiante(nombres, apellidos) {
+  return `${nombres} ${apellidos}`;
+}
+
+async function cargarSecciones() {
+  try {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      console.error('No hay token en localStorage');
+      document.getElementById('selector-seccion').innerHTML = '<option value="">No autenticado - por favor inicia sesión</option>';
+      return;
+    }
+
+    console.log('Token obtenido:', token.substring(0, 20) + '...');
+    
+    const res = await fetch(`${API_URL}/secciones/docente/mis-secciones`, {
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(`HTTP ${res.status}: ${errorData.message || res.statusText}`);
+    }
+    
+    const secciones = await res.json();
+    const selector = document.getElementById('selector-seccion');
+    
+    if (Array.isArray(secciones) && secciones.length > 0) {
+      selector.innerHTML = secciones.map(s => 
+        `<option value="${s.id_seccion}">${s.nombre_curso} ${s.id_seccion}</option>`
+      ).join('');
+      
+      // Auto-load first section
+      const primerSeccion = secciones[0];
+      window.seccionesData = secciones;
+      actualizarTituloSeccion(primerSeccion);
+      cargarAnaliticas(primerSeccion.id_seccion);
+    } else {
+      selector.innerHTML = '<option value="">No hay secciones disponibles</option>';
+    }
+  } catch (error) {
+    console.error('Error cargando secciones:', error);
+    document.getElementById('selector-seccion').innerHTML = '<option value="">Error: ' + error.message + '</option>';
+  }
+}
+
+function actualizarTituloSeccion(seccion) {
+  const titulo = document.getElementById('seccion-titulo');
+  if (seccion && seccion.nombre_curso && seccion.id_seccion) {
+    titulo.textContent = `Sección: ${seccion.nombre_curso} ${seccion.id_seccion}`;
+  }
+}
+
+async function cargarAnaliticas(id_seccion) {
+  if (!id_seccion) return;
+  
+  try {
+    const res = await fetch(`${API_URL}/secciones/${id_seccion}/estadisticas`);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await res.text();
+      console.error('Response is not JSON:', text);
+      throw new Error(`Expected JSON but got: ${contentType}`);
+    }
+
+    const data = await res.json();
+    
+    if (!Array.isArray(data) || data.length === 0) {
+      document.getElementById('analiticas-tabla').innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-gray-500">No hay datos de analíticas para esta sección.</td></tr>';
+      resetStats();
+      return;
+    }
+
+    // Calculate summary stats
+    const totalEstudiantes = data.length;
+    const promedioSeccion = data.reduce((sum, est) => sum + (parseFloat(est.nota_final) || 0), 0) / totalEstudiantes || 0;
+    const asistenciaPromedio = data.reduce((sum, est) => sum + (parseFloat(est.asistencia) || 0), 0) / totalEstudiantes || 0;
+    const enRiesgo = data.filter(est => (est.estado_academico || '').toLowerCase().includes('riesgo')).length;
+
+    document.getElementById('total-estudiantes').textContent = totalEstudiantes;
+    document.getElementById('promedio-seccion').textContent = promedioSeccion.toFixed(1);
+    document.getElementById('asistencia-promedio').textContent = Math.round(asistenciaPromedio) + '%';
+    document.getElementById('en-riesgo').textContent = enRiesgo;
+
+    // Calculate distribution
+    const distribucion = {
+      excelente: data.filter(e => parseFloat(e.nota_final) >= 18).length,
+      bueno: data.filter(e => parseFloat(e.nota_final) >= 16 && parseFloat(e.nota_final) < 18).length,
+      satisfactorio: data.filter(e => parseFloat(e.nota_final) >= 14 && parseFloat(e.nota_final) < 16).length,
+      deficiente: data.filter(e => parseFloat(e.nota_final) >= 12 && parseFloat(e.nota_final) < 14).length,
+      insuficiente: data.filter(e => parseFloat(e.nota_final) > 0 && parseFloat(e.nota_final) < 12).length,
+      noCalificado: data.filter(e => !e.nota_final).length
+    };
+
+    // Update distribution bars
+    const total = totalEstudiantes;
+    document.getElementById('dist-excelente').textContent = distribucion.excelente;
+    document.getElementById('dist-excelente-bar').style.width = ((distribucion.excelente / total) * 100) + '%';
+    document.getElementById('dist-bueno').textContent = distribucion.bueno;
+    document.getElementById('dist-bueno-bar').style.width = ((distribucion.bueno / total) * 100) + '%';
+    document.getElementById('dist-satisfactorio').textContent = distribucion.satisfactorio;
+    document.getElementById('dist-satisfactorio-bar').style.width = ((distribucion.satisfactorio / total) * 100) + '%';
+    document.getElementById('dist-deficiente').textContent = distribucion.deficiente;
+    document.getElementById('dist-deficiente-bar').style.width = ((distribucion.deficiente / total) * 100) + '%';
+    document.getElementById('dist-insuficiente').textContent = distribucion.insuficiente + distribucion.noCalificado;
+    document.getElementById('dist-insuficiente-bar').style.width = (((distribucion.insuficiente + distribucion.noCalificado) / total) * 100) + '%';
+
+    // Calculate evaluation performance (simulated based on available data)
+    const promTareas = data.reduce((sum, e) => {
+      if (e.tareas_enviadas > 0) return sum + 15;
+      return sum;
+    }, 0) / totalEstudiantes;
+    
+    const promExamenes = data.reduce((sum, e) => {
+      if (e.examenes_totales > 0) {
+        return sum + (e.examenes_aprobados / e.examenes_totales * 20);
+      }
+      return sum;
+    }, 0) / totalEstudiantes;
+
+    const promParticipacion = asistenciaPromedio;
+
+    document.getElementById('eval-tareas').textContent = promTareas.toFixed(1);
+    document.getElementById('eval-tareas-bar').style.width = ((promTareas / 20) * 100) + '%';
+    document.getElementById('eval-examenes').textContent = promExamenes.toFixed(1);
+    document.getElementById('eval-examenes-bar').style.width = ((promExamenes / 20) * 100) + '%';
+    document.getElementById('eval-participacion').textContent = promParticipacion.toFixed(1);
+    document.getElementById('eval-participacion-bar').style.width = ((promParticipacion / 100) * 100) + '%';
+
+    // Build table rows
+    const tabla = document.getElementById('analiticas-tabla');
+    tabla.innerHTML = data.map((est, i) => `
+      <tr class="hover:bg-purple-50 transition-colors cursor-pointer" onclick="abrirDetallesEstudiante(${i}, ${JSON.stringify(est).replace(/"/g, '&quot;')})">
+        <td class="px-6 py-4 text-sm text-gray-600">${i + 1}</td>
+        <td class="px-6 py-4 text-sm font-medium text-gray-900">${formatEstudiante(est.nombres, est.apellidos)}</td>
+        <td class="px-6 py-4 text-center">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold ${getProgressColor(est.nota_final)}">
+            ${est.nota_final ?? 'S/C'}
+          </span>
+        </td>
+        <td class="px-6 py-4 text-center text-sm font-semibold text-gray-900">${est.nota_final ?? '-'}</td>
+        <td class="px-6 py-4 text-center text-sm font-semibold text-gray-900">${est.promedio_actividades ?? '-'}</td>
+        <td class="px-6 py-4 text-center text-sm text-gray-700">${est.examenes_aprobados ?? 0}/${est.examenes_totales ?? 0}</td>
+        <td class="px-6 py-4 text-center text-sm text-gray-700">${est.tareas_enviadas ?? 0}</td>
+        <td class="px-6 py-4 text-center text-sm text-gray-700">${est.asistencia ?? '-'}%</td>
+        <td class="px-6 py-4 text-center">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold ${getEstadoColor(est.estado_academico)}">
+            ${est.estado_academico || 'N/A'}
+          </span>
+        </td>
+      </tr>
+    `).join('');
+
+    // Filter functionality
+    const filtroEstado = document.getElementById('filtro-estado');
+    filtroEstado.addEventListener('change', () => {
+      const filtro = filtroEstado.value.toLowerCase();
+      const filas = tabla.querySelectorAll('tr');
+      filas.forEach(fila => {
+        if (!filtro) {
+          fila.style.display = '';
+        } else {
+          const estado = fila.cells[8]?.textContent.toLowerCase() || '';
+          fila.style.display = estado.includes(filtro) ? '' : 'none';
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error cargando analíticas:', error);
+    document.getElementById('analiticas-tabla').innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-red-500">Error al cargar datos.</td></tr>';
+  }
+}
+
+function resetStats() {
+  document.getElementById('total-estudiantes').textContent = '0';
+  document.getElementById('promedio-seccion').textContent = '0.0';
+  document.getElementById('asistencia-promedio').textContent = '0%';
+  document.getElementById('en-riesgo').textContent = '0';
+  
+  // Reset bars
+  ['dist-excelente', 'dist-bueno', 'dist-satisfactorio', 'dist-deficiente', 'dist-insuficiente'].forEach(id => {
+    document.getElementById(`${id}-bar`).style.width = '0%';
+    document.getElementById(id).textContent = '0';
+  });
+  
+  ['eval-tareas', 'eval-examenes', 'eval-participacion'].forEach(id => {
+    document.getElementById(`${id}-bar`).style.width = '0%';
+    document.getElementById(id).textContent = '0.0';
+  });
+}
+
+function abrirDetallesEstudiante(indice, estudiante) {
+  const modal = document.getElementById('modal-estudiante');
+  const titulo = document.getElementById('modal-titulo');
+  const contenido = document.getElementById('modal-contenido');
+  
+  titulo.textContent = `${estudiante.nombres} ${estudiante.apellidos}`;
+  
+  contenido.innerHTML = `
+    <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+          <p class="text-sm text-gray-600">Nota Final</p>
+          <p class="text-2xl font-bold text-purple-600">${estudiante.nota_final || '-'}</p>
+        </div>
+        <div class="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500">
+          <p class="text-sm text-gray-600">Promedio Actividades</p>
+          <p class="text-2xl font-bold text-indigo-600">${estudiante.promedio_actividades || '-'}</p>
+        </div>
+        <div class="bg-cyan-50 p-4 rounded-lg border-l-4 border-cyan-500">
+          <p class="text-sm text-gray-600">Progreso</p>
+          <p class="text-2xl font-bold text-cyan-600">${estudiante.progreso}%</p>
+        </div>
+        <div class="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-500">
+          <p class="text-sm text-gray-600">Asistencia</p>
+          <p class="text-2xl font-bold text-orange-600">${estudiante.asistencia}%</p>
+        </div>
+      </div>
+      
+      <div class="border-t pt-4">
+        <h3 class="font-semibold text-gray-900 mb-3">Evaluaciones</h3>
+        <div class="space-y-2 text-sm">
+          <p><span class="font-medium text-gray-700">Exámenes:</span> ${estudiante.examenes_aprobados}/${estudiante.examenes_totales} aprobados</p>
+          <p><span class="font-medium text-gray-700">Tareas Enviadas:</span> ${estudiante.tareas_enviadas}</p>
+          <p><span class="font-medium text-gray-700">Estado Académico:</span> 
+            <span class="px-2 py-1 rounded-full text-xs font-semibold ${getEstadoColor(estudiante.estado_academico)}">
+              ${estudiante.estado_academico}
+            </span>
+          </p>
+        </div>
+      </div>
+      
+      <div class="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 text-sm text-blue-900">
+        <p><strong>Nota:</strong> Haz clic en una fila para ver más detalles del estudiante.</p>
+      </div>
+    </div>
+  `;
+  
+  modal.classList.remove('hidden');
+}
+
+function cerrarModalEstudiante() {
+  const modal = document.getElementById('modal-estudiante');
+  modal.classList.add('hidden');
+}
+
+// Cerrar modal al hacer clic afuera
+document.getElementById('modal-estudiante')?.addEventListener('click', (e) => {
+  if (e.target.id === 'modal-estudiante') {
+    cerrarModalEstudiante();
+  }
+});
+
+// Event listeners
+document.getElementById('selector-seccion').addEventListener('change', (e) => {
+  const id_seccion = e.target.value;
+  const seccionData = window.seccionesData?.find(s => s.id_seccion == id_seccion);
+  if (seccionData) {
+    actualizarTituloSeccion(seccionData);
+  }
+  cargarAnaliticas(id_seccion);
+});
+
+// Initial load
+cargarSecciones();
+</script>

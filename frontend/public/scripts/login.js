@@ -14,9 +14,16 @@ form.addEventListener("submit", async (e) => {
 
     const rol = data.usuario.rol;
 
-    if (rol === 1) window.location.href = "/admin";
-    else if (rol === 2) window.location.href = "/docente";
-    else window.location.href = "/cursos";
+    if (rol === 1) {
+      // Administrador
+      window.location.href = "/admin";
+    } else if (rol === 2) {
+      // Docente
+      window.location.href = "/docente";
+    } else {
+      // Usuario/Estudiante (rol 3)
+      window.location.href = "/usuario";
+    }
 
   } catch (err) {
     msg.textContent = err.message;

@@ -1,9 +1,14 @@
 // astro.config.mjs
 import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
+import node from "@astrojs/node";
 import fs from "fs";
 
 export default defineConfig({
+  output: "server",
+  adapter: node({
+    mode: "standalone",
+  }),
   integrations: [tailwind()],
   vite: {
     server: {

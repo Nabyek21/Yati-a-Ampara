@@ -1,0 +1,338 @@
+---
+// Componente para mostrar resumen de contenido generado por IA
+interface Props {
+  title?: string;
+  loading?: boolean;
+}
+
+const { title = 'Resumen del Curso', loading = false } = Astro.props;
+---
+
+<div class="resumen-contenedor">
+  {loading && (
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Generando resumen con IA...</p>
+    </div>
+  )}
+
+  {!loading && (
+    <div class="resumen-card">
+      <h2 class="resumen-titulo">{title}</h2>
+      
+      <div id="resumen-content" class="resumen-content">
+        <!-- El contenido se llenará con JavaScript -->
+        <p class="text-gray-500">Presiona el botón para generar resumen</p>
+      </div>
+
+      <div class="resumen-acciones">
+        <button 
+          id="btn-generar-resumen" 
+          class="btn btn-primary"
+        >
+          <i class="fas fa-magic mr-2"></i>
+          Generar Resumen IA
+        </button>
+        <button 
+          id="btn-copiar-resumen" 
+          class="btn btn-secondary hidden"
+        >
+          <i class="fas fa-copy mr-2"></i>
+          Copiar
+        </button>
+        <button 
+          id="btn-descargar-resumen" 
+          class="btn btn-secondary hidden"
+        >
+          <i class="fas fa-download mr-2"></i>
+          Descargar
+        </button>
+      </div>
+    </div>
+  )}
+</div>
+
+<style is:global>
+.resumen-contenedor {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 8px;
+  gap: 15px;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #7c3aed;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.resumen-card {
+  background: white;
+  border-radius: 12px;
+  border-left: 4px solid #7c3aed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.resumen-titulo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resumen-titulo::before {
+  content: '✨';
+  font-size: 1.3rem;
+}
+
+.resumen-content {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.resumen-content h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #7c3aed;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resumen-content h3:first-child {
+  margin-top: 0;
+}
+
+.resumen-content ul,
+.resumen-content ol {
+  margin: 10px 0 10px 20px;
+}
+
+.resumen-content li {
+  margin: 6px 0;
+}
+
+.resumen-content p {
+  margin: 10px 0;
+}
+
+.resumen-acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background: #d1d5db;
+}
+
+.btn-secondary.hidden {
+  display: none;
+}
+
+.resumen-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.stat-item {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  padding: 12px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0c4a6e;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+@media (max-width: 768px) {
+  .resumen-card {
+    padding: 16px;
+  }
+
+  .resumen-acciones {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>
+
+<script>
+  import { resumirCurso, resumirActividades } from '../../services/iaService.js';
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const btnGenerar = document.getElementById('btn-generar-resumen');
+    const btnCopiar = document.getElementById('btn-copiar-resumen');
+    const btnDescargar = document.getElementById('btn-descargar-resumen');
+    const resumenContent = document.getElementById('resumen-content');
+
+    if (!btnGenerar) return;
+
+    btnGenerar.addEventListener('click', async () => {
+      try {
+        // Obtener ID del curso desde la URL
+        const pathParts = window.location.pathname.split('/');
+        const idCurso = pathParts[pathParts.length - 1];
+
+        if (!idCurso || isNaN(idCurso)) {
+          alert('No se puede determinar el curso actual');
+          return;
+        }
+
+        btnGenerar.disabled = true;
+        btnGenerar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generando...';
+
+        const resultado = await resumirCurso(parseInt(idCurso));
+        const resumen = resultado.resumen;
+
+        // Construir el HTML del resumen
+        let html = '';
+
+        if (resumen.resumen) {
+          html += `<p><strong>Resumen:</strong> ${resumen.resumen}</p>`;
+        }
+
+        if (resumen.temas_principales && resumen.temas_principales.length > 0) {
+          html += '<h3>📚 Temas Principales</h3><ul>';
+          resumen.temas_principales.forEach(tema => {
+            html += `<li>${tema}</li>`;
+          });
+          html += '</ul>';
+        }
+
+        if (resumen.objetivos_aprendizaje && resumen.objetivos_aprendizaje.length > 0) {
+          html += '<h3>🎯 Objetivos de Aprendizaje</h3><ul>';
+          resumen.objetivos_aprendizaje.forEach(obj => {
+            html += `<li>${obj}</li>`;
+          });
+          html += '</ul>';
+        }
+
+        if (resumen.habilidades_desarrolladas && resumen.habilidades_desarrolladas.length > 0) {
+          html += '<h3>💪 Habilidades a Desarrollar</h3><ul>';
+          resumen.habilidades_desarrolladas.forEach(hab => {
+            html += `<li>${hab}</li>`;
+          });
+          html += '</ul>';
+        }
+
+        if (resumen.tiempo_estimado) {
+          html += `<h3>⏱️ Tiempo Estimado</h3><p>${resumen.tiempo_estimado}</p>`;
+        }
+
+        if (resumen.nivel_dificultad) {
+          html += `<h3>📊 Nivel de Dificultad</h3><p><strong>${resumen.nivel_dificultad.charAt(0).toUpperCase() + resumen.nivel_dificultad.slice(1)}</strong></p>`;
+        }
+
+        if (resumen.sugerencias_estudio && resumen.sugerencias_estudio.length > 0) {
+          html += '<h3>💡 Sugerencias de Estudio</h3><ul>';
+          resumen.sugerencias_estudio.forEach(sug => {
+            html += `<li>${sug}</li>`;
+          });
+          html += '</ul>';
+        }
+
+        resumenContent.innerHTML = html;
+
+        // Mostrar botones de acciones
+        btnCopiar.classList.remove('hidden');
+        btnDescargar.classList.remove('hidden');
+
+        btnGenerar.innerHTML = '<i class="fas fa-magic mr-2"></i>Regenerar Resumen';
+      } catch (error) {
+        console.error('Error:', error);
+        resumenContent.innerHTML = `<p class="text-red-500">Error al generar resumen: ${error.message}</p>`;
+      } finally {
+        btnGenerar.disabled = false;
+      }
+    });
+
+    btnCopiar.addEventListener('click', () => {
+      const texto = resumenContent.innerText;
+      navigator.clipboard.writeText(texto).then(() => {
+        alert('Resumen copiado al portapapeles');
+      });
+    });
+
+    btnDescargar.addEventListener('click', () => {
+      const contenido = resumenContent.innerText;
+      const elemento = document.createElement('a');
+      elemento.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(contenido));
+      elemento.setAttribute('download', 'resumen-curso.txt');
+      elemento.style.display = 'none';
+      document.body.appendChild(elemento);
+      elemento.click();
+      document.body.removeChild(elemento);
+    });
+  });
+</script>

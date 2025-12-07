@@ -1,0 +1,249 @@
+---
+import DocenteLayout from '../../../layouts/DocenteLayout.astro';
+import DocenteHeader from '../../../components/DocenteHeader.astro';
+
+export const prerender = false;
+---
+
+<DocenteLayout title="Calificaciones del Estudiante - Yatiña">
+  <DocenteHeader>Historial de Calificaciones</DocenteHeader>
+  <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <div class="mb-4">
+      <a href="javascript:history.back()" class="text-purple-600 hover:text-purple-800 flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Volver
+      </a>
+    </div>
+
+    <!-- Información del Estudiante -->
+    <section class="bg-white rounded-lg shadow p-6 mb-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <h1 id="estudiante-nombre" class="text-3xl font-bold text-purple-800">Cargando...</h1>
+          <p id="estudiante-correo" class="text-gray-600 mt-2"></p>
+          <p id="estudiante-matricula" class="text-gray-600 text-sm mt-1"></p>
+        </div>
+        <div class="text-right">
+          <p class="text-sm text-gray-600">Promedio General</p>
+          <p id="promedio-general" class="text-4xl font-bold text-purple-600">0.0</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tabla de Calificaciones -->
+    <section class="bg-white rounded-lg shadow overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-purple-600 text-white">
+            <tr>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Actividad</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Tipo</th>
+              <th class="px-6 py-3 text-center text-sm font-semibold">Puntaje Máx</th>
+              <th class="px-6 py-3 text-center text-sm font-semibold">Puntaje Obtenido</th>
+              <th class="px-6 py-3 text-center text-sm font-semibold">Porcentaje</th>
+              <th class="px-6 py-3 text-center text-sm font-semibold">Calificación</th>
+              <th class="px-6 py-3 text-center text-sm font-semibold">Fecha</th>
+            </tr>
+          </thead>
+          <tbody id="calificaciones-tabla" class="divide-y divide-gray-200">
+            <tr>
+              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                <p>Cargando calificaciones...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+      <div class="bg-white rounded-lg shadow p-6">
+        <p class="text-gray-600 text-sm font-semibold">Total de Actividades</p>
+        <p id="total-actividades" class="text-3xl font-bold text-purple-600 mt-2">0</p>
+      </div>
+      <div class="bg-white rounded-lg shadow p-6">
+        <p class="text-gray-600 text-sm font-semibold">Actividades Aprobadas</p>
+        <p id="actividades-aprobadas" class="text-3xl font-bold text-green-600 mt-2">0</p>
+      </div>
+      <div class="bg-white rounded-lg shadow p-6">
+        <p class="text-gray-600 text-sm font-semibold">Actividades Pendientes</p>
+        <p id="actividades-pendientes" class="text-3xl font-bold text-amber-600 mt-2">0</p>
+      </div>
+      <div class="bg-white rounded-lg shadow p-6">
+        <p class="text-gray-600 text-sm font-semibold">Puntos Totales</p>
+        <p id="puntos-totales" class="text-3xl font-bold text-blue-600 mt-2">0 / 0</p>
+      </div>
+    </div>
+
+    <style>
+      .calificacion-excelente {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      
+      .calificacion-buena {
+        background-color: #dbeafe;
+        color: #0c4a6e;
+      }
+      
+      .calificacion-satisfactoria {
+        background-color: #fef3c7;
+        color: #92400e;
+      }
+      
+      .calificacion-regular {
+        background-color: #ffedd5;
+        color: #9a3412;
+      }
+      
+      .calificacion-baja {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+
+      .calificacion-pendiente {
+        background-color: #f3f4f6;
+        color: #6b7280;
+      }
+    </style>
+  </main>
+</DocenteLayout>
+
+<script type="module">
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      // Obtener ID de matrícula desde la URL
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const id_matricula = pathParts[pathParts.length - 1];
+
+      if (!id_matricula) {
+        document.getElementById('calificaciones-tabla').innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-red-500 text-center">ID de matrícula inválido</td></tr>';
+        return;
+      }
+
+      // Validar token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      // Importar servicio centralizado - Desde /public/services/
+      let obtenerCalificacionesEstudiante, obtenerEtiquetaCalificacion, obtenerClaseCalificacion, calcularPorcentaje, calcularPromedioPonderado, obtenerDesglosePorTipo, obtenerConfiguracionPesos, calcularPromedioPonderadoDinamico;
+      
+      try {
+        const module = await import('/services/calificacionesService.js');
+        obtenerCalificacionesEstudiante = module.obtenerCalificacionesEstudiante;
+        obtenerEtiquetaCalificacion = module.obtenerEtiquetaCalificacion;
+        obtenerClaseCalificacion = module.obtenerClaseCalificacion;
+        calcularPorcentaje = module.calcularPorcentaje;
+        calcularPromedioPonderado = module.calcularPromedioPonderado;
+        obtenerDesglosePorTipo = module.obtenerDesglosePorTipo;
+        obtenerConfiguracionPesos = module.obtenerConfiguracionPesos;
+        calcularPromedioPonderadoDinamico = module.calcularPromedioPonderadoDinamico;
+      } catch (importError) {
+        console.error('Error al importar servicio de calificaciones:', importError);
+        document.getElementById('calificaciones-tabla').innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-red-500 text-center">Error: No se pudo cargar el servicio de calificaciones. Por favor, recarga la página.</td></tr>`;
+        throw importError;
+      }
+
+      // Cargar calificaciones del estudiante
+      console.log('🔄 Cargando calificaciones para matrícula:', id_matricula);
+      const notas = await obtenerCalificacionesEstudiante(id_matricula);
+      console.log('✅ Calificaciones cargadas:', notas);
+
+      if (!Array.isArray(notas) || notas.length === 0) {
+        document.getElementById('calificaciones-tabla').innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-gray-500 text-center">No hay calificaciones registradas</td></tr>';
+        
+        // Mostrar datos básicos
+        document.getElementById('estudiante-nombre').textContent = 'Estudiante';
+        document.getElementById('estudiante-correo').textContent = '';
+        document.getElementById('estudiante-matricula').textContent = `Matrícula: ${id_matricula}`;
+        document.getElementById('promedio-general').textContent = '0.0';
+        
+        return;
+      }
+
+      // Calcular estadísticas
+      const totalActividades = notas.length;
+      const actividadesAprobadas = notas.filter(n => calcularPorcentaje(n.puntaje_obtenido, n.puntaje_maximo) >= 60).length;
+      const actividadesPendientes = notas.filter(n => !n.puntaje_obtenido).length;
+      const puntajeTotalObtenido = notas.reduce((sum, n) => sum + (parseFloat(n.puntaje_obtenido) || 0), 0);
+      const puntajeTotalMaximo = notas.reduce((sum, n) => sum + (parseFloat(n.puntaje_maximo) || 0), 0);
+      
+      // OBTENER CONFIGURACIÓN DE PESOS Y USAR PROMEDIO PONDERADO DINÁMICO
+      let promedioGeneral = 0;
+      try {
+        // Si las notas incluyen id_seccion, usarlo
+        const id_seccion = notas[0]?.id_seccion;
+        const config = await obtenerConfiguracionPesos(id_seccion);
+        promedioGeneral = calcularPromedioPonderadoDinamico(notas, config);
+        console.log('📊 Promedio Ponderado Dinámico calculado:', promedioGeneral);
+        console.log('⚙️ Config usada:', config);
+      } catch (configError) {
+        console.warn('⚠️ No se pudo obtener configuración, usando promedio estático:', configError);
+        promedioGeneral = calcularPromedioPonderado(notas);
+      }
+      console.log('📋 Desglose:', obtenerDesglosePorTipo(notas));
+
+      // Actualizar información del estudiante
+      if (notas[0]) {
+        if (notas[0].estudiante) {
+          document.getElementById('estudiante-nombre').textContent = `${notas[0].estudiante.nombres || ''} ${notas[0].estudiante.apellidos || ''}`.trim();
+          document.getElementById('estudiante-correo').textContent = notas[0].estudiante.correo || '';
+        } else if (notas[0].nombre_estudiante) {
+          document.getElementById('estudiante-nombre').textContent = notas[0].nombre_estudiante;
+          document.getElementById('estudiante-correo').textContent = notas[0].correo_estudiante || '';
+        }
+      }
+      document.getElementById('estudiante-matricula').textContent = `Matrícula: ${id_matricula}`;
+      document.getElementById('promedio-general').textContent = promedioGeneral.toFixed(1);
+
+      // Actualizar estadísticas
+      document.getElementById('total-actividades').textContent = totalActividades;
+      document.getElementById('actividades-aprobadas').textContent = actividadesAprobadas;
+      document.getElementById('actividades-pendientes').textContent = actividadesPendientes;
+      document.getElementById('puntos-totales').textContent = `${puntajeTotalObtenido.toFixed(1)} / ${puntajeTotalMaximo}`;
+
+      // Renderizar tabla de calificaciones
+      const tabla = document.getElementById('calificaciones-tabla');
+      tabla.innerHTML = notas.map(nota => {
+        let puntajeObt = parseFloat(nota.puntaje_obtenido) || 0;
+        let puntajeMax = parseFloat(nota.puntaje_maximo) || 0;
+        
+        // ARREGLO: Si puntaje máximo es 0 pero obtenido tiene valor, están invertidos
+        if (puntajeMax === 0 && puntajeObt > 0) {
+          console.warn(`⚠️ Datos invertidos detectados en ${nota.nombre_actividad}: intercambiando...`);
+          [puntajeObt, puntajeMax] = [puntajeMax, puntajeObt];
+        }
+        
+        const porcentaje = calcularPorcentaje(puntajeObt, puntajeMax);
+        const calificacion = obtenerEtiquetaCalificacion(puntajeObt, puntajeMax);
+        const claseCalificacion = obtenerClaseCalificacion(puntajeObt, puntajeMax);
+        const fecha = nota.fecha_calificacion ? new Date(nota.fecha_calificacion).toLocaleDateString('es-ES') : 'N/A';
+
+        return `
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4 text-sm font-medium text-gray-900">${nota.nombre_actividad || 'Actividad'}</td>
+            <td class="px-6 py-4 text-sm text-gray-700">${nota.tipo || '-'}</td>
+            <td class="px-6 py-4 text-center text-sm font-semibold text-purple-600">${puntajeMax}</td>
+            <td class="px-6 py-4 text-center text-sm font-bold">${puntajeObt > 0 ? puntajeObt : '-'}</td>
+            <td class="px-6 py-4 text-center text-sm font-semibold">${porcentaje}%</td>
+            <td class="px-6 py-4 text-center">
+              <span class="px-3 py-1 rounded-full font-semibold text-sm ${claseCalificacion}">
+                ${calificacion}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center text-sm text-gray-600">${fecha}</td>
+          </tr>
+        `;
+      }).join('');
+
+    } catch (error) {
+      console.error('❌ Error al cargar calificaciones:', error);
+      document.getElementById('calificaciones-tabla').innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-red-500 text-center">Error: ${error.message}</td></tr>`;
+    }
+  });
+</script>

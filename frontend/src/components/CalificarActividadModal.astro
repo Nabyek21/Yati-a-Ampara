@@ -1,0 +1,450 @@
+---
+// CalificarActividadModal.astro
+// Modal para que los docentes califiquen las respuestas de estudiantes
+---
+
+<div id="calificar-actividad-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-5 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-4 border-b">
+      <h3 class="text-xl font-bold text-gray-900">Calificar Actividad</h3>
+      <button id="close-calificar-modal" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <div class="mt-4 grid grid-cols-3 gap-4 mb-6">
+      <!-- Información de la actividad -->
+      <div class="col-span-3 bg-purple-50 rounded-lg p-4 border border-purple-200">
+        <div class="grid grid-cols-4 gap-4">
+          <div>
+            <p class="text-xs text-gray-600">Actividad</p>
+            <p class="font-bold text-gray-800" id="cal-actividad-titulo">-</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-600">Tipo</p>
+            <p class="font-bold text-purple-600" id="cal-actividad-tipo">-</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-600">Puntaje Máximo</p>
+            <p class="font-bold text-green-600" id="cal-actividad-puntaje">-</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-600">Total Respuestas</p>
+            <p class="font-bold text-blue-600" id="cal-total-respuestas">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="col-span-3">
+        <div class="flex gap-2 items-center">
+          <select id="cal-filtro-estado" class="px-3 py-2 border border-gray-300 rounded-md text-sm">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente de calificar</option>
+            <option value="calificado">Calificado</option>
+          </select>
+          <input type="text" id="cal-filtro-estudiante" placeholder="Buscar estudiante..." class="px-3 py-2 border border-gray-300 rounded-md text-sm flex-1">
+          <button id="cal-btn-filtrar" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm">
+            <i class="fas fa-filter mr-1"></i> Filtrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de respuestas por calificar -->
+    <div class="mb-4 max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-100 sticky top-0">
+          <tr class="border-b">
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Estudiante</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Pregunta</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Respuesta</th>
+            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700">Puntaje</th>
+            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700">Estado</th>
+            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="cal-respuestas-lista">
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+              <i class="fas fa-spinner fa-spin text-xl mb-2"></i>
+              <p>Cargando respuestas...</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Resumen -->
+    <div class="bg-blue-50 rounded-lg p-4 mb-4 border border-blue-200">
+      <div class="grid grid-cols-4 gap-4 text-center">
+        <div>
+          <p class="text-xs text-gray-600">Calificadas</p>
+          <p class="text-2xl font-bold text-green-600" id="cal-count-calificadas">0</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-600">Pendientes</p>
+          <p class="text-2xl font-bold text-orange-600" id="cal-count-pendientes">0</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-600">Promedio</p>
+          <p class="text-2xl font-bold text-blue-600" id="cal-promedio">-</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-600">Progreso</p>
+          <div class="w-full bg-gray-300 rounded-full h-2 mt-1">
+            <div id="cal-progress-bar" class="bg-green-600 h-2 rounded-full" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="flex justify-end gap-2">
+      <button id="cal-btn-cerrar" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+        Cerrar
+      </button>
+      <button id="cal-btn-exportar" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        <i class="fas fa-download mr-1"></i> Exportar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para calificar una respuesta específica -->
+<div id="calificar-respuesta-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-4 border-b">
+      <h3 class="text-lg font-bold text-gray-900">Calificar Respuesta</h3>
+      <button id="close-calificar-respuesta-modal" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <form id="calificar-respuesta-form" class="mt-4 space-y-4">
+      <input type="hidden" id="cal-id-respuesta" name="id_respuesta">
+
+      <!-- Información del estudiante -->
+      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <p class="text-xs text-gray-600">Estudiante</p>
+        <p class="text-lg font-bold text-gray-800" id="cal-resp-estudiante">-</p>
+      </div>
+
+      <!-- Información de la pregunta -->
+      <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <p class="text-xs text-purple-600 font-semibold">PREGUNTA</p>
+            <p class="text-gray-800 mt-2" id="cal-resp-pregunta">-</p>
+            <p class="text-xs text-gray-500 mt-2">Tipo: <span id="cal-resp-tipo-pregunta" class="font-semibold">-</span></p>
+          </div>
+          <div class="bg-purple-600 text-white rounded px-3 py-2 text-center">
+            <p class="text-xs opacity-80">Puntaje de Pregunta</p>
+            <p class="text-xl font-bold" id="cal-puntaje-pregunta">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Respuesta del estudiante -->
+      <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+        <p class="text-xs text-blue-600 font-semibold">RESPUESTA DEL ESTUDIANTE</p>
+        <div id="cal-resp-contenido" class="mt-2 text-gray-800">
+          <!-- Se llenará dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Calificación -->
+      <div class="border-t pt-4">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Puntaje Obtenido (0-20)</label>
+            <div class="flex items-center gap-2">
+              <input type="number" id="cal-puntaje-obtenido" name="puntaje_obtenido" step="0.1" min="0" max="20" class="flex-1 px-3 py-2 border border-gray-300 rounded-md" required>
+              <span id="cal-puntaje-maximo" class="text-gray-600">/20</span>
+            </div>
+              <div id="cal-error-puntaje" class="hidden mt-1 text-sm text-red-600 flex items-center gap-1">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>El puntaje debe estar entre 0 y 20</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Porcentaje</label>
+            <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+              <span id="cal-porcentaje" class="text-lg font-bold text-purple-600">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Comentario (opcional)</label>
+          <textarea id="cal-comentario" name="comentario" rows="3" placeholder="Escribe retroalimentación para el estudiante..." class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end gap-2 pt-4 border-t">
+        <button type="button" id="cal-btn-anterior" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+          <i class="fas fa-chevron-left mr-1"></i> Anterior
+        </button>
+        <button type="button" id="cal-btn-siguiente" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+          Siguiente <i class="fas fa-chevron-right ml-1"></i>
+        </button>
+        <button type="button" id="cal-btn-cancelar" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+          Cancelar
+        </button>
+        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+          <i class="fas fa-check mr-1"></i> Guardar Calificación
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { getDetalleRespuestasPorCalificar } from '../../../../public/services/estadisticasService.js';
+  import { updateRespuestaAlumno } from '../../../../public/services/respuestaAlumnoService.js';
+  import { getActividadById } from '../../../../public/services/actividadService.js';
+
+  let respuestasActuales = [];
+  let indexActual = 0;
+  let actividadActual = null;
+
+  // Abrir modal de calificación
+  window.abrirCalificarActividad = async function(idActividad) {
+    const modal = document.getElementById('calificar-actividad-modal');
+    
+    try {
+      // Cargar datos de la actividad
+      actividadActual = await getActividadById(idActividad);
+      document.getElementById('cal-actividad-titulo').textContent = actividadActual.titulo || '-';
+      document.getElementById('cal-actividad-tipo').textContent = actividadActual.tipo.charAt(0).toUpperCase() + actividadActual.tipo.slice(1);
+      document.getElementById('cal-actividad-puntaje').textContent = actividadActual.puntaje_max || '-';
+
+      // Cargar respuestas
+      const respuestas = await getDetalleRespuestasPorCalificar(actividadActual.id_seccion);
+      respuestasActuales = respuestas.respuestas.filter(r => r.id_actividad === idActividad);
+      
+      document.getElementById('cal-total-respuestas').textContent = respuestasActuales.length;
+      
+      renderizarRespuestas(respuestasActuales);
+      actualizarResumen();
+      
+      modal.classList.remove('hidden');
+    } catch (error) {
+      console.error('Error al cargar respuestas:', error);
+      alert('Error al cargar las respuestas');
+    }
+  };
+
+  function renderizarRespuestas(respuestas) {
+    const lista = document.getElementById('cal-respuestas-lista');
+    
+    if (respuestas.length === 0) {
+      lista.innerHTML = `
+        <tr>
+          <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+            <i class="fas fa-check-circle text-2xl text-green-600 mb-2"></i>
+            <p>¡Todas las respuestas han sido calificadas!</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    lista.innerHTML = respuestas.map((respuesta, index) => {
+      const estado = respuesta.puntaje_obtenido !== null ? 'Calificado' : 'Pendiente';
+      const colorEstado = respuesta.puntaje_obtenido !== null ? 'text-green-600 bg-green-50' : 'text-orange-600 bg-orange-50';
+      const puntajeMax = respuesta.puntaje_pregunta || respuesta.puntaje_max || 20;
+      const porcentaje = respuesta.puntaje_obtenido !== null 
+        ? Math.round((respuesta.puntaje_obtenido / puntajeMax) * 100)
+        : '-';
+
+      return `
+        <tr class="border-b hover:bg-gray-50">
+          <td class="px-4 py-3 text-gray-800 font-medium">${respuesta.nombres} ${respuesta.apellidos}</td>
+          <td class="px-4 py-3 text-gray-600 text-xs">${respuesta.pregunta_enunciado || 'Pregunta'}</td>
+          <td class="px-4 py-3 text-gray-600 text-xs truncate max-w-xs">
+            ${respuesta.respuesta_texto || respuesta.opcion_texto || 'Sin respuesta'}
+          </td>
+          <td class="px-4 py-3 text-center font-semibold">
+            ${respuesta.puntaje_obtenido !== null ? `${respuesta.puntaje_obtenido}/${puntajeMax}` : '-'}
+          </td>
+          <td class="px-4 py-3 text-center">
+            <span class="px-2 py-1 rounded text-xs font-semibold ${colorEstado}">
+              ${estado}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-center">
+            <button onclick="calificarRespuesta(${respuesta.id_respuesta}, ${index})" class="text-blue-600 hover:text-blue-800 font-semibold">
+              ${respuesta.puntaje_obtenido !== null ? 'Editar' : 'Calificar'}
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.calificarRespuesta = async function(idRespuesta, index) {
+    indexActual = index;
+    const modal = document.getElementById('calificar-respuesta-modal');
+    const respuesta = respuestasActuales[index];
+
+    // Llenar datos
+    document.getElementById('cal-id-respuesta').value = idRespuesta;
+    document.getElementById('cal-resp-estudiante').textContent = `${respuesta.nombres} ${respuesta.apellidos}`;
+    document.getElementById('cal-resp-pregunta').textContent = respuesta.pregunta_enunciado;
+    document.getElementById('cal-resp-tipo-pregunta').textContent = respuesta.tipo_pregunta || 'texto';
+    
+    // Usar puntaje_pregunta si está disponible, sino usar puntaje_max
+    const puntajeMax = respuesta.puntaje_pregunta || respuesta.puntaje_max || 20;
+    document.getElementById('cal-puntaje-maximo').textContent = `/${puntajeMax}`;
+    document.getElementById('cal-puntaje-pregunta').textContent = puntajeMax;
+
+    // Mostrar respuesta según tipo
+    const contenidoDiv = document.getElementById('cal-resp-contenido');
+    if (respuesta.opcion_texto) {
+      contenidoDiv.innerHTML = `
+        <div class="flex items-start gap-2">
+          <i class="fas fa-check-circle text-green-600 mt-1"></i>
+          <div>
+            <p class="font-medium">${respuesta.opcion_texto}</p>
+            <p class="text-xs text-gray-500 mt-1">Opción ${respuesta.es_correcta ? '(Correcta)' : '(Incorrecta)'}</p>
+          </div>
+        </div>
+      `;
+    } else if (respuesta.respuesta_texto) {
+      contenidoDiv.innerHTML = `
+        <div class="whitespace-pre-wrap bg-white p-3 rounded border border-gray-300 text-gray-800">
+          ${respuesta.respuesta_texto}
+        </div>
+      `;
+    } else {
+      contenidoDiv.innerHTML = '<p class="text-gray-500 italic">Sin respuesta</p>';
+    }
+
+    // Cargar calificación anterior si existe
+    if (respuesta.puntaje_obtenido !== null) {
+      document.getElementById('cal-puntaje-obtenido').value = respuesta.puntaje_obtenido;
+      actualizarPorcentaje(respuesta.puntaje_obtenido, puntajeMax);
+    } else {
+      document.getElementById('cal-puntaje-obtenido').value = '';
+      document.getElementById('cal-porcentaje').textContent = '0%';
+    }
+
+    modal.classList.remove('hidden');
+  };
+
+  function actualizarPorcentaje(puntaje, puntajeMax) {
+    const porcentaje = Math.round((puntaje / puntajeMax) * 100);
+    document.getElementById('cal-porcentaje').textContent = porcentaje + '%';
+  }
+
+  function actualizarResumen() {
+    const calificadas = respuestasActuales.filter(r => r.puntaje_obtenido !== null).length;
+    const pendientes = respuestasActuales.filter(r => r.puntaje_obtenido === null).length;
+    
+    // Calcular promedio considerando el puntaje individual de cada pregunta
+    const promedio = calificadas > 0 
+      ? (respuestasActuales.filter(r => r.puntaje_obtenido !== null)
+          .reduce((sum, r) => {
+            const puntajeMax = r.puntaje_pregunta || r.puntaje_max || 20;
+            return sum + (r.puntaje_obtenido / puntajeMax * 100);
+          }, 0) / calificadas).toFixed(1)
+      : '-';
+
+    document.getElementById('cal-count-calificadas').textContent = calificadas;
+    document.getElementById('cal-count-pendientes').textContent = pendientes;
+    document.getElementById('cal-promedio').textContent = promedio;
+    
+    const progreso = respuestasActuales.length > 0 ? (calificadas / respuestasActuales.length * 100) : 0;
+    document.getElementById('cal-progress-bar').style.width = progreso + '%';
+  }
+
+  // Event listeners
+  document.getElementById('calificar-respuesta-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const idRespuesta = parseInt(document.getElementById('cal-id-respuesta').value);
+    const puntajeObtenido = parseFloat(document.getElementById('cal-puntaje-obtenido').value);
+
+    // Validar puntaje está en rango 0-20
+    if (puntajeObtenido < 0 || puntajeObtenido > 20) {
+      const errorDiv = document.getElementById('cal-error-puntaje');
+      errorDiv.classList.remove('hidden');
+      document.getElementById('cal-puntaje-obtenido').classList.add('border-red-500');
+      alert('El puntaje debe estar entre 0 y 20');
+      return;
+    }
+
+    try {
+      await updateRespuestaAlumno(idRespuesta, { puntaje_obtenido: puntajeObtenido });
+      
+      // Recargar respuestas
+      const respuestas = await getDetalleRespuestasPorCalificar(actividadActual.id_seccion);
+      respuestasActuales = respuestas.respuestas.filter(r => r.id_actividad === actividadActual.id_actividad);
+      
+      renderizarRespuestas(respuestasActuales);
+      actualizarResumen();
+      
+      document.getElementById('calificar-respuesta-modal').classList.add('hidden');
+    } catch (error) {
+      console.error('Error al guardar calificación:', error);
+      alert('Error al guardar la calificación');
+    }
+  });
+
+  document.getElementById('cal-puntaje-obtenido')?.addEventListener('input', (e) => {
+    const respuesta = respuestasActuales[indexActual];
+    const puntajeMax = respuesta.puntaje_pregunta || respuesta.puntaje_max || 20;
+    const valor = parseFloat(e.target.value) || 0;
+    
+    // Validar rango 0-20
+    const errorDiv = document.getElementById('cal-error-puntaje');
+    if (valor > 20 || valor < 0) {
+      errorDiv.classList.remove('hidden');
+      e.target.classList.add('border-red-500');
+    } else {
+      errorDiv.classList.add('hidden');
+      e.target.classList.remove('border-red-500');
+    }
+    
+    actualizarPorcentaje(valor, puntajeMax);
+  });
+
+  document.getElementById('close-calificar-modal')?.addEventListener('click', () => {
+    document.getElementById('calificar-actividad-modal').classList.add('hidden');
+  });
+
+  document.getElementById('cal-btn-cerrar')?.addEventListener('click', () => {
+    document.getElementById('calificar-actividad-modal').classList.add('hidden');
+  });
+
+  document.getElementById('close-calificar-respuesta-modal')?.addEventListener('click', () => {
+    document.getElementById('calificar-respuesta-modal').classList.add('hidden');
+  });
+
+  document.getElementById('cal-btn-cancelar')?.addEventListener('click', () => {
+    document.getElementById('calificar-respuesta-modal').classList.add('hidden');
+  });
+
+  document.getElementById('cal-btn-siguiente')?.addEventListener('click', () => {
+    indexActual++;
+    if (indexActual < respuestasActuales.length) {
+      calificarRespuesta(respuestasActuales[indexActual].id_respuesta, indexActual);
+    } else {
+      alert('Has llegado al final');
+      indexActual--;
+    }
+  });
+
+  document.getElementById('cal-btn-anterior')?.addEventListener('click', () => {
+    indexActual--;
+    if (indexActual >= 0) {
+      calificarRespuesta(respuestasActuales[indexActual].id_respuesta, indexActual);
+    } else {
+      alert('Este es el primer respuesta');
+      indexActual++;
+    }
+  });
+</script>

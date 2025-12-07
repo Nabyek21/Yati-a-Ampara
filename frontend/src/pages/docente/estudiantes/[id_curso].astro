@@ -1,0 +1,565 @@
+---
+import DocenteLayout from '../../../layouts/DocenteLayout.astro';
+import DocenteHeader from '../../../components/DocenteHeader.astro';
+
+export const prerender = false;
+---
+
+<DocenteLayout title="Estudiantes del Curso - Yatiña">
+  <DocenteHeader>Estudiantes Matriculados</DocenteHeader>
+  <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <div class="mb-4">
+      <a href="/docente" class="text-purple-600 hover:text-purple-800 flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Volver a Mis Cursos
+      </a>
+    </div>
+
+    <!-- Información del Curso -->
+    <section class="bg-white rounded-lg shadow p-6 mb-6">
+      <h1 id="curso-nombre" class="text-3xl font-bold text-purple-800">Cargando curso...</h1>
+      <p id="curso-descripcion" class="text-gray-600 mt-2">&nbsp;</p>
+      <div class="mt-4 flex gap-4">
+        <div class="flex items-center gap-2">
+          <i class="fas fa-users text-purple-600"></i>
+          <span id="total-estudiantes" class="font-semibold">0 estudiantes</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="fas fa-list text-purple-600"></i>
+          <span id="total-secciones" class="font-semibold">0 secciones</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Filtrar por Sección</label>
+          <select id="seccion-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+            <option value="">Todas las secciones</option>
+          </select>
+        </div>
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Buscar Estudiante</label>
+          <input type="text" id="search-input" placeholder="Nombre o correo..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de Estudiantes -->
+    <section class="bg-white rounded-lg shadow overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-purple-600 text-white">
+            <tr>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Nombre</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Apellido</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Correo</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Sección</th>
+              <th class="px-6 py-3 text-center text-sm font-semibold">Promedio</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Estado</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Progreso</th>
+              <th class="px-6 py-3 text-center text-sm font-semibold">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="estudiantes-tabla" class="divide-y divide-gray-200">
+            <tr>
+              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                <p>Cargando estudiantes...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Modal de Calificación -->
+    <div id="modal-calificacion" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold text-purple-800">Calificar Actividades</h2>
+          <button id="cerrar-modal" class="text-gray-500 hover:text-gray-700 text-2xl">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="mb-4 pb-4 border-b">
+          <p class="text-gray-700">
+            <strong>Estudiante:</strong> <span id="modal-estudiante-nombre"></span>
+          </p>
+          <p class="text-gray-600 text-sm">
+            <span id="modal-estudiante-correo"></span>
+          </p>
+        </div>
+
+        <!-- Selección de Actividad -->
+        <div class="mb-4">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Selecciona una Actividad:</label>
+          <select id="actividad-select-modal" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+            <option value="">-- Cargando actividades --</option>
+          </select>
+        </div>
+
+        <!-- Tabla de Calificaciones -->
+        <div id="calificaciones-tabla-container" class="mb-4 hidden">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="bg-purple-100">
+                <th class="border px-4 py-2 text-left">Tipo</th>
+                <th class="border px-4 py-2 text-left">Descripción</th>
+                <th class="border px-4 py-2 text-center">Puntaje Máx</th>
+                <th class="border px-4 py-2 text-center">Puntaje Obtenido</th>
+              </tr>
+            </thead>
+            <tbody id="calificaciones-tabla-body">
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex justify-end gap-4">
+          <button id="cancelar-modal" class="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+            Cancelar
+          </button>
+          <button id="guardar-calificacion" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
+            <i class="fas fa-save"></i>
+            Guardar Calificación
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .estado-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      
+      .estado-en_curso {
+        background-color: #dbeafe;
+        color: #0c4a6e;
+      }
+      
+      .estado-aprobado {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      
+      .estado-desaprobado {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+      
+      .progreso-bar {
+        height: 0.5rem;
+        background-color: #e5e7eb;
+        border-radius: 9999px;
+        overflow: hidden;
+      }
+      
+      .progreso-fill {
+        height: 100%;
+        background-color: #a855f7;
+        transition: width 0.3s ease;
+      }
+    </style>
+  </main>
+</DocenteLayout>
+
+<script type="module">
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Importar funciones dinámicamente
+    const { getCursoById } = await import('../../../services/cursoService.js');
+    const { getSecciones } = await import('../../../services/seccionService.js');
+    const { getAlumnosBySeccion } = await import('../../../services/matriculaService.js');
+    const { getActividades, getNota, updateNota, createNota, getNotas } = await import('../../../services/notaService.js');
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const id_curso = pathParts[pathParts.length - 1];
+
+    if (!id_curso) {
+      document.getElementById('estudiantes-tabla').innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-red-500 text-center">ID de curso inválido</td></tr>';
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      // Cargar información del curso
+      const curso = await getCursoById(id_curso);
+      document.getElementById('curso-nombre').textContent = curso.nombre || `Curso ${id_curso}`;
+      document.getElementById('curso-descripcion').textContent = curso.descripcion || '';
+
+      // Obtener id_docente_perfil del usuario actual
+      const user = localStorage.getItem('user');
+      let id_docente_perfil = null;
+      
+      if (user) {
+        const userData = JSON.parse(user);
+        id_docente_perfil = userData.id_docente_perfil;
+      }
+
+      // Cargar secciones del curso filtrando por docente
+      const secciones = id_docente_perfil
+        ? await getSecciones({ id_curso, id_docente_perfil })
+        : await getSecciones({ id_curso });
+      
+      if (!Array.isArray(secciones) || secciones.length === 0) {
+        document.getElementById('estudiantes-tabla').innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-gray-500 text-center">No hay secciones disponibles</td></tr>';
+        return;
+      }
+
+      // Actualizar contadores
+      document.getElementById('total-secciones').textContent = `${secciones.length} sección${secciones.length > 1 ? 'es' : ''}`;
+
+      // Llenar select de secciones - seccionFilterSelect será declarado después
+      const seccionFilterSelectTemp = document.getElementById('seccion-filter');
+      secciones.forEach(seccion => {
+        const option = document.createElement('option');
+        option.value = seccion.id_seccion;
+        option.textContent = `${seccion.nombre_seccion} (${seccion.total_estudiantes || 0} estudiantes)`;
+        seccionFilterSelectTemp.appendChild(option);
+      });
+
+      // Cargar estudiantes de todas las secciones
+      let todosLosEstudiantes = [];
+
+      console.log('🔍 Cargando estudiantes para secciones:', secciones);
+
+      for (const seccion of secciones) {
+        try {
+          console.log(`📚 Obteniendo alumnos de sección ${seccion.id_seccion}...`);
+          const alumnos = await getAlumnosBySeccion(seccion.id_seccion);
+          console.log(`✅ Alumnos de sección ${seccion.id_seccion}:`, alumnos);
+          
+          if (Array.isArray(alumnos)) {
+            // Agregar estudiantes primero sin notas
+            alumnos.forEach(alumno => {
+              todosLosEstudiantes.push({
+                ...alumno,
+                id_seccion: seccion.id_seccion,
+                nombre_seccion: seccion.nombre_seccion,
+                promedio_notas: 0  // Valor por defecto
+              });
+            });
+          }
+        } catch (err) {
+          console.warn(`Error cargando estudiantes de sección ${seccion.id_seccion}:`, err);
+        }
+      }
+
+      console.log('📊 Total de estudiantes cargados:', todosLosEstudiantes);
+      document.getElementById('total-estudiantes').textContent = `${todosLosEstudiantes.length} estudiante${todosLosEstudiantes.length !== 1 ? 's' : ''}`;
+
+      // Obtener referencias a elementos del DOM necesarios
+      const searchInput = document.getElementById('search-input');
+      const seccionFilterSelect = document.getElementById('seccion-filter');
+
+      const getPromedioColor = (promedio) => {
+        if (promedio >= 18) return 'text-green-600 bg-green-50';
+        if (promedio >= 16) return 'text-blue-600 bg-blue-50';
+        if (promedio >= 14) return 'text-amber-600 bg-amber-50';
+        if (promedio >= 12) return 'text-orange-600 bg-orange-50';
+        return 'text-red-600 bg-red-50';
+      };
+
+      const getPromedioLabel = (promedio) => {
+        if (promedio >= 18) return 'Excelente';
+        if (promedio >= 16) return 'Bueno';
+        if (promedio >= 14) return 'Satisfactorio';
+        if (promedio >= 12) return 'Regular';
+        return 'Bajo';
+      };
+
+      // Función para renderizar tabla
+      const renderTabla = (estudiantes) => {
+        if (estudiantes.length === 0) {
+          return '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500">No hay estudiantes</td></tr>';
+        }
+
+        return estudiantes.map(estudiante => {
+          const estadoClass = `estado-${estudiante.estado_academico || 'en_curso'}`;
+          const estadoLabel = {
+            'en_curso': 'En Curso',
+            'aprobado': 'Aprobado',
+            'desaprobado': 'Desaprobado'
+          }[estudiante.estado_academico] || estudiante.estado_academico;
+          
+          const progreso = estudiante.progreso || 0;
+          const promedio = estudiante.promedio_notas || 0;
+          const promedioColor = getPromedioColor(promedio);
+          const promedioLabel = getPromedioLabel(promedio);
+
+          return `
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4 text-sm font-medium text-gray-900">${estudiante.nombres || '-'}</td>
+              <td class="px-6 py-4 text-sm text-gray-700">${estudiante.apellidos || '-'}</td>
+              <td class="px-6 py-4 text-sm text-gray-700">${estudiante.correo || '-'}</td>
+              <td class="px-6 py-4 text-sm font-medium text-purple-600">${estudiante.nombre_seccion || '-'}</td>
+              <td class="px-6 py-4 text-center">
+                <span class="px-3 py-1 rounded-full font-semibold text-sm ${promedioColor}">
+                  ${promedio.toFixed(1)} (${promedioLabel})
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm">
+                <span class="estado-badge ${estadoClass}">${estadoLabel}</span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+                  <div class="progreso-bar w-24">
+                    <div class="progreso-fill" style="width: ${progreso}%"></div>
+                  </div>
+                  <span class="text-sm text-gray-600">${progreso}%</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <div class="flex gap-2 justify-center">
+                  <button class="calificar-btn bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors" data-id-matricula="${estudiante.id_matricula}" data-nombres="${estudiante.nombres}" data-apellidos="${estudiante.apellidos}" data-correo="${estudiante.correo}">
+                    <i class="fas fa-star mr-1"></i>Calificar
+                  </button>
+                  <a href="/docente/calificaciones-estudiante/${estudiante.id_matricula}?curso=${id_curso}" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors flex items-center gap-1">
+                    <i class="fas fa-history"></i>Historial
+                  </a>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      };
+
+      // Re-renderizar tabla y agregar listeners de calificación
+      const agregarListenersCalificacion = () => {
+        document.querySelectorAll('.calificar-btn').forEach(btn => {
+          btn.addEventListener('click', abrirModalCalificacion);
+        });
+      };
+
+      // Función para actualizar tabla con listeners
+      const actualizarTabla = () => {
+        const seccionSeleccionada = seccionFilterSelect.value;
+        const busqueda = searchInput.value.toLowerCase();
+
+        let estudiantesFiltra = todosLosEstudiantes;
+
+        if (seccionSeleccionada) {
+          estudiantesFiltra = estudiantesFiltra.filter(e => e.id_seccion == seccionSeleccionada);
+        }
+
+        if (busqueda) {
+          estudiantesFiltra = estudiantesFiltra.filter(e => 
+            (e.nombres || '').toLowerCase().includes(busqueda) ||
+            (e.apellidos || '').toLowerCase().includes(busqueda) ||
+            (e.correo || '').toLowerCase().includes(busqueda)
+          );
+        }
+
+        document.getElementById('estudiantes-tabla').innerHTML = renderTabla(estudiantesFiltra);
+        agregarListenersCalificacion();
+      };
+
+      // Cargar promedios de forma asíncrona sin bloquear la UI
+      const cargarPromedios = async () => {
+        // Importar servicio centralizado - desde /public/services/
+        let obtenerCalificacionesEstudiante;
+        
+        try {
+          const module = await import('/services/calificacionesService.js');
+          obtenerCalificacionesEstudiante = module.obtenerCalificacionesEstudiante;
+        } catch (importError) {
+          console.warn('Error al importar servicio de calificaciones:', importError);
+          console.warn('Usando valores por defecto para promedios');
+          // Si falla la importación, mantener promedios en 0
+          todosLosEstudiantes.forEach(e => e.promedio_notas = 0);
+          actualizarTabla();
+          return;
+        }
+
+        for (let i = 0; i < todosLosEstudiantes.length; i++) {
+          const estudiante = todosLosEstudiantes[i];
+          try {
+            const notas = await obtenerCalificacionesEstudiante(estudiante.id_matricula);
+            if (Array.isArray(notas) && notas.length > 0) {
+              const promedio = notas.reduce((sum, nota) => sum + (nota.puntaje_obtenido || 0), 0) / notas.length;
+              estudiante.promedio_notas = parseFloat(promedio.toFixed(2));
+            }
+          } catch (err) {
+            console.warn(`Error cargando notas para estudiante ${estudiante.id_matricula}:`, err);
+            estudiante.promedio_notas = 0;
+          }
+        }
+        // Actualizar tabla después de cargar todos los promedios
+        actualizarTabla();
+      };
+
+      // Renderizar tabla inicial
+      document.getElementById('estudiantes-tabla').innerHTML = renderTabla(todosLosEstudiantes);
+
+      // Cargar promedios de forma asíncrona
+      cargarPromedios();
+
+      // Eventos de filtro
+      seccionFilterSelect.addEventListener('change', actualizarTabla);
+      searchInput.addEventListener('input', actualizarTabla);
+
+      // Lógica del Modal de Calificación
+      const modal = document.getElementById('modal-calificacion');
+      const cerrarModalBtn = document.getElementById('cerrar-modal');
+      const cancelarModalBtn = document.getElementById('cancelar-modal');
+      const guardarCalificacionBtn = document.getElementById('guardar-calificacion');
+      const actividadSelectModal = document.getElementById('actividad-select-modal');
+      
+      let idSeccionActual = null;
+      let idMatriculaActual = null;
+
+      async function abrirModalCalificacion(e) {
+        const btn = e.target.closest('.calificar-btn');
+        const idMatricula = btn.dataset.idMatricula;
+        const nombres = btn.dataset.nombres;
+        const apellidos = btn.dataset.apellidos;
+        const correo = btn.dataset.correo;
+
+        idMatriculaActual = idMatricula;
+
+        // Obtener la sección del estudiante
+        const estudiante = todosLosEstudiantes.find(e => e.id_matricula == idMatricula);
+        idSeccionActual = estudiante.id_seccion;
+
+        // Llenar datos del estudiante en el modal
+        document.getElementById('modal-estudiante-nombre').textContent = `${nombres} ${apellidos}`;
+        document.getElementById('modal-estudiante-correo').textContent = correo;
+
+        // Cargar actividades
+        try {
+          const actividades = await getActividades({ id_seccion: idSeccionActual });
+          
+          if (!Array.isArray(actividades) || actividades.length === 0) {
+            actividadSelectModal.innerHTML = '<option value="">No hay actividades</option>';
+          } else {
+            actividadSelectModal.innerHTML = '<option value="">-- Selecciona una actividad --</option>';
+            actividades.forEach(act => {
+              const option = document.createElement('option');
+              option.value = act.id_actividad;
+              option.dataset.puntajeMax = act.puntaje_max || 20;
+              option.textContent = `${act.titulo} (${act.tipo}) - ${act.puntaje_max} pts`;
+              actividadSelectModal.appendChild(option);
+            });
+          }
+        } catch (error) {
+          console.error('Error al cargar actividades:', error);
+          actividadSelectModal.innerHTML = '<option value="">Error al cargar</option>';
+        }
+
+        modal.classList.remove('hidden');
+      }
+
+      cerrarModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+      cancelarModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+      actividadSelectModal.addEventListener('change', async (e) => {
+        const idActividad = e.target.value;
+        const contenedor = document.getElementById('calificaciones-tabla-container');
+        const tbody = document.getElementById('calificaciones-tabla-body');
+
+        if (!idActividad) {
+          contenedor.classList.add('hidden');
+          return;
+        }
+
+        // Mostrar formulario de calificación
+        const puntajeMax = e.target.options[e.target.selectedIndex].dataset.puntajeMax;
+        
+        tbody.innerHTML = `
+          <tr>
+            <td class="border px-4 py-2">
+              <input type="text" class="w-full px-2 py-1" value="Actividad" readonly>
+            </td>
+            <td class="border px-4 py-2">
+              <input type="text" class="w-full px-2 py-1" value="${e.target.options[e.target.selectedIndex].text}" readonly>
+            </td>
+            <td class="border px-4 py-2 text-center">
+              <input type="number" class="w-full px-2 py-1 text-center" value="${puntajeMax}" readonly>
+            </td>
+            <td class="border px-4 py-2 text-center">
+              <input type="number" id="puntaje-obtenido" class="w-full px-2 py-1 text-center" min="0" max="${puntajeMax}" step="0.01" placeholder="Ingresa puntaje">
+            </td>
+          </tr>
+        `;
+        
+        contenedor.classList.remove('hidden');
+        window.currentActivityId = idActividad;
+        window.currentPuntajeMax = puntajeMax;
+      });
+
+      guardarCalificacionBtn.addEventListener('click', async () => {
+        const puntajeObtenido = parseFloat(document.getElementById('puntaje-obtenido').value);
+        const idActividad = actividadSelectModal.value;
+
+        if (!idActividad) {
+          alert('Por favor selecciona una actividad');
+          return;
+        }
+
+        if (isNaN(puntajeObtenido)) {
+          alert('Por favor ingresa un puntaje válido');
+          return;
+        }
+
+        try {
+          guardarCalificacionBtn.disabled = true;
+          guardarCalificacionBtn.textContent = 'Guardando...';
+
+          // Intentar obtener nota existente
+          let nota = await getNota(idMatriculaActual, idActividad);
+          
+          if (nota && nota.id_nota) {
+            // Actualizar nota existente
+            await updateNota(nota.id_nota, puntajeObtenido);
+          } else {
+            // Crear nueva nota
+            await createNota(idMatriculaActual, idActividad, puntajeObtenido);
+          }
+
+          alert('Calificación guardada exitosamente');
+          modal.classList.add('hidden');
+          
+          // Recargar las notas del estudiante para actualizar el promedio
+          const estudianteIdx = todosLosEstudiantes.findIndex(e => e.id_matricula == idMatriculaActual);
+          if (estudianteIdx !== -1) {
+            try {
+              const notas = await getNotas(idMatriculaActual);
+              if (Array.isArray(notas) && notas.length > 0) {
+                const promedio = notas.reduce((sum, nota) => sum + (nota.puntaje_obtenido || 0), 0) / notas.length;
+                todosLosEstudiantes[estudianteIdx].promedio_notas = parseFloat(promedio.toFixed(2));
+              }
+            } catch (err) {
+              console.warn('Error actualizando promedio:', err);
+            }
+          }
+          
+          actualizarTabla(); // Refrescar tabla para actualizar datos
+          
+        } catch (error) {
+          console.error('Error al guardar:', error);
+          alert('Error al guardar la calificación: ' + error.message);
+        } finally {
+          guardarCalificacionBtn.disabled = false;
+          guardarCalificacionBtn.innerHTML = '<i class="fas fa-save"></i>Guardar Calificación';
+        }
+      });
+
+      agregarListenersCalificacion();
+
+    } catch (error) {
+      console.error('Error al cargar estudiantes:', error);
+      document.getElementById('estudiantes-tabla').innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-red-500 text-center">Error al cargar los datos</td></tr>';
+    }
+  });
+</script>

@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+
+# Production
+dist/
+build/
+out/
+.next/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.cache/
+tmp/
+temp/
+*.tmp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Uploads (ignorar archivos subidos locales)
+backend/src/uploads/
+backend/uploads/
+
+# Database backups
+*.sql.bak
+*.backup
+
+# Package lock files (keep only one per project)
+pnpm-lock.yaml
+package-lock.json
+
+# Astro build
+.astro/
+
+# Node modules lock files (track only main ones)
+backend/pnpm-lock.yaml
+*.sql
+*.backup
+
+# Node-RED
+.node-red/

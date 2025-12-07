@@ -1,0 +1,75 @@
+---
+export const prerender = false;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visor de contenido</title>
+    <link rel="stylesheet" href="/styles/tailwind.css" />
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+    <div class="max-w-7xl mx-auto py-6 px-4">
+      <div class="bg-white rounded-lg shadow p-4 mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <a href="javascript:history.back()" class="text-sm text-gray-600 hover:underline">← Volver</a>
+          <h1 id="viewer-title" class="text-lg font-semibold text-gray-800">Visor de contenido</h1>
+        </div>
+        <div class="flex items-center gap-2">
+          <a id="download-link" class="text-sm text-blue-600 hover:underline" download>Descargar</a>
+          <a id="open-raw" class="text-sm text-gray-600 hover:underline" target="_blank">Abrir en nueva pestaña</a>
+        </div>
+      </div>
+
+      <div id="viewer-frame" class="bg-white rounded-lg shadow overflow-hidden" style="height:80vh;">
+        <!-- Iframe inserted by JS -->
+      </div>
+    </div>
+
+    <script>
+      (function(){
+        const params = new URLSearchParams(window.location.search);
+        const file = params.get('file');
+        const titleEl = document.getElementById('viewer-title');
+        const frameContainer = document.getElementById('viewer-frame');
+        const downloadLink = document.getElementById('download-link');
+        const openRaw = document.getElementById('open-raw');
+
+        if (!file) {
+          frameContainer.innerHTML = '<p class="p-6 text-center text-red-500">No se encontró archivo para mostrar.</p>';
+          downloadLink.style.display = 'none';
+          openRaw.style.display = 'none';
+          return;
+        }
+
+        try {
+          const decoded = decodeURIComponent(file);
+          // Set title
+          const parts = decoded.split('/');
+          const filename = parts[parts.length -1] || decoded;
+          titleEl.textContent = filename;
+
+          // If it's a PDF, embed with full viewer; else try to embed as iframe
+          const lower = filename.toLowerCase();
+          const iframe = document.createElement('iframe');
+          iframe.src = decoded;
+          iframe.style.border = '0';
+          iframe.style.width = '100%';
+          iframe.style.height = '100%';
+          frameContainer.appendChild(iframe);
+
+          downloadLink.href = decoded;
+          downloadLink.setAttribute('download', filename);
+          openRaw.href = decoded;
+        } catch (err) {
+          console.error('Error al abrir viewer', err);
+          frameContainer.innerHTML = '<p class="p-6 text-center text-red-500">Error al abrir el archivo.</p>';
+          downloadLink.style.display = 'none';
+          openRaw.style.display = 'none';
+        }
+      })();
+    </script>
+  </body>
+</html>

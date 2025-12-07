@@ -1,0 +1,500 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminHeader from '../../components/AdminHeader.astro';
+---
+
+<AdminLayout title="Gestión de Docentes - Yatiña Ampara">
+  <AdminHeader>Gestión de Docentes</AdminHeader>
+
+  <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <div class="bg-white rounded-lg shadow p-4">
+      <div class="flex justify-end mb-4 space-x-4">
+        <button id="manage-especialidades-button" class="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700">
+          <i class="fas fa-tags"></i>
+          <span>Gestionar Especialidades</span>
+        </button>
+        <button id="add-docente-button" class="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-purple-700">
+          <i class="fas fa-plus"></i>
+          <span>Nuevo Docente</span>
+        </button>
+      </div>
+      <!-- Filtros y barra de búsqueda -->
+      <div class="bg-purple-50 p-4 rounded-lg mb-6 flex flex-wrap items-center space-x-4">
+        <input type="text" id="search-input" placeholder="Buscar por Nombre, Apellido, DNI, Celular, Especialidad..." class="flex-1 border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white px-3 py-2" />
+        <select id="especialidad-filter" class="border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white px-3 py-2">
+          <option value="">Todas las Especialidades</option>
+          <!-- Opciones de especialidades se cargarán dinámicamente -->
+        </select>
+        <select id="state-filter" class="border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white px-3 py-2">
+          <option value="">Todos los estados</option>
+          <!-- Opciones de estados se cargarán dinámicamente -->
+        </select>
+      </div>
+      <!-- Tabla de docentes -->
+      <h2 class="text-2xl font-semibold text-purple-800 mb-4">Todos los Docentes</h2>
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-purple-100">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">APELLIDOS</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">NOMBRES</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">DNI</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">CORREO</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">CELULAR</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">ESPECIALIDAD</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">ESTADO</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody id="docentes-table-body" class="bg-white divide-y divide-gray-200">
+          <!-- Las filas se renderizan dinámicamente con un hover effect -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+</AdminLayout>
+
+<!-- HTML del DocenteFormModal integrado directamente -->
+<div id="docente-form-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="modal-title"></h3> <!-- Título dinámico -->
+      <button id="close-docente-modal-button" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="mt-4">
+      <form id="docente-form">
+        <input type="hidden" id="docente-id" />
+        <input type="hidden" id="docente-user-id" />
+
+        <div class="mb-4">
+          <label for="nombres" class="block text-sm font-medium text-gray-700">Nombres</label>
+          <input type="text" id="nombres" name="nombres" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="mb-4">
+          <label for="apellidos" class="block text-sm font-medium text-gray-700">Apellidos</label>
+          <input type="text" id="apellidos" name="apellidos" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="mb-4">
+          <label for="dni" class="block text-sm font-medium text-gray-700">DNI</label>
+          <input type="text" id="dni" name="dni" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="mb-4">
+          <label for="correo" class="block text-sm font-medium text-gray-700">Correo</label>
+          <input type="email" id="correo" name="correo" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="mb-4">
+          <label for="celular" class="block text-sm font-medium text-gray-700">Celular</label>
+          <input type="text" id="celular" name="celular" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+        </div>
+        <div class="mb-4">
+          <label for="modal-id_especialidad" class="block text-sm font-medium text-gray-700">Especialidad</label>
+          <select id="modal-id_especialidad" name="id_especialidad" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+            <option value="">Selecciona una especialidad</option>
+            <!-- Opciones de especialidades se cargarán dinámicamente -->
+          </select>
+        </div>
+        <div class="mb-4" id="password-field-container">
+          <label for="contrasena" class="block text-sm font-medium text-gray-700">Contraseña</label>
+          <input type="password" id="contrasena" name="contrasena" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+        </div>
+
+        <div class="flex justify-end space-x-2 mt-6">
+          <button type="button" id="cancel-docente-modal-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancelar</button>
+          <button type="submit" id="submit-docente-form-button" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+            Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { getDocentes, createDocente, updateDocente, deactivateDocente } from '../../public/services/docenteService.js';
+  import { getEstados } from '../../public/services/estadoService.js';
+  import { getEspecialidades, createEspecialidad, updateEspecialidad, deleteEspecialidad } from '../../public/services/especialidadService.js'; // Importar nuevos servicios de especialidad
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Script de admin/docentes.astro cargado y DOMContentLoaded disparado.');
+    const docentesTableBody = document.getElementById('docentes-table-body');
+    const searchInput = document.getElementById('search-input');
+    const especialidadFilter = document.getElementById('especialidad-filter'); // Nuevo
+    const stateFilter = document.getElementById('state-filter');
+
+    // Referencias a elementos del modal de Docentes
+    const docenteFormModal = document.getElementById('docente-form-modal');
+    const modalTitle = docenteFormModal.querySelector('#modal-title');
+    const closeDocenteModalButton = docenteFormModal.querySelector('#close-docente-modal-button');
+    const cancelDocenteModalButton = docenteFormModal.querySelector('#cancel-docente-modal-button');
+    const docenteForm = docenteFormModal.querySelector('#docente-form');
+    const docenteIdField = docenteForm.querySelector('#docente-id');
+    const docenteUserIdField = docenteForm.querySelector('#docente-user-id');
+    const nombresField = docenteForm.querySelector('#nombres');
+    const apellidosField = docenteForm.querySelector('#apellidos');
+    const dniField = docenteForm.querySelector('#dni');
+    const correoField = docenteForm.querySelector('#correo');
+    const celularField = docenteForm.querySelector('#celular');
+    const modalEspecialidadSelect = docenteForm.querySelector('#modal-id_especialidad'); // Nuevo
+    const contrasenaField = docenteForm.querySelector('#contrasena');
+    const passwordFieldContainer = docenteForm.querySelector('#password-field-container');
+    const submitDocenteFormButton = docenteForm.querySelector('#submit-docente-form-button');
+
+    let isEditingDocente = false; 
+
+    const currentFilters = {
+      search: '',
+      id_estado: '',
+      id_especialidad: '', // Nuevo filtro
+    };
+
+    const fetchAndRenderDocentes = async () => {
+      docentesTableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">Cargando docentes...</td></tr>`;
+      try {
+        const docentes = await getDocentes(currentFilters);
+
+        if (docentes.length === 0) {
+          docentesTableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">No hay docentes registrados con los filtros actuales.</td></tr>`;
+          return;
+        }
+
+        docentesTableBody.innerHTML = docentes.map(docente => `
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">${docente.apellidos}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${docente.nombres}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${docente.dni || 'N/A'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${docente.correo}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${docente.celular || 'N/A'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${docente.nombre_especialidad || 'N/A'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${docente.id_estado === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                ${docente.id_estado === 1 ? 'Activo' : 'Inactivo'}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <button class="text-yellow-600 hover:text-yellow-900 mr-2 edit-docente-button" data-id="${docente.id_docente_perfil}" data-user-id="${docente.id_usuario}" data-docente='${encodeURIComponent(JSON.stringify(docente))}'><i class="fas fa-edit"></i></button>
+              <button class="text-red-600 hover:text-red-900 deactivate-docente-button" data-id="${docente.id_docente_perfil}"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+
+      } catch (error) {
+        console.error('Error al cargar docentes:', error);
+        docentesTableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-4 whitespace-nowrap text-center text-red-500">Error al cargar los docentes: ${error.message}.</td></tr>`;
+      }
+    };
+
+    const populateStatesFilter = async () => {
+      try {
+        const estados = await getEstados();
+        stateFilter.innerHTML = '<option value="">Todos los estados</option>' + 
+                                estados.map(estado => `<option value="${estado.id_estado}">${estado.nombre}</option>`).join('');
+      } catch (error) {
+        console.error('Error al cargar estados para filtro:', error);
+      }
+    };
+
+    const populateEspecialidadesFilter = async () => { // Nueva función
+      try {
+        const especialidades = await getEspecialidades();
+        especialidadFilter.innerHTML = '<option value="">Todas las Especialidades</option>' + 
+                                       especialidades.map(esp => `<option value="${esp.id_especialidad}">${esp.nombre}</option>`).join('');
+        modalEspecialidadSelect.innerHTML = especialidades.map(esp => `<option value="${esp.id_especialidad}">${esp.nombre}</option>`).join('');
+      } catch (error) {
+        console.error('Error al cargar especialidades:', error);
+      }
+    };
+
+    const openDocenteModal = (isEditingMode = false, docenteData = {}) => {
+      isEditingDocente = isEditingMode;
+      docenteForm.reset();
+
+      modalTitle.textContent = isEditingMode ? 'Editar Docente' : 'Nuevo Docente';
+      submitDocenteFormButton.textContent = isEditingMode ? 'Guardar Cambios' : 'Añadir Docente';
+
+      if (isEditingMode) {
+        docenteIdField.value = docenteData.id_docente_perfil || '';
+        docenteUserIdField.value = docenteData.id_usuario || '';
+        nombresField.value = docenteData.nombres || '';
+        apellidosField.value = docenteData.apellidos || '';
+        dniField.value = docenteData.dni || '';
+        correoField.value = docenteData.correo || '';
+        celularField.value = docenteData.celular || '';
+        modalEspecialidadSelect.value = docenteData.id_especialidad || ''; // Seleccionar especialidad
+
+        passwordFieldContainer.classList.add('hidden'); 
+        contrasenaField.removeAttribute('required');
+      } else {
+        passwordFieldContainer.classList.remove('hidden');
+        contrasenaField.setAttribute('required', 'true');
+        modalEspecialidadSelect.value = ''; // Limpiar selección al añadir
+      }
+
+      docenteFormModal.classList.remove('hidden'); 
+    };
+
+    const closeDocenteModal = () => {
+      docenteFormModal.classList.add('hidden'); 
+      docenteForm.reset(); 
+      isEditingDocente = false;
+    };
+
+    const handleDocenteFormSubmit = async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(docenteForm);
+      const data = {};
+      for (const [key, value] of formData.entries()) {
+        data[key] = value;
+      }
+
+      // Asegurarse de que id_especialidad es un número si está presente
+      if (data.id_especialidad) {
+        data.id_especialidad = parseInt(data.id_especialidad);
+      } else {
+        delete data.id_especialidad; // Eliminar si está vacío
+      }
+      delete data.especialidad; // Asegurarse de no enviar el campo antiguo
+
+      const id_docente_perfil = docenteIdField.value ? parseInt(docenteIdField.value) : undefined;
+      const id_usuario_asociado = docenteUserIdField.value ? parseInt(docenteUserIdField.value) : undefined; // Para actualizar usuario existente
+
+      try {
+        if (isEditingDocente) {
+          // Para la actualización, separamos los datos del usuario y del perfil del docente
+          const { id_especialidad, ...userData } = data;
+          const docenteProfileData = { id_especialidad };
+          await updateDocente(id_docente_perfil, id_usuario_asociado, userData, docenteProfileData);
+          alert('Docente actualizado correctamente!');
+        } else {
+          await createDocente(data);
+          alert('Docente añadido correctamente!');
+        }
+        closeDocenteModal();
+        fetchAndRenderDocentes(); 
+      } catch (error) {
+        console.error('Error al guardar docente:', error);
+        alert(`Error al guardar docente: ${error.message}`);
+      }
+    };
+
+    // Event Listeners para filtros
+    searchInput.addEventListener('input', () => {
+      currentFilters.search = searchInput.value;
+      fetchAndRenderDocentes();
+    });
+
+    especialidadFilter.addEventListener('change', () => { // Nuevo listener
+      currentFilters.id_especialidad = especialidadFilter.value;
+      fetchAndRenderDocentes();
+    });
+
+    stateFilter.addEventListener('change', () => {
+      currentFilters.id_estado = stateFilter.value;
+      fetchAndRenderDocentes();
+    });
+
+    // Listener para el botón "Nuevo Docente"
+    const addDocenteButton = document.getElementById('add-docente-button');
+    addDocenteButton.addEventListener('click', () => openDocenteModal(false));
+
+    // Listeners para botones de cerrar y cancelar del modal
+    closeDocenteModalButton.addEventListener('click', closeDocenteModal);
+    cancelDocenteModalButton.addEventListener('click', closeDocenteModal);
+    docenteFormModal.addEventListener('click', (event) => {
+      if (event.target === docenteFormModal) {
+        closeDocenteModal();
+      }
+    });
+
+    // Listener para el envío del formulario del modal
+    docenteForm.addEventListener('submit', handleDocenteFormSubmit);
+
+    // Delegación de eventos para botones de editar y eliminar en la tabla
+    docentesTableBody.addEventListener('click', async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+
+      const docentePerfilId = parseInt(target.dataset.id);
+      
+      if (target.classList.contains('edit-docente-button')) {
+        const docenteData = JSON.parse(decodeURIComponent(target.dataset.docente));
+        openDocenteModal(true, docenteData);
+      } else if (target.classList.contains('deactivate-docente-button')) {
+        if (confirm('¿Estás segura de que quieres desactivar este docente?')) {
+          try {
+            await deactivateDocente(docentePerfilId);
+            alert('Docente desactivado correctamente!');
+            fetchAndRenderDocentes(); 
+          } catch (error) {
+            console.error('Error al desactivar docente:', error);
+            alert(`Error al desactivar docente: ${error.message}`);
+          }
+        }
+      }
+    });
+
+    // Inicializar filtros y cargar docentes al cargar la página
+    populateStatesFilter();
+    populateEspecialidadesFilter(); // Nueva inicialización
+    fetchAndRenderDocentes();
+  });
+
+  // Lógica del modal de Gestión de Especialidades
+  const especialidadesManagementModal = document.getElementById('especialidades-management-modal');
+  const closeEspecialidadesModalButton = document.getElementById('close-especialidades-modal-button');
+  const manageEspecialidadesButton = document.getElementById('manage-especialidades-button');
+  const especialidadForm = document.getElementById('especialidad-form');
+  const especialidadIdField = document.getElementById('especialidad-id');
+  const especialidadNombreField = document.getElementById('especialidad-nombre');
+  const submitEspecialidadFormButton = document.getElementById('submit-especialidad-form-button');
+  const cancelEspecialidadFormButton = document.getElementById('cancel-especialidad-form-button');
+  const especialidadesTableBody = document.getElementById('especialidades-table-body');
+
+  let isEditingSpecialty = false;
+
+  const openEspecialidadesManagementModal = async () => {
+    especialidadesManagementModal.classList.remove('hidden');
+    await fetchAndRenderEspecialidades();
+  };
+
+  const closeEspecialidadesManagementModal = () => {
+    especialidadesManagementModal.classList.add('hidden');
+    especialidadForm.reset();
+    isEditingSpecialty = false;
+    submitEspecialidadFormButton.textContent = 'Añadir Especialidad';
+  };
+
+  const fetchAndRenderEspecialidades = async () => {
+    especialidadesTableBody.innerHTML = `<tr><td colspan="3" class="px-4 py-2 text-center text-gray-500">Cargando especialidades...</td></tr>`;
+    try {
+      const especialidades = await getEspecialidades();
+      if (especialidades.length === 0) {
+        especialidadesTableBody.innerHTML = `<tr><td colspan="3" class="px-4 py-2 text-center text-gray-500">No hay especialidades registradas.</td></tr>`;
+        return;
+      }
+      especialidadesTableBody.innerHTML = especialidades.map(esp => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2">${esp.id_especialidad}</td>
+          <td class="px-4 py-2">${esp.nombre}</td>
+          <td class="px-4 py-2">
+            <button class="text-yellow-600 hover:text-yellow-900 mr-2 edit-especialidad-button" data-id="${esp.id_especialidad}" data-nombre="${esp.nombre}"><i class="fas fa-edit"></i></button>
+            <button class="text-red-600 hover:text-red-900 delete-especialidad-button" data-id="${esp.id_especialidad}"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>
+      `).join('');
+
+    } catch (error) {
+      console.error('Error al cargar especialidades para gestión:', error);
+      especialidadesTableBody.innerHTML = `<tr><td colspan="3" class="px-4 py-2 text-center text-red-500">Error al cargar especialidades: ${error.message}.</td></tr>`;
+    }
+  };
+  const handleEspecialidadFormSubmit = async (event) => {
+    event.preventDefault();
+    const nombre = especialidadNombreField.value;
+    
+    if (isEditingSpecialty) {
+      const id_especialidad = parseInt(especialidadIdField.value);
+      try {
+        await updateEspecialidad(id_especialidad, nombre);
+        alert('Especialidad actualizada correctamente!');
+      } catch (error) {
+        console.error('Error al actualizar especialidad:', error);
+        alert(`Error al actualizar especialidad: ${error.message}`);
+      }
+    } else {
+      try {
+        await createEspecialidad(nombre);
+        alert('Especialidad añadida correctamente!');
+      } catch (error) {
+        console.error('Error al añadir especialidad:', error);
+        alert(`Error al añadir especialidad: ${error.message}`);
+      }
+    }
+    especialidadForm.reset();
+    isEditingSpecialty = false;
+    submitEspecialidadFormButton.textContent = 'Añadir Especialidad';
+    await fetchAndRenderEspecialidades(); // Refrescar la tabla de especialidades
+    populateEspecialidadesFilter(); // Refrescar los selectores de especialidades
+  };
+
+  // Event Listeners para el modal de especialidades
+  manageEspecialidadesButton.addEventListener('click', openEspecialidadesManagementModal);
+  closeEspecialidadesModalButton.addEventListener('click', closeEspecialidadesManagementModal);
+  cancelEspecialidadFormButton.addEventListener('click', () => {
+    especialidadForm.reset();
+    isEditingSpecialty = false;
+    submitEspecialidadFormButton.textContent = 'Añadir Especialidad';
+  });
+  especialidadForm.addEventListener('submit', handleEspecialidadFormSubmit);
+
+  especialidadesTableBody.addEventListener('click', async (event) => {
+    const target = event.target.closest('button');
+    if (!target) return;
+
+    const especialidadId = parseInt(target.dataset.id);
+
+    if (target.classList.contains('edit-especialidad-button')) {
+      isEditingSpecialty = true;
+      especialidadIdField.value = especialidadId;
+      especialidadNombreField.value = target.dataset.nombre;
+      submitEspecialidadFormButton.textContent = 'Actualizar Especialidad';
+    } else if (target.classList.contains('delete-especialidad-button')) {
+      if (confirm('¿Estás segura de que quieres eliminar esta especialidad? ¡Esta acción es permanente y puede afectar a los docentes asociados!')) {
+        try {
+          await deleteEspecialidad(especialidadId);
+          alert('Especialidad eliminada correctamente!');
+          await fetchAndRenderEspecialidades();
+          populateEspecialidadesFilter(); // Refrescar los selectores de especialidades
+        } catch (error) {
+          console.error('Error al eliminar especialidad:', error);
+          alert(`Error al eliminar especialidad: ${error.message}`);
+        }
+      }
+    }
+  });
+
+</script>
+
+<!-- HTML del Modal de Gestión de Especialidades -->
+<div id="especialidades-management-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" role="dialog" aria-modal="true" aria-labelledby="especialidades-modal-title">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="especialidades-modal-title">Gestionar Especialidades</h3>
+      <button id="close-especialidades-modal-button" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="mt-4">
+      <!-- Formulario para añadir/editar especialidad -->
+      <form id="especialidad-form" class="mb-6 p-4 border rounded-md bg-gray-50">
+        <input type="hidden" id="especialidad-id" />
+        <div class="mb-4">
+          <label for="especialidad-nombre" class="block text-sm font-medium text-gray-700">Nombre de la Especialidad</label>
+          <input type="text" id="especialidad-nombre" name="nombre" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="flex justify-end space-x-2">
+          <button type="button" id="cancel-especialidad-form-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancelar</button>
+          <button type="submit" id="submit-especialidad-form-button" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+            Añadir Especialidad
+          </button>
+        </div>
+      </form>
+
+      <!-- Tabla de especialidades existentes -->
+      <h4 class="text-lg font-semibold text-gray-800 mb-2">Especialidades Existentes</h4>
+      <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="especialidades-table-body" class="bg-white divide-y divide-gray-200">
+          <!-- Las especialidades se cargarán aquí dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

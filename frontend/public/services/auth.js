@@ -1,5 +1,3 @@
-// frontend/src/services/auth.js
-
 const API = "http://localhost:4000/api/auth";
 
 export async function registerUser(data) {
@@ -7,6 +5,7 @@ export async function registerUser(data) {
     const res = await fetch(`${API}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(data),
     });
 
@@ -28,6 +27,7 @@ export async function loginUser(correo, contrasena) {
     const res = await fetch(`${API}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ correo, contrasena }),
     });
 

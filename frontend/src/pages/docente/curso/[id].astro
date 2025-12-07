@@ -1,0 +1,1469 @@
+---
+import DocenteLayout from '../../../layouts/DocenteLayout.astro';
+import DocenteHeader from '../../../components/DocenteHeader.astro';
+import CalificarActividadModal from '../../../components/CalificarActividadModal.astro';
+
+// Función para generar rutas dinámicas
+// Generamos un rango amplio de IDs para cubrir la mayoría de casos
+// El JavaScript del cliente siempre obtendrá el ID real desde la URL
+export async function getStaticPaths() {
+  // Generar rutas para IDs del 1 al 100 (ajusta según necesidad)
+  const paths = [];
+  for (let i = 1; i <= 100; i++) {
+    paths.push({ params: { id: i.toString() } });
+  }
+  return paths;
+}
+
+// El parámetro de Astro se ignora - siempre obtenemos el ID desde la URL en el cliente
+---
+
+<DocenteLayout title="Módulos del Curso - Yatiña">
+  <DocenteHeader>Módulos del Curso</DocenteHeader>
+  <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <div class="mb-4">
+      <a href="/docente" class="text-purple-600 hover:text-purple-800 flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Volver a Mis Cursos
+      </a>
+    </div>
+
+    <!-- Información del Curso -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold text-purple-800 mb-2" id="curso-nombre">Cargando...</h2>
+          <p class="text-gray-600" id="curso-descripcion"></p>
+          <p class="text-sm text-gray-500 mt-2" id="total-semanas"></p>
+        </div>
+        <div id="modalidad-badge" class="ml-4">
+          <!-- Badge de modalidad se cargará dinámicamente -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Pestañas -->
+    <div class="bg-white rounded-lg shadow-lg mb-6">
+      <div class="border-b border-gray-200">
+        <nav class="flex space-x-8 px-6" aria-label="Tabs">
+          <button 
+            id="tab-contenido" 
+            class="tab-button active border-b-2 border-purple-600 py-4 px-1 text-sm font-medium text-purple-600"
+            onclick="switchTab('contenido')"
+          >
+            Contenido
+          </button>
+          <button 
+            id="tab-clases" 
+            class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            onclick="switchTab('clases')"
+          >
+            Clases
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Contenido de las Pestañas -->
+    <!-- Pestaña: Contenido (Módulos) -->
+    <div id="content-contenido" class="tab-content">
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <div id="modulos-container">
+          <div class="text-center text-gray-500 py-8">
+            <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+            <p>Cargando módulos...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pestaña: Clases -->
+    <div id="content-clases" class="tab-content hidden">
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <div id="clases-container">
+          <div class="text-center text-gray-500 py-8">
+            <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+            <p>Cargando clases...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Componente para calificar actividades -->
+  <CalificarActividadModal />
+</DocenteLayout>
+
+<!-- Modal para agregar/editar actividad -->
+<div id="actividad-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="actividad-modal-titulo">Nueva Actividad</h3>
+      <button id="close-actividad-modal" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    <form id="actividad-form" class="mt-4">
+      <input type="hidden" id="actividad-id-modulo" name="id_modulo">
+      <input type="hidden" id="actividad-id-seccion" name="id_seccion">
+      <input type="hidden" id="actividad-id-docente" name="id_docente_perfil">
+      <input type="hidden" id="actividad-id-actividad" name="id_actividad">
+
+      <div class="mb-4">
+        <label for="actividad-tipo" class="block text-sm font-medium text-gray-700">Tipo de Actividad</label>
+        <select id="actividad-tipo" name="tipo" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+          <option value="">Selecciona un tipo</option>
+          <option value="tarea">Tarea</option>
+          <option value="examen">Examen</option>
+          <option value="quiz">Quiz</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label for="actividad-titulo" class="block text-sm font-medium text-gray-700">Título</label>
+        <input type="text" id="actividad-titulo" name="titulo" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+      </div>
+
+      <div class="mb-4">
+        <label for="actividad-descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+        <textarea id="actividad-descripcion" name="descripcion" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label for="actividad-fecha-entrega" class="block text-sm font-medium text-gray-700">Fecha de Entrega</label>
+          <input type="datetime-local" id="actividad-fecha-entrega" name="fecha_entrega" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        </div>
+        <div>
+          <label for="actividad-puntaje" class="block text-sm font-medium text-gray-700">Puntaje Máximo</label>
+          <input type="number" id="actividad-puntaje" name="puntaje_max" value="20" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-2 mt-6">
+        <button type="button" id="cancel-actividad" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+          Cancelar
+        </button>
+        <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+          Guardar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para gestionar preguntas de un examen -->
+<div id="preguntas-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900">Gestionar Preguntas - <span id="preguntas-actividad-titulo"></span></h3>
+      <button id="close-preguntas-modal" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    <div class="mt-4">
+      <div class="flex justify-end mb-4">
+        <button id="add-pregunta-button" class="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-700">
+          <i class="fas fa-plus"></i>
+          <span>Nueva Pregunta</span>
+        </button>
+      </div>
+      <div id="preguntas-container" class="space-y-4 max-h-96 overflow-y-auto">
+        <p class="text-center text-gray-500 py-4">Cargando preguntas...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para crear/editar pregunta -->
+<div id="pregunta-form-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="pregunta-modal-titulo">Nueva Pregunta</h3>
+      <button id="close-pregunta-form-modal" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    <form id="pregunta-form" class="mt-4">
+      <input type="hidden" id="pregunta-id-actividad" name="id_actividad">
+      <input type="hidden" id="pregunta-id-pregunta" name="id_pregunta">
+
+      <div class="mb-4">
+        <label for="pregunta-tipo" class="block text-sm font-medium text-gray-700">Tipo de Pregunta</label>
+        <select id="pregunta-tipo" name="tipo" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+          <option value="">Selecciona un tipo</option>
+          <option value="opcion">Opción Múltiple</option>
+          <option value="texto">Texto Libre</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label for="pregunta-enunciado" class="block text-sm font-medium text-gray-700">Enunciado</label>
+        <textarea id="pregunta-enunciado" name="enunciado" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></textarea>
+      </div>
+
+      <div class="mb-4">
+        <label for="pregunta-puntaje" class="block text-sm font-medium text-gray-700">Puntaje</label>
+        <input type="number" id="pregunta-puntaje" name="puntaje" value="1" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+      </div>
+
+      <!-- Sección de opciones (solo para tipo "opcion") -->
+      <div id="opciones-section" class="mb-4 hidden">
+        <div class="flex items-center justify-between mb-2">
+          <label class="block text-sm font-medium text-gray-700">Opciones de Respuesta</label>
+          <button type="button" id="add-opcion-button" class="text-sm text-green-600 hover:text-green-800">
+            <i class="fas fa-plus mr-1"></i> Agregar Opción
+          </button>
+        </div>
+        <div id="opciones-container" class="space-y-2">
+          <!-- Las opciones se agregarán dinámicamente -->
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-2 mt-6">
+        <button type="button" id="cancel-pregunta" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+          Cancelar
+        </button>
+        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+          Guardar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para ver contenido relacionado de una actividad -->
+<div id="contenido-relacionado-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900">Contenido Relacionado</h3>
+      <button id="close-contenido-relacionado-modal" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    <div class="mt-4">
+      <div id="contenido-relacionado-list" class="space-y-2">
+        <p class="text-center text-gray-500 py-4">Cargando contenido...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para agregar contenido -->
+<div id="contenido-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="modal-titulo">Agregar Contenido</h3>
+      <button id="close-contenido-modal" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    <form id="contenido-form" class="mt-4">
+      <input type="hidden" id="contenido-id-modulo" name="id_modulo">
+      <input type="hidden" id="contenido-id-seccion" name="id_seccion">
+      <input type="hidden" id="contenido-id-contenido" name="id_contenido">
+      
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Contenido</label>
+        <select id="contenido-tipo" name="tipo" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+          <option value="">Seleccione un tipo</option>
+          <option value="video">Video</option>
+          <option value="pdf">PDF</option>
+          <option value="archivo">Archivo</option>
+          <option value="link">Enlace</option>
+          <option value="texto">Texto</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Título</label>
+        <input type="text" id="contenido-titulo" name="titulo" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+        <textarea id="contenido-descripcion" name="descripcion" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+      </div>
+
+      <div class="mb-4" id="url-contenido-group">
+        <label class="block text-sm font-medium text-gray-700 mb-2">URL / Enlace</label>
+        <input type="url" id="contenido-url" name="url_contenido" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+      </div>
+
+      <div class="mb-4" id="archivo-contenido-group">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Archivo</label>
+        <div id="archivo-actual" class="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-md hidden">
+          <p class="text-sm text-gray-600">Archivo actual: <span id="archivo-nombre" class="font-semibold"></span></p>
+          <p class="text-xs text-gray-500 mt-1">Selecciona un nuevo archivo para reemplazarlo</p>
+        </div>
+        <input type="file" id="contenido-archivo" name="archivo" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Orden</label>
+        <input type="number" id="contenido-orden" name="orden" value="1" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+      </div>
+
+      <div class="flex justify-end space-x-3 mt-6">
+        <button type="button" id="cancel-contenido" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+          Cancelar
+        </button>
+        <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+          Guardar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de Previsualización de Archivos -->
+<div id="preview-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+  <div class="relative w-full max-w-4xl mx-auto p-5">
+    <button onclick="document.getElementById('preview-modal').classList.add('hidden')" class="absolute top-4 right-4 text-white bg-gray-700 hover:bg-gray-600 rounded-full w-8 h-8 flex items-center justify-center z-10">
+      <i class="fas fa-times"></i>
+    </button>
+    
+    <!-- Contenedor para PDF -->
+    <div id="pdf-container" class="hidden">
+      <iframe id="pdf-viewer" width="100%" height="600" frameborder="0"></iframe>
+    </div>
+    
+    <!-- Contenedor para imágenes -->
+    <div id="image-container" class="hidden">
+      <img id="image-viewer" src="" alt="Previsualización" class="max-w-full max-h-96 mx-auto rounded">
+    </div>
+    
+    <!-- Contenedor para otros archivos -->
+    <div id="other-container" class="hidden bg-white rounded p-6 text-center">
+      <i class="fas fa-file text-6xl text-gray-400 mb-4"></i>
+      <p class="text-gray-600 mb-4">No se puede previsualizar este tipo de archivo</p>
+      <a id="download-link" href="#" download class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        <i class="fas fa-download mr-2"></i>Descargar
+      </a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { getModulosByCurso, getModulosBySeccion } from '../../../../public/services/moduloService.js';
+  import { getContenidoByModulo, getContenidoById, createContenido, updateContenido, deleteContenido } from '../../../../public/services/moduloContenidoService.js';
+  import { getSeccionesDocente } from '../../../../public/services/seccionService.js';
+  import { getCursos } from '../../../../public/services/cursoService.js';
+  import { getClases } from '../../../../public/services/claseService.js';
+  import { getActividades, getActividadById, createActividad, updateActividad, deleteActividad, getContenidoRelacionado } from '../../../../public/services/actividadService.js';
+  import { getPreguntas, getPreguntaById, createPregunta, updatePregunta, deletePregunta } from '../../../../public/services/preguntaService.js';
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      // Obtener el ID del curso desde la URL
+      const pathParts = window.location.pathname.split('/');
+      const cursoIdFromUrl = pathParts[pathParts.length - 1];
+      const cursoId = parseInt(cursoIdFromUrl);
+      
+      if (isNaN(cursoId)) {
+        document.getElementById('modulos-container').innerHTML = `
+          <div class="text-center text-red-500 py-8">
+            <p>ID de curso inválido</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Cargar información del curso
+      const cursos = await getCursos();
+      const curso = cursos.find(c => c.id_curso === cursoId);
+      
+      // Obtener id_docente_perfil del usuario actual
+      const user = localStorage.getItem('user');
+      let id_docente_perfil = null;
+      
+      if (user) {
+        const userData = JSON.parse(user);
+        id_docente_perfil = userData.id_docente_perfil;
+      }
+
+      // Cargar TODAS las secciones del docente y filtrar por curso
+      const todasLasSecciones = await getSeccionesDocente();
+      const secciones = todasLasSecciones.filter(s => s.id_curso === cursoId);
+      
+      if (curso) {
+        document.getElementById('curso-nombre').textContent = curso.nombre;
+        document.getElementById('curso-descripcion').textContent = curso.descripcion || 'Sin descripción';
+        
+        // Mostrar modalidad si está disponible
+        const modalidadBadge = document.getElementById('modalidad-badge');
+        if (secciones.length > 0 && secciones[0].nombre_modalidad) {
+          modalidadBadge.innerHTML = `
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+              ${secciones[0].nombre_modalidad}
+            </span>
+          `;
+        }
+      }
+      
+      if (secciones.length === 0) {
+        document.getElementById('modulos-container').innerHTML = `
+          <div class="text-center text-gray-500 py-8">
+            <p>No tienes secciones asignadas para este curso</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Usar la primera sección (o permitir seleccionar)
+      const seccionActual = secciones[0];
+      const seccionId = seccionActual.id_seccion;
+
+      // Cargar módulos específicos de la sección
+      const modulos = await getModulosBySeccion(seccionId);
+      
+      if (modulos.length === 0) {
+        document.getElementById('modulos-container').innerHTML = `
+          <div class="text-center text-gray-500 py-8">
+            <p>Este curso no tiene módulos configurados</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Actualizar total de semanas
+      document.getElementById('total-semanas').textContent = `Total de semanas (${modulos.length})`;
+
+      // Obtener id_docente_perfil de la sección
+      const idDocentePerfil = seccionActual.id_docente_perfil;
+
+      // Cargar contenido y actividades para cada módulo
+      const modulosConContenido = await Promise.all(
+        modulos.map(async (modulo) => {
+          const contenido = await getContenidoByModulo(modulo.id_modulo, seccionId);
+          const actividades = await getActividades({ 
+            id_modulo: modulo.id_modulo, 
+            id_seccion: seccionId 
+          });
+          return { ...modulo, contenido, actividades };
+        })
+      );
+
+      // Renderizar acordeón
+      renderModulos(modulosConContenido, seccionId, idDocentePerfil);
+      
+      // Guardar seccionId y idDocentePerfil globalmente para usar en otras funciones
+      window.currentSeccionId = seccionId;
+      window.currentIdDocentePerfil = idDocentePerfil;
+
+    } catch (error) {
+      console.error('Error al cargar módulos:', error);
+      document.getElementById('modulos-container').innerHTML = `
+        <div class="text-center text-red-500 py-8">
+          <p>Error al cargar los módulos. Por favor, intenta de nuevo.</p>
+        </div>
+      `;
+    }
+  });
+
+  // Función para cambiar de pestaña
+  window.switchTab = function(tabName) {
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.add('hidden');
+    });
+    
+    // Remover clase active de todos los tabs
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.classList.remove('active', 'border-purple-600', 'text-purple-600');
+      button.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Mostrar el contenido seleccionado
+    document.getElementById(`content-${tabName}`).classList.remove('hidden');
+    
+    // Activar el tab seleccionado
+    const activeTab = document.getElementById(`tab-${tabName}`);
+    activeTab.classList.add('active', 'border-purple-600', 'text-purple-600');
+    activeTab.classList.remove('border-transparent', 'text-gray-500');
+    
+    // Cargar datos si es necesario
+    if (tabName === 'clases' && window.currentSeccionId) {
+      loadClases(window.currentSeccionId);
+    }
+  };
+
+  // Función para cargar y renderizar clases
+  async function loadClases(seccionId) {
+    try {
+      const clasesContainer = document.getElementById('clases-container');
+      clasesContainer.innerHTML = `
+        <div class="text-center text-gray-500 py-8">
+          <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+          <p>Cargando clases...</p>
+        </div>
+      `;
+
+      const clases = await getClases({ id_seccion: seccionId });
+      
+      if (clases.length === 0) {
+        clasesContainer.innerHTML = `
+          <div class="text-center text-gray-500 py-8">
+            <i class="fas fa-calendar-times text-4xl mb-4 text-gray-400"></i>
+            <p>No hay clases programadas para esta sección</p>
+            <p class="text-sm mt-2">Las clases se generan automáticamente cuando se crea una sección con horarios</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Agrupar clases por módulo y fecha
+      const clasesPorModulo = {};
+      clases.forEach(clase => {
+        const moduloKey = clase.id_modulo;
+        if (!clasesPorModulo[moduloKey]) {
+          clasesPorModulo[moduloKey] = {
+            nombre_modulo: clase.nombre_modulo || `Módulo ${moduloKey}`,
+            clases: []
+          };
+        }
+        clasesPorModulo[moduloKey].clases.push(clase);
+      });
+
+      // Renderizar clases
+      renderClases(clasesPorModulo);
+    } catch (error) {
+      console.error('Error al cargar clases:', error);
+      document.getElementById('clases-container').innerHTML = `
+        <div class="text-center text-red-500 py-8">
+          <p>Error al cargar las clases. Por favor, intenta de nuevo.</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderClases(clasesPorModulo) {
+    const container = document.getElementById('clases-container');
+    
+    const html = Object.keys(clasesPorModulo).map(moduloKey => {
+      const modulo = clasesPorModulo[moduloKey];
+      const clasesOrdenadas = modulo.clases.sort((a, b) => {
+        // Ordenar por fecha y luego por hora
+        const fechaA = new Date(a.fecha_clase + ' ' + a.hora_inicio);
+        const fechaB = new Date(b.fecha_clase + ' ' + b.hora_inicio);
+        return fechaA - fechaB;
+      });
+
+      return `
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-purple-800 mb-3 flex items-center">
+            <i class="fas fa-book mr-2"></i>
+            ${modulo.nombre_modulo}
+          </h3>
+          <div class="space-y-2">
+            ${clasesOrdenadas.map(clase => {
+              const fecha = new Date(clase.fecha_clase);
+              const fechaFormateada = fecha.toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              });
+              const fechaCorta = fecha.toLocaleDateString('es-ES', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
+              });
+              
+              return `
+                <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-purple-500 hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                      <div class="bg-purple-100 rounded-full p-2">
+                        <i class="fas fa-calendar-alt text-purple-600"></i>
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-800">${fechaFormateada}</p>
+                        <p class="text-sm text-gray-600">
+                          <i class="fas fa-clock mr-1"></i>
+                          ${clase.hora_inicio} - ${clase.hora_fin}
+                          <span class="ml-3">
+                            <i class="fas fa-calendar-day mr-1"></i>
+                            ${clase.dia_semana}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-xs text-gray-500">${fechaCorta}</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = html;
+  }
+
+  function renderModulos(modulos, seccionId, idDocentePerfil) {
+    const container = document.getElementById('modulos-container');
+    
+    container.innerHTML = modulos.map((modulo, index) => {
+      const contenidoCount = modulo.contenido.length;
+      const actividadesCount = modulo.actividades.length;
+      const moduloId = `modulo-${modulo.id_modulo}`;
+      
+      return `
+        <div class="border-b border-blue-100 mb-2">
+          <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50" onclick="toggleModulo('${moduloId}')">
+            <div class="flex items-center space-x-3">
+              <span class="text-purple-600 font-bold text-lg">Semana ${String(modulo.orden).padStart(2, '0')}</span>
+              <span class="text-gray-700 font-semibold">${modulo.titulo}</span>
+            </div>
+            <div class="flex items-center space-x-4">
+              <span class="text-sm text-gray-500">${contenidoCount} contenido${contenidoCount !== 1 ? 's' : ''}</span>
+              <span class="text-sm text-orange-500">${actividadesCount} actividad${actividadesCount !== 1 ? 'es' : ''}</span>
+              <i class="fas fa-chevron-up text-gray-400" id="icon-${moduloId}"></i>
+            </div>
+          </div>
+          <div id="${moduloId}" class="hidden px-4 pb-4">
+            <div class="ml-4 border-l-2 border-purple-200 pl-4">
+              <div class="mb-3">
+                <p class="text-sm text-gray-600">${modulo.descripcion || 'Sin descripción'}</p>
+              </div>
+              
+              <!-- Sección de Contenido -->
+              <div class="mb-6">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-sm font-semibold text-gray-700">Contenido</h4>
+                  <button onclick="openContenidoModal(${modulo.id_modulo}, ${seccionId})" class="px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700">
+                    <i class="fas fa-plus mr-1"></i> Agregar Contenido
+                  </button>
+                </div>
+                <div id="contenido-list-${modulo.id_modulo}" class="space-y-2">
+                  ${renderContenido(modulo.contenido, modulo.id_modulo, seccionId)}
+                </div>
+              </div>
+
+              <!-- Sección de Actividades -->
+              <div class="mb-3 border-t pt-4">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-sm font-semibold text-gray-700">Actividades</h4>
+                  <button onclick="openActividadModal(${modulo.id_modulo}, ${seccionId}, ${idDocentePerfil})" class="px-3 py-1 bg-orange-600 text-white text-xs rounded hover:bg-orange-700">
+                    <i class="fas fa-plus mr-1"></i> Nueva Actividad
+                  </button>
+                </div>
+                <div id="actividades-list-${modulo.id_modulo}" class="space-y-2">
+                  ${renderActividades(modulo.actividades, modulo.id_modulo, seccionId)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Expandir el primer módulo por defecto
+    if (modulos.length > 0) {
+      toggleModulo(`modulo-${modulos[0].id_modulo}`);
+    }
+  }
+
+  function renderContenido(contenido, moduloId, seccionId) {
+    if (contenido.length === 0) {
+      return '<p class="text-sm text-gray-400 italic">No hay contenido agregado aún</p>';
+    }
+
+    return contenido.map(item => {
+      const tipoIcon = {
+        'video': 'fa-video',
+        'pdf': 'fa-file-pdf',
+        'archivo': 'fa-file',
+        'link': 'fa-link',
+        'texto': 'fa-file-alt'
+      }[item.tipo] || 'fa-file';
+
+      // Link de previsualización/descarga si hay archivo
+      let actionLink = '';
+      if (item.archivo) {
+        const fileUrl = `http://localhost:5678/uploads/actividades/${item.archivo}`;
+        const isPreviewable = item.archivo.toLowerCase().endsWith('.pdf') || 
+                             item.archivo.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/i);
+        
+        if (isPreviewable) {
+          actionLink = `<button onclick="previewFile('${fileUrl}', '${item.archivo}')" class="text-green-600 hover:text-green-800 text-sm" title="Previsualizar archivo">
+            <i class="fas fa-eye"></i>
+          </button>`;
+        } else {
+          actionLink = `<a href="${fileUrl}" download class="text-green-600 hover:text-green-800 text-sm" title="Descargar archivo">
+            <i class="fas fa-download"></i>
+          </a>`;
+        }
+      }
+
+      return `
+        <div class="bg-gray-50 rounded p-3 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <i class="fas ${tipoIcon} text-purple-600"></i>
+            <div>
+              <p class="font-medium text-sm">${item.titulo}</p>
+              <p class="text-xs text-gray-500">${item.tipo} • Orden: ${item.orden}</p>
+              ${item.archivo ? `<p class="text-xs text-gray-400 mt-1">📄 ${item.archivo}</p>` : ''}
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            ${actionLink}
+            <button onclick="editContenido(${item.id_contenido}, ${moduloId}, ${seccionId})" class="text-blue-600 hover:text-blue-800">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteContenidoItem(${item.id_contenido}, ${moduloId}, ${seccionId})" class="text-red-600 hover:text-red-800">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.toggleModulo = function(moduloId) {
+    const content = document.getElementById(moduloId);
+    const icon = document.getElementById(`icon-${moduloId}`);
+    
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      icon.classList.remove('fa-chevron-down');
+      icon.classList.add('fa-chevron-up');
+    } else {
+      content.classList.add('hidden');
+      icon.classList.remove('fa-chevron-up');
+      icon.classList.add('fa-chevron-down');
+    }
+  };
+
+  window.openContenidoModal = function(idModulo, idSeccion, idContenido = null) {
+    const modal = document.getElementById('contenido-modal');
+    const form = document.getElementById('contenido-form');
+    const tituloModal = document.getElementById('modal-titulo');
+    
+    document.getElementById('contenido-id-modulo').value = idModulo;
+    document.getElementById('contenido-id-seccion').value = idSeccion;
+    document.getElementById('contenido-id-contenido').value = idContenido || '';
+    
+    if (idContenido) {
+      tituloModal.textContent = 'Editar Contenido';
+      // Cargar datos del contenido
+      // TODO: Implementar carga de datos
+    } else {
+      tituloModal.textContent = 'Agregar Contenido';
+      form.reset();
+      document.getElementById('contenido-id-modulo').value = idModulo;
+      document.getElementById('contenido-id-seccion').value = idSeccion;
+    }
+    
+    modal.classList.remove('hidden');
+    updateContenidoFields();
+  };
+
+  window.editContenido = async function(idContenido, moduloId, seccionId) {
+    try {
+      const contenido = await getContenidoById(idContenido);
+      if (contenido) {
+        window.openContenidoModal(moduloId, seccionId, idContenido);
+        
+        // Llenar el formulario
+        document.getElementById('contenido-tipo').value = contenido.tipo;
+        document.getElementById('contenido-titulo').value = contenido.titulo;
+        document.getElementById('contenido-descripcion').value = contenido.descripcion || '';
+        document.getElementById('contenido-url').value = contenido.url_contenido || '';
+        document.getElementById('contenido-orden').value = contenido.orden || 1;
+        
+        // Mostrar archivo actual si existe
+        if (contenido.archivo) {
+          document.getElementById('archivo-actual').classList.remove('hidden');
+          document.getElementById('archivo-nombre').textContent = contenido.archivo;
+        } else {
+          document.getElementById('archivo-actual').classList.add('hidden');
+        }
+        
+        // Actualizar visibilidad de campos
+        updateContenidoFields();
+      }
+    } catch (error) {
+      console.error('Error al cargar contenido:', error);
+      alert('Error al cargar el contenido');
+    }
+  };
+
+  window.openContenidoModal = function(idModulo, idSeccion, idContenido = null) {
+    const modal = document.getElementById('contenido-modal');
+    const form = document.getElementById('contenido-form');
+    const tituloModal = document.getElementById('modal-titulo');
+    
+    if (idContenido) {
+      tituloModal.textContent = 'Editar Contenido';
+    } else {
+      tituloModal.textContent = 'Agregar Contenido';
+      form.reset();
+      document.getElementById('archivo-actual').classList.add('hidden');
+    }
+    
+    document.getElementById('contenido-id-modulo').value = idModulo;
+    document.getElementById('contenido-id-seccion').value = idSeccion;
+    document.getElementById('contenido-id-contenido').value = idContenido || '';
+    
+    modal.classList.remove('hidden');
+    if (!idContenido) {
+      updateContenidoFields();
+    }
+  };
+
+  window.deleteContenidoItem = async function(idContenido, moduloId, seccionId) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este contenido?')) {
+      return;
+    }
+
+    try {
+      await deleteContenido(idContenido);
+      // Recargar contenido del módulo
+      const contenido = await getContenidoByModulo(moduloId, seccionId);
+      document.getElementById(`contenido-list-${moduloId}`).innerHTML = renderContenido(contenido, moduloId, seccionId);
+    } catch (error) {
+      console.error('Error al eliminar contenido:', error);
+      alert('Error al eliminar el contenido');
+    }
+  };
+
+  // Funciones para actividades
+  function renderActividades(actividades, moduloId, seccionId) {
+    if (actividades.length === 0) {
+      return '<p class="text-sm text-gray-400 italic">No hay actividades creadas aún</p>';
+    }
+
+    return actividades.map(actividad => {
+      const tipoIcon = {
+        'tarea': 'fa-tasks',
+        'examen': 'fa-file-alt',
+        'quiz': 'fa-question-circle'
+      }[actividad.tipo] || 'fa-file-alt';
+
+      const tipoColor = {
+        'tarea': 'text-blue-600',
+        'examen': 'text-red-600',
+        'quiz': 'text-green-600'
+      }[actividad.tipo] || 'text-gray-600';
+
+      const fechaEntrega = actividad.fecha_entrega 
+        ? new Date(actividad.fecha_entrega).toLocaleString('es-ES', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : 'Sin fecha';
+
+      return `
+        <div class="bg-orange-50 rounded p-3 flex items-center justify-between border border-orange-200">
+          <div class="flex items-center space-x-3 flex-1">
+            <i class="fas ${tipoIcon} ${tipoColor} text-lg"></i>
+            <div class="flex-1">
+              <p class="font-medium text-sm text-gray-800">${actividad.titulo}</p>
+              <div class="flex items-center space-x-3 text-xs text-gray-500 mt-1">
+                <span class="px-2 py-0.5 bg-orange-100 text-orange-700 rounded">${actividad.tipo}</span>
+                <span><i class="fas fa-calendar mr-1"></i>${fechaEntrega}</span>
+                <span><i class="fas fa-star mr-1"></i>${actividad.puntaje_max} pts</span>
+              </div>
+              ${actividad.descripcion ? `<p class="text-xs text-gray-600 mt-1">${actividad.descripcion.substring(0, 60)}${actividad.descripcion.length > 60 ? '...' : ''}</p>` : ''}
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            ${actividad.tipo === 'examen' ? `
+              <button onclick="gestionarPreguntas(${actividad.id_actividad})" class="text-green-600 hover:text-green-800" title="Gestionar preguntas">
+                <i class="fas fa-question-circle"></i>
+              </button>
+            ` : ''}
+            <button onclick="abrirCalificarActividad(${actividad.id_actividad})" class="text-purple-600 hover:text-purple-800 font-semibold" title="Calificar respuestas">
+              <i class="fas fa-graduation-cap"></i> Calificar
+            </button>
+            <button onclick="verContenidoRelacionado(${actividad.id_actividad})" class="text-purple-600 hover:text-purple-800" title="Ver contenido relacionado">
+              <i class="fas fa-book"></i>
+            </button>
+            <button onclick="editActividad(${actividad.id_actividad}, ${moduloId}, ${seccionId})" class="text-blue-600 hover:text-blue-800">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteActividadItem(${actividad.id_actividad}, ${moduloId}, ${seccionId})" class="text-red-600 hover:text-red-800">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.openActividadModal = function(idModulo, idSeccion, idDocentePerfil, idActividad = null) {
+    const modal = document.getElementById('actividad-modal');
+    const form = document.getElementById('actividad-form');
+    const tituloModal = document.getElementById('actividad-modal-titulo');
+    
+    document.getElementById('actividad-id-modulo').value = idModulo;
+    document.getElementById('actividad-id-seccion').value = idSeccion;
+    document.getElementById('actividad-id-docente').value = idDocentePerfil;
+    document.getElementById('actividad-id-actividad').value = idActividad || '';
+    
+    if (idActividad) {
+      tituloModal.textContent = 'Editar Actividad';
+      // TODO: Cargar datos de la actividad
+    } else {
+      tituloModal.textContent = 'Nueva Actividad';
+      form.reset();
+      document.getElementById('actividad-id-modulo').value = idModulo;
+      document.getElementById('actividad-id-seccion').value = idSeccion;
+      document.getElementById('actividad-id-docente').value = idDocentePerfil;
+      document.getElementById('actividad-puntaje').value = 20;
+    }
+    
+    modal.classList.remove('hidden');
+  };
+
+  window.editActividad = async function(idActividad, moduloId, seccionId) {
+    try {
+      const actividad = await getActividadById(idActividad);
+      if (actividad) {
+        openActividadModal(
+          actividad.id_modulo, 
+          actividad.id_seccion, 
+          actividad.id_docente_perfil, 
+          idActividad
+        );
+        
+        // Llenar el formulario
+        document.getElementById('actividad-tipo').value = actividad.tipo;
+        document.getElementById('actividad-titulo').value = actividad.titulo;
+        document.getElementById('actividad-descripcion').value = actividad.descripcion || '';
+        
+        if (actividad.fecha_entrega) {
+          const fecha = new Date(actividad.fecha_entrega);
+          const fechaLocal = new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000);
+          document.getElementById('actividad-fecha-entrega').value = fechaLocal.toISOString().slice(0, 16);
+        }
+        
+        document.getElementById('actividad-puntaje').value = actividad.puntaje_max || 20;
+      }
+    } catch (error) {
+      console.error('Error al cargar actividad:', error);
+      alert('Error al cargar la actividad');
+    }
+  };
+
+  window.deleteActividadItem = async function(idActividad, moduloId, seccionId) {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta actividad?')) {
+      return;
+    }
+
+    try {
+      await deleteActividad(idActividad);
+      // Recargar actividades del módulo
+      const actividades = await getActividades({ id_modulo: moduloId, id_seccion: seccionId });
+      document.getElementById(`actividades-list-${moduloId}`).innerHTML = renderActividades(actividades, moduloId, seccionId);
+    } catch (error) {
+      console.error('Error al eliminar actividad:', error);
+      alert('Error al eliminar la actividad');
+    }
+  };
+
+  window.verContenidoRelacionado = async function(idActividad) {
+    const modal = document.getElementById('contenido-relacionado-modal');
+    const listContainer = document.getElementById('contenido-relacionado-list');
+    
+    modal.classList.remove('hidden');
+    listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">Cargando contenido...</p>';
+    
+    try {
+      const contenido = await getContenidoRelacionado(idActividad);
+      
+      if (contenido.length === 0) {
+        listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">No hay contenido relacionado para esta actividad</p>';
+        return;
+      }
+      
+      listContainer.innerHTML = contenido.map(item => {
+        const tipoIcon = {
+          'video': 'fa-video',
+          'pdf': 'fa-file-pdf',
+          'archivo': 'fa-file',
+          'link': 'fa-link',
+          'texto': 'fa-file-alt'
+        }[item.tipo] || 'fa-file';
+        
+        return `
+          <div class="bg-gray-50 rounded p-3 flex items-center space-x-3">
+            <i class="fas ${tipoIcon} text-purple-600 text-lg"></i>
+            <div class="flex-1">
+              <p class="font-medium text-sm">${item.titulo}</p>
+              <p class="text-xs text-gray-500">${item.tipo} • Orden: ${item.orden}</p>
+              ${item.descripcion ? `<p class="text-xs text-gray-600 mt-1">${item.descripcion}</p>` : ''}
+            </div>
+            ${item.url_contenido ? `<a href="${item.url_contenido}" target="_blank" class="text-purple-600 hover:text-purple-800"><i class="fas fa-external-link-alt"></i></a>` : ''}
+          </div>
+        `;
+      }).join('');
+    } catch (error) {
+      console.error('Error al cargar contenido relacionado:', error);
+      listContainer.innerHTML = '<p class="text-center text-red-500 py-4">Error al cargar el contenido relacionado</p>';
+    }
+  };
+
+  // Variables globales para preguntas
+  let currentActividadIdForPreguntas = null;
+  let opcionCounter = 0;
+
+  // Funciones para gestionar preguntas
+  window.gestionarPreguntas = async function(idActividad) {
+    currentActividadIdForPreguntas = idActividad;
+    const modal = document.getElementById('preguntas-modal');
+    const actividadTitulo = document.getElementById('preguntas-actividad-titulo');
+    
+    // Obtener información de la actividad para mostrar el título
+    try {
+      const actividad = await getActividadById(idActividad);
+      actividadTitulo.textContent = actividad.titulo;
+    } catch (error) {
+      actividadTitulo.textContent = 'Examen';
+    }
+    
+    modal.classList.remove('hidden');
+    await loadPreguntas(idActividad);
+  };
+
+  async function loadPreguntas(idActividad) {
+    const container = document.getElementById('preguntas-container');
+    container.innerHTML = '<p class="text-center text-gray-500 py-4">Cargando preguntas...</p>';
+    
+    try {
+      const preguntas = await getPreguntas({ id_actividad: idActividad, include_opciones: 'true' });
+      
+      if (preguntas.length === 0) {
+        container.innerHTML = `
+          <div class="text-center text-gray-500 py-8">
+            <i class="fas fa-question-circle text-4xl mb-4 text-gray-400"></i>
+            <p>No hay preguntas creadas aún</p>
+            <p class="text-sm mt-2">Haz clic en "Nueva Pregunta" para comenzar</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = preguntas.map((pregunta, index) => {
+        const opcionesHtml = pregunta.opciones && pregunta.opciones.length > 0
+          ? pregunta.opciones.map((opcion, idx) => `
+              <div class="flex items-center space-x-2 text-sm">
+                <span class="font-medium">${String.fromCharCode(65 + idx)}.</span>
+                <span>${opcion.texto}</span>
+                ${opcion.es_correcta ? '<span class="text-green-600 font-bold">✓ Correcta</span>' : ''}
+              </div>
+            `).join('')
+          : '<p class="text-xs text-gray-400 italic">Sin opciones</p>';
+        
+        return `
+          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex-1">
+                <div class="flex items-center space-x-2 mb-2">
+                  <span class="font-bold text-gray-700">Pregunta ${index + 1}</span>
+                  <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">${pregunta.tipo === 'opcion' ? 'Opción Múltiple' : 'Texto Libre'}</span>
+                  <span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">${pregunta.puntaje} pts</span>
+                </div>
+                <p class="text-gray-800 mb-2">${pregunta.enunciado}</p>
+                ${pregunta.tipo === 'opcion' ? `
+                  <div class="ml-4 mt-2 space-y-1">
+                    ${opcionesHtml}
+                  </div>
+                ` : ''}
+              </div>
+              <div class="flex space-x-2 ml-4">
+                <button onclick="editPregunta(${pregunta.id_pregunta})" class="text-blue-600 hover:text-blue-800" title="Editar">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="deletePreguntaItem(${pregunta.id_pregunta})" class="text-red-600 hover:text-red-800" title="Eliminar">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (error) {
+      console.error('Error al cargar preguntas:', error);
+      container.innerHTML = '<p class="text-center text-red-500 py-4">Error al cargar las preguntas</p>';
+    }
+  }
+
+  window.openPreguntaModal = function(idActividad, idPregunta = null) {
+    const modal = document.getElementById('pregunta-form-modal');
+    const form = document.getElementById('pregunta-form');
+    const tituloModal = document.getElementById('pregunta-modal-titulo');
+    const opcionesSection = document.getElementById('opciones-section');
+    
+    document.getElementById('pregunta-id-actividad').value = idActividad;
+    document.getElementById('pregunta-id-pregunta').value = idPregunta || '';
+    
+    if (idPregunta) {
+      tituloModal.textContent = 'Editar Pregunta';
+    } else {
+      tituloModal.textContent = 'Nueva Pregunta';
+      form.reset();
+      document.getElementById('pregunta-id-actividad').value = idActividad;
+      document.getElementById('pregunta-puntaje').value = 1;
+      opcionesSection.classList.add('hidden');
+      document.getElementById('opciones-container').innerHTML = '';
+      opcionCounter = 0;
+    }
+    
+    modal.classList.remove('hidden');
+  };
+
+  window.editPregunta = async function(idPregunta) {
+    try {
+      const pregunta = await getPreguntaById(idPregunta);
+      if (pregunta) {
+        openPreguntaModal(pregunta.id_actividad, idPregunta);
+        
+        // Llenar el formulario
+        document.getElementById('pregunta-tipo').value = pregunta.tipo;
+        document.getElementById('pregunta-enunciado').value = pregunta.enunciado;
+        document.getElementById('pregunta-puntaje').value = pregunta.puntaje || 1;
+        
+        // Si es tipo "opcion", cargar las opciones
+        if (pregunta.tipo === 'opcion' && pregunta.opciones) {
+          const opcionesSection = document.getElementById('opciones-section');
+          opcionesSection.classList.remove('hidden');
+          const container = document.getElementById('opciones-container');
+          
+          opcionCounter = 0;
+          container.innerHTML = pregunta.opciones.map(opcion => {
+            opcionCounter++;
+            return renderOpcionInput(opcionCounter, opcion.texto, opcion.es_correcta);
+          }).join('');
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar pregunta:', error);
+      alert('Error al cargar la pregunta');
+    }
+  };
+
+  window.deletePreguntaItem = async function(idPregunta) {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta pregunta?')) {
+      return;
+    }
+
+    try {
+      await deletePregunta(idPregunta);
+      await loadPreguntas(currentActividadIdForPreguntas);
+    } catch (error) {
+      console.error('Error al eliminar pregunta:', error);
+      alert('Error al eliminar la pregunta');
+    }
+  };
+
+  function renderOpcionInput(index, texto = '', esCorrecta = false) {
+    return `
+      <div class="opcion-item flex items-center space-x-2 p-2 bg-gray-50 rounded border">
+        <input type="text" class="opcion-texto flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm" 
+               placeholder="Texto de la opción" value="${texto}" required>
+        <label class="flex items-center space-x-1 text-sm">
+          <input type="checkbox" class="opcion-correcta" ${esCorrecta ? 'checked' : ''}>
+          <span>Correcta</span>
+        </label>
+        <button type="button" class="remove-opcion text-red-600 hover:text-red-800" onclick="removeOpcion(this)">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `;
+  }
+
+  window.removeOpcion = function(button) {
+    button.closest('.opcion-item').remove();
+  };
+
+  // Event listeners para el modal de preguntas
+  document.getElementById('close-preguntas-modal')?.addEventListener('click', () => {
+    document.getElementById('preguntas-modal').classList.add('hidden');
+    currentActividadIdForPreguntas = null;
+  });
+
+  document.getElementById('add-pregunta-button')?.addEventListener('click', () => {
+    if (currentActividadIdForPreguntas) {
+      openPreguntaModal(currentActividadIdForPreguntas);
+    }
+  });
+
+  // Event listeners para el modal de formulario de pregunta
+  document.getElementById('close-pregunta-form-modal')?.addEventListener('click', () => {
+    document.getElementById('pregunta-form-modal').classList.add('hidden');
+  });
+
+  document.getElementById('cancel-pregunta')?.addEventListener('click', () => {
+    document.getElementById('pregunta-form-modal').classList.add('hidden');
+  });
+
+  document.getElementById('add-opcion-button')?.addEventListener('click', () => {
+    const container = document.getElementById('opciones-container');
+    opcionCounter++;
+    container.insertAdjacentHTML('beforeend', renderOpcionInput(opcionCounter));
+  });
+
+  // Mostrar/ocultar sección de opciones según el tipo
+  document.getElementById('pregunta-tipo')?.addEventListener('change', function() {
+    const opcionesSection = document.getElementById('opciones-section');
+    const container = document.getElementById('opciones-container');
+    
+    if (this.value === 'opcion') {
+      opcionesSection.classList.remove('hidden');
+      // Agregar al menos 2 opciones por defecto
+      if (container.children.length === 0) {
+        opcionCounter = 0;
+        container.innerHTML = renderOpcionInput(++opcionCounter) + renderOpcionInput(++opcionCounter);
+      }
+    } else {
+      opcionesSection.classList.add('hidden');
+      container.innerHTML = '';
+      opcionCounter = 0;
+    }
+  });
+
+  // Manejar envío del formulario de pregunta
+  document.getElementById('pregunta-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const idPregunta = document.getElementById('pregunta-id-pregunta').value;
+    const idActividad = parseInt(document.getElementById('pregunta-id-actividad').value);
+    const tipo = formData.get('tipo');
+    
+    const preguntaData = {
+      id_actividad: idActividad,
+      tipo: tipo,
+      enunciado: formData.get('enunciado'),
+      puntaje: parseInt(formData.get('puntaje')) || 1
+    };
+    
+    // Si es tipo "opcion", agregar las opciones
+    if (tipo === 'opcion') {
+      const opcionesItems = document.querySelectorAll('.opcion-item');
+      const opciones = [];
+      
+      opcionesItems.forEach(item => {
+        const texto = item.querySelector('.opcion-texto').value.trim();
+        const esCorrecta = item.querySelector('.opcion-correcta').checked;
+        
+        if (texto) {
+          opciones.push({ texto, es_correcta: esCorrecta });
+        }
+      });
+      
+      if (opciones.length < 2) {
+        alert('Las preguntas de opción múltiple deben tener al menos 2 opciones');
+        return;
+      }
+      
+      preguntaData.opciones = opciones;
+    }
+    
+    try {
+      if (idPregunta) {
+        await updatePregunta(idPregunta, preguntaData);
+      } else {
+        await createPregunta(preguntaData);
+      }
+      
+      document.getElementById('pregunta-form-modal').classList.add('hidden');
+      await loadPreguntas(idActividad);
+    } catch (error) {
+      console.error('Error al guardar pregunta:', error);
+      alert('Error al guardar la pregunta: ' + error.message);
+    }
+  });
+
+  // Event listeners para el modal de actividades
+  document.getElementById('close-actividad-modal')?.addEventListener('click', () => {
+    document.getElementById('actividad-modal').classList.add('hidden');
+  });
+
+  document.getElementById('cancel-actividad')?.addEventListener('click', () => {
+    document.getElementById('actividad-modal').classList.add('hidden');
+  });
+
+  document.getElementById('close-contenido-relacionado-modal')?.addEventListener('click', () => {
+    document.getElementById('contenido-relacionado-modal').classList.add('hidden');
+  });
+
+  document.getElementById('actividad-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const idActividad = document.getElementById('actividad-id-actividad').value;
+    const idModulo = parseInt(document.getElementById('actividad-id-modulo').value);
+    const idSeccion = parseInt(document.getElementById('actividad-id-seccion').value);
+    const idDocentePerfil = parseInt(document.getElementById('actividad-id-docente').value);
+    
+    const actividadData = {
+      id_modulo: idModulo,
+      id_seccion: idSeccion,
+      id_docente_perfil: idDocentePerfil,
+      tipo: formData.get('tipo'),
+      titulo: formData.get('titulo'),
+      descripcion: formData.get('descripcion') || null,
+      fecha_entrega: formData.get('fecha_entrega') || null,
+      puntaje_max: parseInt(formData.get('puntaje_max')) || 20
+    };
+
+    try {
+      if (idActividad) {
+        await updateActividad(idActividad, actividadData);
+      } else {
+        await createActividad(actividadData);
+      }
+      
+      // Recargar actividades del módulo
+      const actividades = await getActividades({ id_modulo: idModulo, id_seccion: idSeccion });
+      document.getElementById(`actividades-list-${idModulo}`).innerHTML = renderActividades(actividades, idModulo, idSeccion);
+      
+      document.getElementById('actividad-modal').classList.add('hidden');
+      e.target.reset();
+    } catch (error) {
+      console.error('Error al guardar actividad:', error);
+      alert('Error al guardar la actividad: ' + error.message);
+    }
+  });
+
+  function updateContenidoFields() {
+    const tipo = document.getElementById('contenido-tipo').value;
+    const urlGroup = document.getElementById('url-contenido-group');
+    const archivoGroup = document.getElementById('archivo-contenido-group');
+
+    if (tipo === 'link' || tipo === 'video') {
+      urlGroup.classList.remove('hidden');
+      archivoGroup.classList.add('hidden');
+    } else if (tipo === 'pdf' || tipo === 'archivo') {
+      urlGroup.classList.add('hidden');
+      archivoGroup.classList.remove('hidden');
+    } else {
+      urlGroup.classList.add('hidden');
+      archivoGroup.classList.add('hidden');
+    }
+  }
+
+  // Event listeners
+  document.getElementById('contenido-tipo').addEventListener('change', updateContenidoFields);
+  
+  document.getElementById('close-contenido-modal').addEventListener('click', () => {
+    document.getElementById('contenido-modal').classList.add('hidden');
+  });
+
+  document.getElementById('cancel-contenido').addEventListener('click', () => {
+    document.getElementById('contenido-modal').classList.add('hidden');
+  });
+
+  document.getElementById('contenido-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const idContenido = document.getElementById('contenido-id-contenido').value;
+    const idModulo = parseInt(document.getElementById('contenido-id-modulo').value);
+    const idSeccion = parseInt(document.getElementById('contenido-id-seccion').value);
+    
+    const archivoInput = document.getElementById('contenido-archivo');
+    const archivo = archivoInput.files[0];
+    
+    // Crear objeto con los datos
+    const contenidoData = {
+      id_modulo: idModulo,
+      id_seccion: idSeccion,
+      tipo: document.getElementById('contenido-tipo').value,
+      titulo: document.getElementById('contenido-titulo').value,
+      descripcion: document.getElementById('contenido-descripcion').value || null,
+      url_contenido: document.getElementById('contenido-url').value || null,
+      orden: parseInt(document.getElementById('contenido-orden').value) || 1
+    };
+
+    // Si hay un archivo, subirlo primero
+    if (archivo && archivo instanceof File) {
+      try {
+        // Crear FormData para upload
+        const formData = new FormData();
+        formData.append('archivo', archivo);
+        formData.append('id_modulo', idModulo);  // ← incluir id_modulo en FormData
+        
+        // Subir archivo - PASAR id_modulo como query parameter también
+        const uploadResponse = await fetch(`http://localhost:5678/api/upload/contenido?id_modulo=${idModulo}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formData
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          contenidoData.archivo = uploadData.filename;
+          console.log("✅ Archivo subido:", uploadData.filename);
+        } else {
+          alert('Error al subir el archivo');
+          return;
+        }
+      } catch (error) {
+        console.error('Error al subir archivo:', error);
+        alert('Error al subir el archivo');
+        return;
+      }
+    }
+
+    try {
+      if (idContenido) {
+        await updateContenido(idContenido, contenidoData);
+      } else {
+        await createContenido(contenidoData);
+      }
+      
+      // Recargar contenido del módulo
+      const contenido = await getContenidoByModulo(idModulo, idSeccion);
+      document.getElementById(`contenido-list-${idModulo}`).innerHTML = renderContenido(contenido, idModulo, idSeccion);
+      
+      document.getElementById('contenido-modal').classList.add('hidden');
+      e.target.reset();
+    } catch (error) {
+      console.error('Error al guardar contenido:', error);
+      alert('Error al guardar el contenido: ' + error.message);
+    }
+  });
+
+  // Función para previsualizar archivos
+  window.previewFile = function(fileUrl, fileName) {
+    const modal = document.getElementById('preview-modal');
+    const pdfContainer = document.getElementById('pdf-container');
+    const imageContainer = document.getElementById('image-container');
+    const otherContainer = document.getElementById('other-container');
+    
+    // Limpiar contenedores
+    pdfContainer.classList.add('hidden');
+    imageContainer.classList.add('hidden');
+    otherContainer.classList.add('hidden');
+    
+    // Detectar tipo de archivo
+    const fileExt = fileName.toLowerCase().split('.').pop();
+    
+    if (fileExt === 'pdf') {
+      document.getElementById('pdf-viewer').src = fileUrl;
+      pdfContainer.classList.remove('hidden');
+    } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+      document.getElementById('image-viewer').src = fileUrl;
+      imageContainer.classList.remove('hidden');
+    } else {
+      document.getElementById('download-link').href = fileUrl;
+      otherContainer.classList.remove('hidden');
+    }
+    
+    modal.classList.remove('hidden');
+  };
+</script>
+
+

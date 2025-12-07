@@ -1,0 +1,340 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminHeader from '../../components/AdminHeader.astro';
+// import UserFormModal from '../../components/UserFormModal.astro'; // Eliminar esta importación
+
+// const userName = "Admin User"; // Esto ya no es necesario aquí
+
+// Estas variables de estado serán manejadas internamente en el script de JS
+// let isUserModalOpen = false; 
+// let isEditingUser = false; 
+// let currentEditingUser = {}; 
+---
+
+<AdminLayout title="Gestión de Usuarios - Yatiña Ampara">
+  <AdminHeader>Gestión de Usuarios</AdminHeader>
+
+  <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <div class="bg-white rounded-lg shadow p-4">
+      <div class="flex justify-end mb-4">
+        <button id="add-user-button" class="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-purple-700">
+          <i class="fas fa-plus"></i>
+          <span>Nuevo Usuario</span>
+        </button>
+      </div>
+      <!-- Filtros y barra de búsqueda -->
+      <div class="bg-purple-50 p-4 rounded-lg mb-6 flex flex-wrap items-center space-x-4">
+        <input type="text" id="search-input" placeholder="Buscar por Nombre, Apellido, DNI, Celular..." class="flex-1 border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white px-3 py-2" />
+        <!-- Eliminado: Filtro de especialidades que no corresponde a la vista de usuarios -->
+        <select id="state-filter" class="border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white px-3 py-2">
+          <option value="">Todos los estados</option>
+          <!-- Opciones de estados se cargarán dinámicamente -->
+        </select>
+      </div>
+      <!-- Tabla de usuarios (ejemplo) -->
+      <h2 class="text-2xl font-semibold text-purple-800 mb-4">Todos los Usuarios</h2>
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-purple-100">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">APELLIDOS</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">NOMBRES</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">DNI</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">CORREO</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">CELULAR</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">ROL</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">ESTADO</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-purple-800 uppercase tracking-wider">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
+          <!-- Los usuarios se cargarán aquí dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+</AdminLayout>
+
+<!-- HTML del UserFormModal integrado directamente -->
+<div id="user-form-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-lg font-bold text-gray-900" id="modal-title"></h3> <!-- Título dinámico -->
+      <button id="close-user-modal-button" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="mt-4">
+      <form id="user-form">
+        <input type="hidden" id="user-id" />
+
+        <div class="mb-4">
+          <label for="nombres" class="block text-sm font-medium text-gray-700">Nombres</label>
+          <input type="text" id="nombres" name="nombres" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="mb-4">
+          <label for="apellidos" class="block text-sm font-medium text-gray-700">Apellidos</label>
+          <input type="text" id="apellidos" name="apellidos" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="mb-4">
+          <label for="dni" class="block text-sm font-medium text-gray-700">DNI</label>
+          <input type="text" id="dni" name="dni" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="mb-4">
+          <label for="correo" class="block text-sm font-medium text-gray-700">Correo</label>
+          <input type="email" id="correo" name="correo" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+        </div>
+        <div class="mb-4">
+          <label for="celular" class="block text-sm font-medium text-gray-700">Celular</label>
+          <input type="text" id="celular" name="celular" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+        </div>
+        <div class="mb-4">
+          <label for="modal-id_rol" class="block text-sm font-medium text-gray-700">Rol</label>
+          <select id="modal-id_rol" name="id_rol" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+            <!-- Roles se cargarán dinámicamente -->
+          </select>
+        </div>
+        <div class="mb-4">
+          <label for="modal-id_estado" class="block text-sm font-medium text-gray-700">Estado</label>
+          <select id="modal-id_estado" name="id_estado" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+            <!-- Estados se cargarán dinámicamente -->
+          </select>
+        </div>
+        <div class="mb-4" id="password-field-container">
+          <label for="contrasena" class="block text-sm font-medium text-gray-700">Contraseña</label>
+          <input type="password" id="contrasena" name="contrasena" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+        </div>
+
+        <div class="flex justify-end space-x-2 mt-6">
+          <button type="button" id="cancel-user-modal-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancelar</button>
+          <button type="submit" id="submit-user-form-button" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+            Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { getUsers, updateUser, deactivateUser } from '../../public/services/userService.js';
+  import { getEstados } from '../../public/services/estadoService.js';
+  import { registerUser } from '../../public/services/auth.js'; // Importa el servicio de registro
+  import { getRoles } from '../../public/services/rolService.js'; // Importa el servicio de roles
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Script de admin/users.astro cargado y DOMContentLoaded disparado.');
+    const usersTableBody = document.getElementById('users-table-body');
+    const searchInput = document.getElementById('search-input');
+    // const courseFilter = document.getElementById('course-filter'); // Eliminado el filtro de especialidades
+    const stateFilter = document.getElementById('state-filter');
+
+    // Referencias a elementos del modal
+    const userFormModal = document.getElementById('user-form-modal');
+    const modalTitle = userFormModal.querySelector('#modal-title');
+    const closeUserModalButton = userFormModal.querySelector('#close-user-modal-button');
+    const cancelUserModalButton = userFormModal.querySelector('#cancel-user-modal-button');
+    const userForm = userFormModal.querySelector('#user-form');
+    const userIdField = userForm.querySelector('#user-id');
+    const nombresField = userForm.querySelector('#nombres');
+    const apellidosField = userForm.querySelector('#apellidos');
+    const dniField = userForm.querySelector('#dni');
+    const correoField = userForm.querySelector('#correo');
+    const celularField = userForm.querySelector('#celular');
+    const modalRolSelect = userForm.querySelector('#modal-id_rol');
+    const modalEstadoSelect = userForm.querySelector('#modal-id_estado');
+    const contrasenaField = userForm.querySelector('#contrasena');
+    const passwordFieldContainer = userForm.querySelector('#password-field-container');
+    const submitUserFormButton = userForm.querySelector('#submit-user-form-button');
+
+    let isEditingUser = false; // Estado local para el script
+
+    const currentFilters = {
+      rol: 3, // Por defecto, solo usuarias
+      search: '',
+      id_estado: '',
+      id_curso: '', // Si implementas cursos, este será dinámico
+    };
+
+    const fetchAndRenderUsers = async () => {
+      usersTableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">Cargando usuarios...</td></tr>`;
+      try {
+        const users = await getUsers(currentFilters);
+
+        if (users.length === 0) {
+          usersTableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">No hay usuarias registradas con los filtros actuales.</td></tr>`;
+          return;
+        }
+
+        usersTableBody.innerHTML = users.map(user => `
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">${user.apellidos}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${user.nombres}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${user.dni || 'N/A'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${user.correo}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${user.celular || 'N/A'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${user.id_rol === 1 ? 'Administrador' : user.id_rol === 2 ? 'Docente' : 'Usuaria'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.id_estado === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                ${user.id_estado === 1 ? 'Activo' : 'Inactivo'}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <button class="text-yellow-600 hover:text-yellow-900 mr-2 edit-user-button" data-id="${user.id_usuario}" data-user='${encodeURIComponent(JSON.stringify(user))}'><i class="fas fa-edit"></i></button>
+              <button class="text-red-600 hover:text-red-900 delete-user-button" data-id="${user.id_usuario}"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+
+      } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+        usersTableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-4 whitespace-nowrap text-center text-red-500">Error al cargar los usuarios: ${error.message}.</td></tr>`;
+      }
+    };
+
+    const populateStatesFilter = async () => {
+      try {
+        const estados = await getEstados();
+        stateFilter.innerHTML = '<option value="">Todos los estados</option>' + 
+                                estados.map(estado => `<option value="${estado.id_estado}">${estado.nombre}</option>`).join('');
+        modalEstadoSelect.innerHTML = estados.map(estado => `<option value="${estado.id_estado}">${estado.nombre}</option>`).join('');
+      } catch (error) {
+        console.error('Error al cargar estados:', error);
+      }
+    };
+
+    const populateRolesFilter = async () => {
+      try {
+        const roles = await getRoles();
+        modalRolSelect.innerHTML = roles.map(rol => `<option value="${rol.id_rol}">${rol.nombre}</option>`).join('');
+      } catch (error) {
+        console.error('Error al cargar roles:', error);
+      }
+    };
+
+    // Funciones para controlar el modal de usuario
+    const openUserModal = (isEditingMode = false, userData = {}) => {
+      isEditingUser = isEditingMode;
+      userForm.reset(); // Limpiar formulario
+
+      modalTitle.textContent = isEditingMode ? 'Editar Usuario' : 'Nuevo Usuario';
+      submitUserFormButton.textContent = isEditingMode ? 'Guardar Cambios' : 'Añadir Usuario';
+
+      if (isEditingMode) {
+        userIdField.value = userData.id_usuario || '';
+        nombresField.value = userData.nombres || '';
+        apellidosField.value = userData.apellidos || '';
+        dniField.value = userData.dni || '';
+        correoField.value = userData.correo || '';
+        celularField.value = userData.celular || '';
+        modalRolSelect.value = userData.id_rol || '3'; // Default a Usuaria
+        modalEstadoSelect.value = userData.id_estado || '1'; // Default a Activo
+        passwordFieldContainer.classList.add('hidden'); // Ocultar campo de contraseña en edición
+        contrasenaField.removeAttribute('required');
+      } else {
+        passwordFieldContainer.classList.remove('hidden'); // Mostrar campo de contraseña al añadir
+        contrasenaField.setAttribute('required', 'true');
+        modalRolSelect.value = '3'; // Default a Usuaria para nuevos usuarios
+        modalEstadoSelect.value = '1'; // Default a Activo para nuevos usuarios
+      }
+
+      userFormModal.classList.remove('hidden'); // Mostrar el modal
+    };
+
+    const closeUserModal = () => {
+      userFormModal.classList.add('hidden'); // Ocultar el modal
+      userForm.reset(); // Limpiar formulario
+      isEditingUser = false;
+    };
+
+    const handleUserFormSubmit = async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(userForm);
+      const data = {}; // Eliminada la anotación de tipo TypeScript
+      for (const [key, value] of formData.entries()) {
+        data[key] = value;
+      }
+
+      const id_usuario = userIdField.value ? parseInt(userIdField.value) : undefined;
+
+      try {
+        if (isEditingUser) {
+          await updateUser(id_usuario, data);
+          alert('Usuario actualizado correctamente!');
+        } else {
+          await registerUser(data); 
+          alert('Usuario añadido correctamente!');
+        }
+        closeUserModal();
+        fetchAndRenderUsers(); // Refrescar la tabla
+      } catch (error) {
+        console.error('Error al guardar usuario:', error);
+        alert(`Error al guardar usuario: ${error.message}`);
+      }
+    };
+
+    // Event Listeners para filtros
+    searchInput.addEventListener('input', () => {
+      currentFilters.search = searchInput.value;
+      fetchAndRenderUsers();
+    });
+
+    stateFilter.addEventListener('change', () => {
+      currentFilters.id_estado = stateFilter.value;
+      fetchAndRenderUsers();
+    });
+
+    // Eliminado: Event listener para courseFilter que ya no existe
+    /*
+    courseFilter.addEventListener('change', () => {
+      currentFilters.id_curso = courseFilter.value; // Implementar cuando se tenga el endpoint de cursos
+      fetchAndRenderUsers();
+    });
+    */
+
+    // Listener para el botón "Nuevo Usuario"
+    const addUserButton = document.getElementById('add-user-button');
+    addUserButton.addEventListener('click', () => openUserModal(false));
+
+    // Listeners para botones de cerrar y cancelar del modal
+    closeUserModalButton.addEventListener('click', closeUserModal);
+    cancelUserModalButton.addEventListener('click', closeUserModal);
+    userFormModal.addEventListener('click', (event) => {
+      if (event.target === userFormModal) {
+        closeUserModal();
+      }
+    });
+
+    // Listener para el envío del formulario del modal
+    userForm.addEventListener('submit', handleUserFormSubmit);
+
+    // Delegación de eventos para botones de editar y eliminar en la tabla
+    usersTableBody.addEventListener('click', async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+
+      const userId = parseInt(target.dataset.id);
+      
+      if (target.classList.contains('edit-user-button')) {
+        const userData = JSON.parse(decodeURIComponent(target.dataset.user));
+        openUserModal(true, userData);
+      } else if (target.classList.contains('delete-user-button')) {
+        if (confirm('¿Estás segura de que quieres desactivar este usuario?')) {
+          try {
+            await deactivateUser(userId);
+            alert('Usuario desactivado correctamente!');
+            fetchAndRenderUsers(); // Refrescar la tabla
+          } catch (error) {
+            console.error('Error al desactivar usuario:', error);
+            alert(`Error al desactivar usuario: ${error.message}`);
+          }
+        }
+      }
+    });
+
+    // Inicializar filtros y cargar usuarios al cargar la página
+    populateStatesFilter();
+    populateRolesFilter(); // Poblamos los roles para el modal
+    fetchAndRenderUsers();
+  });
+</script>

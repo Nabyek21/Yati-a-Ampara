@@ -1,0 +1,605 @@
+---
+import UsuarioHeader from '../../components/UsuarioHeader.astro';
+import UsuarioLayout from '../../layouts/UsuarioLayout.astro';
+---
+
+<UsuarioLayout title="Foros - Yatiña">
+  <UsuarioHeader>Foros de Discusión</UsuarioHeader>
+
+  <main class="flex-1 overflow-auto p-6 bg-gradient-to-br from-purple-50 to-indigo-50">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-4 gap-6">
+        <!-- Sidebar Izquierdo: Categorías y Destacados -->
+        <aside class="col-span-1 space-y-6">
+          <!-- Categorías -->
+          <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
+            <div class="flex items-center gap-2 mb-4">
+              <i class="fas fa-list text-purple-600 text-xl"></i>
+              <h2 class="text-xl font-bold text-gray-800">Categorías</h2>
+            </div>
+            <div id="categorias-lista" class="space-y-2">
+              <div class="text-center py-4 text-gray-500">
+                <i class="fas fa-spinner fa-spin mb-2"></i>
+                <p class="text-sm">Cargando...</p>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <input type="text" placeholder="Buscar tema..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            </div>
+          </div>
+
+          <!-- Publicaciones Destacadas (Sticky) -->
+          <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl shadow-md p-6 sticky top-96">
+            <div class="flex items-center gap-2 mb-4">
+              <i class="fas fa-star text-yellow-300 text-xl"></i>
+              <h2 class="text-xl font-bold text-white">Destacados</h2>
+            </div>
+            <div id="publicaciones-destacadas" class="space-y-3">
+              <p class="text-sm text-purple-100">Cargando...</p>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <div class="col-span-3">
+          <!-- Encabezado con botón de crear -->
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h1 class="text-4xl font-bold text-gray-800 mb-1"></h1>
+              <p class="text-gray-600">Comparte tus ideas y aprende con la comunidad</p>
+            </div>
+            <button id="btn-crear-publicacion" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 flex items-center gap-2 font-semibold shadow-lg hover:shadow-xl transition">
+              <i class="fas fa-plus"></i>
+              Crear Publicación
+            </button>
+          </div>
+
+          <!-- Lista de publicaciones -->
+          <div id="foro-publicaciones" class="space-y-4">
+            <div class="text-center py-12 text-gray-500">
+              <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+              <p>Cargando temas...</p>
+            </div>
+          </div>
+
+          <!-- Publicación seleccionada -->
+          <div id="publicacion-detalle" class="hidden">
+            <!-- Se cargará dinámicamente -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para crear publicación -->
+  <div id="modal-crear-publicacion" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 p-6 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-pen-fancy text-white text-2xl"></i>
+          <h2 class="text-2xl font-bold text-white">Crear Publicación</h2>
+        </div>
+        <button onclick="cerrarModalCrear()" class="text-white hover:text-gray-200 transition">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+      
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-tag text-purple-600 mr-2"></i>
+            Título (requerido)
+          </label>
+          <input 
+            id="input-titulo-publicacion"
+            type="text" 
+            placeholder="Ej: ¿Cómo estudiar para el examen?" 
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition"
+            maxlength="200"
+          />
+          <p id="contador-titulo" class="text-xs text-gray-500 mt-1">0/200</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-align-left text-purple-600 mr-2"></i>
+            Contenido (opcional)
+          </label>
+          <textarea 
+            id="input-contenido-publicacion"
+            placeholder="Escribe tu pregunta, idea o comentario..." 
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition resize-none"
+            rows="8"
+            maxlength="2000"
+          ></textarea>
+          <p id="contador-contenido" class="text-xs text-gray-500 mt-1">0/2000</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-layer-group text-purple-600 mr-2"></i>
+            Sección
+          </label>
+          <select 
+            id="select-seccion-publicacion"
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition bg-white">
+            <option value="">-- Selecciona una sección --</option>
+          </select>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button 
+            onclick="cerrarModalCrear()" 
+            class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition">
+            <i class="fas fa-times mr-2"></i>Cancelar
+          </button>
+          <button 
+            onclick="guardarPublicacion()" 
+            class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2">
+            <i class="fas fa-check"></i>Publicar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</UsuarioLayout>
+
+<script type="module">
+  import { obtenerTemasPorSeccion, crearTema, obtenerRespuestasPorTema, crearRespuesta, obtenerTemaPorId } from '../../../../public/services/foroService.js';
+  import { getMatriculasByUsuario } from '../../../../public/services/matriculaService.js';
+
+  let seccionesDelUsuario = [];
+  let seccionActual = null;
+  let publicacionesActuales = [];
+  let publicacionSeleccionada = null;
+
+  // Cargar secciones al iniciar
+  document.addEventListener('DOMContentLoaded', async () => {
+    await cargarSecciones();
+    
+    // Event listener para el botón de crear publicación
+    document.getElementById('btn-crear-publicacion').addEventListener('click', abrirModalCrear);
+    
+    // Contadores de caracteres
+    document.getElementById('input-titulo-publicacion').addEventListener('input', (e) => {
+      document.getElementById('contador-titulo').textContent = `${e.target.value.length}/200`;
+    });
+    
+    document.getElementById('input-contenido-publicacion').addEventListener('input', (e) => {
+      document.getElementById('contador-contenido').textContent = `${e.target.value.length}/2000`;
+    });
+  });
+
+  async function cargarSecciones() {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const matriculas = await getMatriculasByUsuario(user.id_usuario);
+
+      // Extraer secciones únicas
+      seccionesDelUsuario = [...new Set(matriculas.map(m => ({ 
+        id_seccion: m.id_seccion, 
+        nombre_seccion: m.nombre_seccion 
+      })))];
+
+      renderizarCategorias();
+
+      // Cargar la primera sección por defecto
+      if (seccionesDelUsuario.length > 0) {
+        seleccionarSeccion(seccionesDelUsuario[0].id_seccion, seccionesDelUsuario[0].nombre_seccion);
+      }
+    } catch (error) {
+      console.error('Error al cargar secciones:', error);
+      document.getElementById('categorias-lista').innerHTML = `
+        <div class="text-center py-4 text-red-500 text-sm">
+          <i class="fas fa-exclamation-circle mb-2"></i>
+          <p>Error al cargar</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderizarCategorias() {
+    const lista = document.getElementById('categorias-lista');
+    lista.innerHTML = seccionesDelUsuario.map(seccion => `
+      <button 
+        onclick="seleccionarSeccion(${seccion.id_seccion}, '${seccion.nombre_seccion}')"
+        class="categoria-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-50 transition ${seccion.id_seccion === seccionActual?.id ? 'bg-purple-100 text-purple-600 font-semibold border-l-4 border-purple-600' : 'text-gray-700 border-l-4 border-transparent'}"
+        data-seccion="${seccion.id_seccion}">
+        <i class="fas fa-comments mr-2"></i>
+        ${seccion.nombre_seccion}
+        <span class="float-right bg-gray-300 px-2 py-1 rounded text-xs font-semibold">0</span>
+      </button>
+    `).join('');
+  }
+
+  function renderizarPublicacionDestacada(publicacion) {
+    return `
+      <div 
+        onclick="abrirPublicacion(${publicacion.id_tema})" 
+        class="bg-white bg-opacity-10 hover:bg-opacity-20 rounded-lg p-4 cursor-pointer transition border border-white border-opacity-20 hover:border-opacity-40">
+        <h4 class="text-sm font-bold text-white mb-2 truncate">${publicacion.titulo}</h4>
+        <div class="flex items-center justify-between text-xs text-purple-100">
+          <span><i class="fas fa-comments mr-1"></i>${publicacion.total_respuestas} respuestas</span>
+          <span><i class="fas fa-user mr-1"></i>${publicacion.nombres || 'Anónimo'}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function actualizarPublicacionesDestacadas() {
+    const destacados = document.getElementById('publicaciones-destacadas');
+    if (publicacionesActuales.length === 0) {
+      destacados.innerHTML = `
+        <p class="text-sm text-purple-100 text-center py-4">
+          <i class="fas fa-inbox mb-2"></i><br>
+          No hay publicaciones aún
+        </p>
+      `;
+      return;
+    }
+
+    // Ordenar por cantidad de respuestas y mostrar los top 5
+    const topPublicaciones = publicacionesActuales
+      .sort((a, b) => b.total_respuestas - a.total_respuestas)
+      .slice(0, 5);
+
+    destacados.innerHTML = topPublicaciones.length === 0 
+      ? '<p class="text-sm text-purple-100">Sin publicaciones destacadas</p>'
+      : topPublicaciones.map(pub => renderizarPublicacionDestacada(pub)).join('');
+  }
+
+  window.seleccionarSeccion = async function(idSeccion, nombreSeccion) {
+    seccionActual = { id: idSeccion, nombre: nombreSeccion };
+    document.querySelector('h1').textContent = nombreSeccion;
+    
+    // Actualizar estilos de categorías
+    document.querySelectorAll('.categoria-btn').forEach(btn => {
+      btn.classList.remove('bg-purple-100', 'text-purple-600', 'font-semibold', 'border-l-4', 'border-purple-600');
+      btn.classList.add('text-gray-700', 'border-l-4', 'border-transparent');
+      if (btn.dataset.seccion == idSeccion) {
+        btn.classList.add('bg-purple-100', 'text-purple-600', 'font-semibold', 'border-l-4', 'border-purple-600');
+        btn.classList.remove('border-transparent');
+      }
+    });
+
+    // Cerrar detalle si estaba abierto
+    document.getElementById('publicacion-detalle').classList.add('hidden');
+    document.getElementById('foro-publicaciones').classList.remove('hidden');
+
+    await cargarPublicaciones();
+  };
+
+  async function cargarPublicaciones() {
+    try {
+      const container = document.getElementById('foro-publicaciones');
+      container.innerHTML = `
+        <div class="text-center py-12 text-gray-500">
+          <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+          <p>Cargando publicaciones...</p>
+        </div>
+      `;
+
+      publicacionesActuales = await obtenerTemasPorSeccion(seccionActual.id);
+      renderizarPublicaciones(publicacionesActuales);
+      actualizarPublicacionesDestacadas();
+    } catch (error) {
+      console.error('Error al cargar publicaciones:', error);
+      document.getElementById('foro-publicaciones').innerHTML = `
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <i class="fas fa-exclamation-triangle text-red-600 text-3xl mb-3"></i>
+          <p class="text-red-700 font-semibold">Error al cargar las publicaciones</p>
+          <p class="text-red-600 text-sm mt-1">${error.message}</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderizarPublicaciones(publicaciones) {
+    const container = document.getElementById('foro-publicaciones');
+
+    if (publicaciones.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-12 text-gray-500">
+          <i class="fas fa-inbox text-5xl mb-3 opacity-30"></i>
+          <p class="text-lg font-semibold">No hay publicaciones en esta sección</p>
+          <p class="text-sm mt-2">¡Sé el primero en crear una!</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = publicaciones.map(pub => `
+      <div 
+        onclick="abrirPublicacion(${pub.id_tema})" 
+        class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl hover:border-purple-300 cursor-pointer transition border-l-4 border-purple-500 hover:translate-y-[-2px]">
+        <div class="flex justify-between items-start mb-3">
+          <div class="flex-1">
+            <h3 class="text-lg font-bold text-gray-900 mb-1">${pub.titulo}</h3>
+            <p class="text-gray-600 text-sm mb-3 line-clamp-2">${pub.contenido || 'Sin descripción'}</p>
+          </div>
+          <span class="px-3 py-1 bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 text-xs font-bold rounded-full whitespace-nowrap ml-2">
+            <i class="fas fa-comments mr-1"></i>${pub.total_respuestas}
+          </span>
+        </div>
+        <div class="flex justify-between items-center text-xs text-gray-500 pt-3 border-t border-gray-200">
+          <span><i class="fas fa-user-circle mr-1"></i><strong>${pub.nombres || 'Anónimo'}</strong> ${pub.apellidos || ''}</span>
+          <span><i class="fas fa-clock mr-1"></i>${new Date(pub.fecha_creacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.abrirPublicacion = async function(idPublicacion) {
+    try {
+      publicacionSeleccionada = await obtenerTemaPorId(idPublicacion);
+      const respuestas = await obtenerRespuestasPorTema(idPublicacion);
+      
+      document.getElementById('foro-publicaciones').classList.add('hidden');
+      
+      const detalleContainer = document.getElementById('publicacion-detalle');
+      detalleContainer.classList.remove('hidden');
+      
+      detalleContainer.innerHTML = `
+        <div class="bg-white rounded-xl shadow-md p-8">
+          <button onclick="volverAPublicaciones()" class="text-purple-600 hover:text-purple-700 flex items-center gap-2 mb-6 font-semibold hover:translate-x-[-4px] transition">
+            <i class="fas fa-arrow-left"></i>
+            Volver
+          </button>
+          
+          <div class="mb-6 pb-6 border-b border-gray-200">
+            <h2 class="text-4xl font-bold text-gray-900 mb-3">${publicacionSeleccionada.titulo}</h2>
+            <p class="text-gray-700 text-lg">${publicacionSeleccionada.contenido || ''}</p>
+          </div>
+          
+          <div class="flex items-center justify-between pb-6 border-b border-gray-200 mb-6">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                ${(publicacionSeleccionada.nombres || 'A').charAt(0)}
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900 text-lg">${publicacionSeleccionada.nombres || 'Anónimo'} ${publicacionSeleccionada.apellidos || ''}</p>
+                <p class="text-xs text-gray-500"><i class="fas fa-calendar mr-1"></i>${new Date(publicacionSeleccionada.fecha_creacion).toLocaleString('es-ES')}</p>
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-purple-600">${respuestas.length}</div>
+              <div class="text-xs text-gray-600">respuestas</div>
+            </div>
+          </div>
+
+          <!-- Respuestas -->
+          <div class="mb-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <i class="fas fa-comments text-purple-600"></i>
+              Respuestas
+            </h3>
+            <div id="respuestas-list" class="space-y-4">
+              ${respuestas.length === 0 ? '<p class="text-gray-500 text-center py-8"><i class="fas fa-inbox mb-2"></i><br>No hay respuestas aún</p>' : ''}
+              ${respuestas.map(resp => `
+                <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-5 border border-purple-100">
+                  <div class="flex items-start gap-4 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                      ${(resp.nombres || 'A').charAt(0)}
+                    </div>
+                    <div class="flex-1">
+                      <p class="font-semibold text-gray-900">${resp.nombres || 'Anónimo'} ${resp.apellidos || ''}</p>
+                      <p class="text-xs text-gray-500"><i class="fas fa-calendar mr-1"></i>${new Date(resp.fecha_creacion).toLocaleString('es-ES')}</p>
+                    </div>
+                  </div>
+                  <p class="text-gray-700 leading-relaxed">${resp.contenido}</p>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Form para nueva respuesta -->
+            <div class="mt-8 pt-8 border-t border-gray-200">
+              <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-pen text-purple-600"></i>
+                Escribe tu respuesta
+              </h4>
+              <textarea id="nueva-respuesta-text" placeholder="Comparte tu perspectiva..." class="w-full px-4 py-3 border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none" rows="5"></textarea>
+              <button id="btn-enviar-respuesta" onclick="enviarRespuesta()" class="mt-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition">
+                <i class="fas fa-paper-plane mr-2"></i>Enviar Respuesta
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    } catch (error) {
+      console.error('Error al abrir publicación:', error);
+      alert('Error al cargar la publicación');
+    }
+  };
+
+  window.volverAPublicaciones = function() {
+    document.getElementById('publicacion-detalle').classList.add('hidden');
+    document.getElementById('foro-publicaciones').classList.remove('hidden');
+    publicacionSeleccionada = null;
+  };
+
+  window.enviarRespuesta = async function() {
+    const contenido = document.getElementById('nueva-respuesta-text').value.trim();
+    if (!contenido) {
+      alert('Escribe una respuesta');
+      return;
+    }
+
+    try {
+      await crearRespuesta(publicacionSeleccionada.id_tema, contenido);
+      document.getElementById('nueva-respuesta-text').value = '';
+      
+      // Recargar publicación
+      await window.abrirPublicacion(publicacionSeleccionada.id_tema);
+      
+      // Actualizar destacados también
+      actualizarPublicacionesDestacadas();
+    } catch (error) {
+      console.error('Error al enviar respuesta:', error);
+      alert('Error al enviar la respuesta');
+    }
+  };
+
+  // ============ FUNCIONES DEL MODAL ============
+
+  window.abrirModalCrear = function() {
+    const modal = document.getElementById('modal-crear-publicacion');
+    modal.classList.remove('hidden');
+    
+    // Poblar secciones en el select
+    const select = document.getElementById('select-seccion-publicacion');
+    select.innerHTML = '<option value="">-- Selecciona una sección --</option>';
+    
+    seccionesDelUsuario.forEach(seccion => {
+      const option = document.createElement('option');
+      option.value = seccion.id_seccion;
+      option.textContent = seccion.nombre_seccion;
+      if (seccionActual && seccion.id_seccion === seccionActual.id) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
+    
+    // Limpiar formulario
+    document.getElementById('input-titulo-publicacion').value = '';
+    document.getElementById('input-contenido-publicacion').value = '';
+    document.getElementById('contador-titulo').textContent = '0/200';
+    document.getElementById('contador-contenido').textContent = '0/2000';
+  };
+
+  window.cerrarModalCrear = function() {
+    const modal = document.getElementById('modal-crear-publicacion');
+    modal.classList.add('hidden');
+  };
+
+  window.guardarPublicacion = async function() {
+    const titulo = document.getElementById('input-titulo-publicacion').value.trim();
+    const contenido = document.getElementById('input-contenido-publicacion').value.trim();
+    const idSeccion = document.getElementById('select-seccion-publicacion').value;
+    const btnPublicar = document.querySelector('#modal-crear-publicacion .space-y-4 button:last-of-type');
+
+    if (!titulo) {
+      alert('El título es requerido');
+      return;
+    }
+
+    if (!idSeccion) {
+      alert('Debes seleccionar una sección');
+      return;
+    }
+
+    try {
+      // Mostrar cargando
+      const originalHTML = btnPublicar.innerHTML;
+      btnPublicar.disabled = true;
+      btnPublicar.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Publicando...';
+
+      await crearTema(parseInt(idSeccion), titulo, contenido);
+
+      // Cerrar modal
+      cerrarModalCrear();
+
+      // Recargar publicaciones
+      if (seccionActual && parseInt(idSeccion) === seccionActual.id) {
+        await cargarPublicaciones();
+      } else {
+        // Si cambió de sección, cambiar a esa sección
+        const seccion = seccionesDelUsuario.find(s => s.id_seccion === parseInt(idSeccion));
+        if (seccion) {
+          await window.seleccionarSeccion(seccion.id_seccion, seccion.nombre_seccion);
+        }
+      }
+
+      alert('✅ Publicación creada correctamente');
+    } catch (error) {
+      console.error('Error al crear publicación:', error);
+      alert('Error al crear la publicación: ' + error.message);
+    } finally {
+      btnPublicar.disabled = false;
+      btnPublicar.innerHTML = '<i class="fas fa-check"></i>Publicar';
+    }
+  };
+
+  // Cerrar modal al hacer click fuera de él
+  window.addEventListener('click', (e) => {
+    const modal = document.getElementById('modal-crear-publicacion');
+    if (e.target === modal) {
+      cerrarModalCrear();
+    }
+  });
+</script>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Animaciones suaves */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  #foro-publicaciones > div {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  /* Scroll suave para el sidebar pegajoso */
+  aside {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+
+  /* Estilo para scrollbar personalizado */
+  aside::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  aside::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  aside::-webkit-scrollbar-thumb {
+    background: rgba(168, 85, 247, 0.3);
+    border-radius: 3px;
+  }
+
+  aside::-webkit-scrollbar-thumb:hover {
+    background: rgba(168, 85, 247, 0.5);
+  }
+
+  /* Modal styles */
+  #modal-crear-publicacion {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  #modal-crear-publicacion.hidden {
+    display: none;
+  }
+
+  /* Input focus styles */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+  }
+
+  /* Smooth transitions */
+  button {
+    transition: all 0.3s ease;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+</style>
+

@@ -1,0 +1,661 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminHeader from '../../components/AdminHeader.astro';
+---
+
+<AdminLayout title="Administrar Biblioteca - Yatiña">
+  <AdminHeader>Administrar Biblioteca</AdminHeader>
+
+  <main class="flex-1 overflow-auto p-6 bg-gradient-to-br from-purple-50 to-indigo-50">
+    <div class="max-w-7xl mx-auto">
+      <!-- Encabezado -->
+      <div class="mb-6">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Gestionar Biblioteca</h1>
+        <p class="text-gray-600">Sube y gestiona recursos educativos para los estudiantes</p>
+      </div>
+
+      <!-- Botón para crear recurso -->
+      <div class="mb-6">
+        <button 
+          onclick="abrirModalCrear()" 
+          class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition">
+          <i class="fas fa-plus mr-2"></i>Subir Nuevo Recurso
+        </button>
+      </div>
+
+      <!-- Tabla de recursos -->
+      <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+          <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-list text-purple-600"></i>
+            Recursos Disponibles
+          </h2>
+        </div>
+
+        <div id="tabla-recursos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+          <div class="col-span-full text-center text-gray-500 py-12">
+            <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+            <p class="text-lg">Cargando recursos...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para crear/editar recurso -->
+  <div id="modal-crear-recurso" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 p-6 flex items-center justify-between">
+        <h2 id="modal-titulo-crear" class="text-2xl font-bold text-white">Subir Recurso</h2>
+        <button onclick="cerrarModalCrear()" class="text-white hover:text-gray-200 transition">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+      
+      <div class="p-6 space-y-4">
+        <input type="hidden" id="id-recurso-editar" />
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-layer-group text-purple-600 mr-2"></i>Tipo de Recurso (requerido)
+          </label>
+          <select 
+            id="input-tipo"
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition"
+          >
+            <option value="">Selecciona un tipo...</option>
+            <option value="PDF">📄 PDF</option>
+            <option value="Video">🎥 Video</option>
+            <option value="Artículo">📰 Artículo</option>
+            <option value="Libro">📚 Libro</option>
+            <option value="Presentación">🎯 Presentación</option>
+            <option value="Enlace">🔗 Enlace Web</option>
+            <option value="Audio">🎵 Audio</option>
+            <option value="Imagen">🖼️ Imagen</option>
+            <option value="Documento">📋 Documento</option>
+            <option value="Otro">📎 Otro</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-heading text-purple-600 mr-2"></i>Título (requerido)
+          </label>
+          <input 
+            id="input-titulo"
+            type="text" 
+            placeholder="Ej: Guía de Cálculo Integral" 
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-user text-purple-600 mr-2"></i>Autor
+          </label>
+          <input 
+            id="input-autor"
+            type="text" 
+            placeholder="Ej: Juan Pérez" 
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-align-left text-purple-600 mr-2"></i>Descripción
+          </label>
+          <textarea 
+            id="input-descripcion"
+            placeholder="Describe brevemente el contenido del recurso..." 
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition resize-none"
+            rows="4"
+          ></textarea>
+        </div>
+
+        <!-- Tabs para elegir entre URL o Archivo -->
+        <div class="border-b border-gray-300 mb-4">
+          <div class="flex gap-4">
+            <button 
+              id="tab-url" 
+              onclick="cambiarTab('url')"
+              class="px-4 py-2 font-semibold text-purple-600 border-b-2 border-purple-600 focus:outline-none">
+              <i class="fas fa-link mr-2"></i>URL del Recurso
+            </button>
+            <button 
+              id="tab-archivo" 
+              onclick="cambiarTab('archivo')"
+              class="px-4 py-2 font-semibold text-gray-600 border-b-2 border-transparent hover:text-purple-600 focus:outline-none transition">
+              <i class="fas fa-upload mr-2"></i>Subir Archivo
+            </button>
+          </div>
+        </div>
+
+        <!-- Sección URL -->
+        <div id="seccion-url" class="space-y-3">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <i class="fas fa-link text-purple-600 mr-2"></i>URL del Recurso
+            </label>
+            <input 
+              id="input-url"
+              type="url" 
+              placeholder="https://ejemplo.com/recurso.pdf" 
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition"
+            />
+            <p class="text-xs text-gray-500 mt-1">Puede ser un enlace a Google Drive, OneDrive, o tu servidor</p>
+          </div>
+        </div>
+
+        <!-- Sección Archivo (oculta por defecto) -->
+        <div id="seccion-archivo" class="space-y-3 hidden">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <i class="fas fa-file text-purple-600 mr-2"></i>Selecciona un archivo
+            </label>
+            <div id="zona-drop" class="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-600 hover:bg-purple-50 transition">
+              <i class="fas fa-cloud-upload-alt text-3xl text-purple-500 mb-2"></i>
+              <p class="text-sm font-semibold text-gray-700">Arrastra un archivo aquí o haz clic para seleccionar</p>
+              <p class="text-xs text-gray-500 mt-1">Máximo 50 MB</p>
+              <input 
+                id="input-archivo"
+                type="file" 
+                class="hidden"
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4,.mp3,.wav,.jpg,.jpeg,.png,.gif,.zip"
+              />
+            </div>
+            <p id="nombre-archivo" class="text-sm text-gray-600 mt-2 hidden">
+              <i class="fas fa-check-circle text-green-500 mr-2"></i>
+              <span id="nombre-archivo-texto"></span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button 
+            onclick="cerrarModalCrear()" 
+            class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition">
+            <i class="fas fa-times mr-2"></i>Cancelar
+          </button>
+          <button 
+            onclick="guardarRecurso()" 
+            class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transition">
+            <i class="fas fa-save mr-2"></i>Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Previsualización -->
+  <div id="modal-preview" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <!-- Encabezado -->
+      <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-indigo-600">
+        <h2 id="preview-titulo" class="text-2xl font-bold text-white">Previsualización</h2>
+        <button onclick="cerrarModalPreview()" class="text-white hover:text-gray-200 transition text-2xl">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Contenido -->
+      <div id="preview-contenido" class="flex-1 overflow-y-auto p-6 bg-gray-50 flex items-center justify-center">
+        <div class="text-center text-gray-500">
+          <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+          <p>Cargando previsualización...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script type="module">
+  import { obtenerRecursos, crearRecurso, actualizarRecurso, eliminarRecurso } from '../../../../public/services/bibliotecaService.js';
+
+  let recursosActuales = [];
+
+  // Cargar datos al iniciar
+  document.addEventListener('DOMContentLoaded', async () => {
+    await cargarRecursos();
+  });
+
+  async function cargarRecursos() {
+    try {
+      const tabla = document.getElementById('tabla-recursos');
+      tabla.innerHTML = `
+        <tr>
+          <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+            <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+            <p class="text-lg">Cargando recursos...</p>
+          </td>
+        </tr>
+      `;
+
+      recursosActuales = await obtenerRecursos();
+      renderizarTabla(recursosActuales);
+    } catch (error) {
+      console.error('Error al cargar recursos:', error);
+      document.getElementById('tabla-recursos').innerHTML = `
+        <tr>
+          <td colspan="5" class="px-6 py-6 text-center text-red-600">
+            Error al cargar los recursos: ${error.message}
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  function renderizarTabla(recursos) {
+    const tabla = document.getElementById('tabla-recursos');
+
+    if (recursos.length === 0) {
+      tabla.innerHTML = `
+        <div class="col-span-full text-center text-gray-500 py-12">
+          <i class="fas fa-inbox text-5xl mb-3 text-gray-300"></i>
+          <p class="text-lg font-semibold">No hay recursos aún</p>
+          <p class="text-sm text-gray-400 mt-2">¡Sube el primero haciendo clic en "Subir Nuevo Recurso"!</p>
+        </div>
+      `;
+      return;
+    }
+
+    tabla.innerHTML = recursos.map(recurso => {
+      const tipoEmoji = {
+        'PDF': '📄',
+        'Video': '🎥',
+        'Artículo': '📰',
+        'Libro': '📚',
+        'Presentación': '🎯',
+        'Enlace': '🔗',
+        'Audio': '🎵',
+        'Imagen': '🖼️',
+        'Documento': '📋',
+        'Otro': '📎'
+      };
+      
+      return `
+        <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-300 flex flex-col h-full cursor-pointer group">
+          <!-- Encabezado con tipo - Clickeable para previsualizar -->
+          <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 border-b border-gray-100 group-hover:from-purple-100 group-hover:to-indigo-100 transition-all" onclick="abrirPreview(${recurso.id_recurso})">
+            <div class="flex items-center justify-between">
+              <span class="text-3xl">${tipoEmoji[recurso.tipo] || '📎'}</span>
+              <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">${recurso.tipo}</span>
+            </div>
+          </div>
+
+          <!-- Contenido - Clickeable para previsualizar -->
+          <div class="p-4 space-y-3 flex-1 group-hover:bg-purple-50 transition-colors" onclick="abrirPreview(${recurso.id_recurso})">
+            <!-- Título -->
+            <div>
+              <h3 class="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-purple-600">${recurso.titulo}</h3>
+            </div>
+
+            <!-- Autor -->
+            ${recurso.autor ? `
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-user text-purple-500"></i>
+                <span>${recurso.autor}</span>
+              </div>
+            ` : ''}
+
+            <!-- Descripción -->
+            ${recurso.descripcion ? `
+              <p class="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                ${recurso.descripcion}
+              </p>
+            ` : `<p class="text-sm text-gray-400 italic">Sin descripción</p>`}
+
+            <!-- Fecha -->
+            <div class="flex items-center gap-2 text-xs text-gray-500 pt-2 border-t border-gray-100">
+              <i class="fas fa-calendar-alt text-purple-400"></i>
+              <span>${new Date(recurso.fecha_publicacion).toLocaleDateString('es-ES')}</span>
+            </div>
+          </div>
+
+          <!-- Acciones -->
+          <div class="bg-gray-50 p-3 flex gap-2">
+            <button 
+              onclick="abrirPreview(${recurso.id_recurso}); event.stopPropagation();"
+              class="flex-1 px-3 py-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition font-semibold text-sm flex items-center justify-center gap-1">
+              <i class="fas fa-eye"></i>Ver
+            </button>
+            <button 
+              onclick="editarRecurso(${recurso.id_recurso}); event.stopPropagation();"
+              class="flex-1 px-3 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition font-semibold text-sm flex items-center justify-center gap-1">
+              <i class="fas fa-edit"></i>Editar
+            </button>
+            <button 
+              onclick="confirmarEliminar(${recurso.id_recurso}); event.stopPropagation();"
+              class="flex-1 px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition font-semibold text-sm flex items-center justify-center gap-1">
+              <i class="fas fa-trash"></i>Eliminar
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.abrirModalCrear = function() {
+    document.getElementById('id-recurso-editar').value = '';
+    document.getElementById('modal-titulo-crear').textContent = 'Subir Nuevo Recurso';
+    document.getElementById('input-tipo').value = '';
+    document.getElementById('input-titulo').value = '';
+    document.getElementById('input-autor').value = '';
+    document.getElementById('input-descripcion').value = '';
+    document.getElementById('input-url').value = '';
+    document.getElementById('input-archivo').value = '';
+    document.getElementById('nombre-archivo').classList.add('hidden');
+    cambiarTab('url');
+    document.getElementById('modal-crear-recurso').classList.remove('hidden');
+  };
+
+  window.cerrarModalCrear = function() {
+    document.getElementById('modal-crear-recurso').classList.add('hidden');
+  };
+
+  // Funciones para cambio de tabs
+  window.cambiarTab = function(tab) {
+    const seccionUrl = document.getElementById('seccion-url');
+    const seccionArchivo = document.getElementById('seccion-archivo');
+    const tabUrl = document.getElementById('tab-url');
+    const tabArchivo = document.getElementById('tab-archivo');
+
+    if (tab === 'url') {
+      seccionUrl.classList.remove('hidden');
+      seccionArchivo.classList.add('hidden');
+      tabUrl.classList.add('border-purple-600', 'text-purple-600');
+      tabUrl.classList.remove('border-transparent', 'text-gray-600');
+      tabArchivo.classList.remove('border-purple-600', 'text-purple-600');
+      tabArchivo.classList.add('border-transparent', 'text-gray-600');
+    } else {
+      seccionUrl.classList.add('hidden');
+      seccionArchivo.classList.remove('hidden');
+      tabArchivo.classList.add('border-purple-600', 'text-purple-600');
+      tabArchivo.classList.remove('border-transparent', 'text-gray-600');
+      tabUrl.classList.remove('border-purple-600', 'text-purple-600');
+      tabUrl.classList.add('border-transparent', 'text-gray-600');
+    }
+  };
+
+  // Manejo de zona de drop y selección de archivo
+  const zonaDrop = document.getElementById('zona-drop');
+  const inputArchivo = document.getElementById('input-archivo');
+
+  zonaDrop.addEventListener('click', () => inputArchivo.click());
+
+  zonaDrop.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    zonaDrop.classList.add('border-purple-600', 'bg-purple-50');
+  });
+
+  zonaDrop.addEventListener('dragleave', () => {
+    zonaDrop.classList.remove('border-purple-600', 'bg-purple-50');
+  });
+
+  zonaDrop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zonaDrop.classList.remove('border-purple-600', 'bg-purple-50');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      inputArchivo.files = files;
+      mostrarNombreArchivo(files[0].name);
+    }
+  });
+
+  inputArchivo.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      mostrarNombreArchivo(e.target.files[0].name);
+    }
+  });
+
+  function mostrarNombreArchivo(nombre) {
+    document.getElementById('nombre-archivo-texto').textContent = nombre;
+    document.getElementById('nombre-archivo').classList.remove('hidden');
+  }
+
+  window.guardarRecurso = async function() {
+    const idRecurso = document.getElementById('id-recurso-editar').value;
+    const tipo = document.getElementById('input-tipo').value.trim();
+    const titulo = document.getElementById('input-titulo').value.trim();
+    const autor = document.getElementById('input-autor').value.trim();
+    const descripcion = document.getElementById('input-descripcion').value.trim();
+    const url = document.getElementById('input-url').value.trim();
+    const archivo = document.getElementById('input-archivo').files[0];
+
+    if (!tipo || !titulo) {
+      alert('El tipo y título son requeridos');
+      return;
+    }
+
+    // Verificar que al menos haya URL o archivo
+    if (!url && !archivo) {
+      alert('Debes proporcionar una URL o subir un archivo');
+      return;
+    }
+
+    // Si hay archivo, validar tamaño
+    if (archivo && archivo.size > 50 * 1024 * 1024) {
+      alert('El archivo es demasiado grande. Máximo 50 MB');
+      return;
+    }
+
+    try {
+      const btnGuardar = document.querySelector('#modal-crear-recurso button:last-of-type');
+      btnGuardar.disabled = true;
+      btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Guardando...';
+
+      if (idRecurso) {
+        // Editar - solo con URL
+        await actualizarRecurso(parseInt(idRecurso), tipo, titulo, autor, descripcion, url);
+      } else {
+        // Crear - puede ser archivo o URL
+        if (archivo) {
+          // Crear FormData para subir archivo
+          const formData = new FormData();
+          formData.append('tipo', tipo);
+          formData.append('titulo', titulo);
+          formData.append('autor', autor);
+          formData.append('descripcion', descripcion);
+          formData.append('archivo', archivo);
+
+          const response = await fetch('http://localhost:4000/api/biblioteca', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || errorData.message || 'Error al crear recurso');
+          }
+
+          const responseData = await response.json();
+          console.log('Recurso creado exitosamente:', responseData);
+        } else {
+          // Crear con URL
+          await crearRecurso(tipo, titulo, autor, descripcion, url);
+        }
+      }
+
+      cerrarModalCrear();
+      await cargarRecursos();
+      alert(idRecurso ? '✅ Recurso actualizado' : '✅ Recurso creado correctamente');
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error: ' + error.message);
+    } finally {
+      const btnGuardar = document.querySelector('#modal-crear-recurso button:last-of-type');
+      btnGuardar.disabled = false;
+      btnGuardar.innerHTML = '<i class="fas fa-save mr-2"></i>Guardar';
+    }
+  };
+
+  window.editarRecurso = async function(id_recurso) {
+    const recurso = recursosActuales.find(r => r.id_recurso === id_recurso);
+    if (!recurso) return;
+
+    document.getElementById('id-recurso-editar').value = id_recurso;
+    document.getElementById('modal-titulo-crear').textContent = 'Editar Recurso';
+    document.getElementById('input-tipo').value = recurso.tipo;
+    document.getElementById('input-titulo').value = recurso.titulo;
+    document.getElementById('input-autor').value = recurso.autor || '';
+    document.getElementById('input-descripcion').value = recurso.descripcion || '';
+    document.getElementById('input-url').value = recurso.url_recurso || '';
+    document.getElementById('modal-crear-recurso').classList.remove('hidden');
+  };
+
+  window.confirmarEliminar = function(id_recurso) {
+    if (confirm('¿Estás seguro de que deseas eliminar este recurso?')) {
+      eliminarRecursoConfirmado(id_recurso);
+    }
+  };
+
+  async function eliminarRecursoConfirmado(id_recurso) {
+    try {
+      await eliminarRecurso(id_recurso);
+      await cargarRecursos();
+      alert('✅ Recurso eliminado correctamente');
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al eliminar: ' + error.message);
+    }
+  }
+
+  // Funciones de previsualización
+  window.abrirPreview = function(id_recurso) {
+    const recurso = recursosActuales.find(r => r.id_recurso === id_recurso);
+    if (!recurso) return;
+
+    document.getElementById('preview-titulo').textContent = recurso.titulo;
+    const previewContenido = document.getElementById('preview-contenido');
+
+    // Renderizar según el tipo de recurso
+    if (recurso.tipo === 'Video') {
+      // Extraer video ID de YouTube o Vimeo
+      let videoHtml = '';
+      const url = recurso.url_recurso || '';
+      
+      if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const videoId = url.includes('youtu.be') 
+          ? url.split('youtu.be/')[1].split('?')[0]
+          : url.split('v=')[1].split('&')[0];
+        videoHtml = `<iframe class="w-full h-full rounded-lg" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      } else if (url.includes('vimeo.com')) {
+        const videoId = url.split('vimeo.com/')[1];
+        videoHtml = `<iframe class="w-full h-full rounded-lg" src="https://player.vimeo.com/video/${videoId}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+      } else {
+        videoHtml = `<video class="w-full h-full rounded-lg" controls><source src="${url}" type="video/mp4">Tu navegador no soporta video HTML5</video>`;
+      }
+      previewContenido.innerHTML = `<div class="w-full h-96">${videoHtml}</div>`;
+    } 
+    else if (recurso.tipo === 'PDF') {
+      previewContenido.innerHTML = `
+        <div class="w-full h-full flex flex-col">
+          <iframe class="flex-1 rounded-lg" src="https://docs.google.com/gview?url=${encodeURIComponent(recurso.url_recurso)}&embedded=true"></iframe>
+          <a href="${recurso.url_recurso}" target="_blank" class="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-center">
+            <i class="fas fa-download mr-2"></i>Descargar PDF
+          </a>
+        </div>
+      `;
+    }
+    else if (recurso.tipo === 'Imagen') {
+      previewContenido.innerHTML = `<img src="${recurso.url_recurso}" alt="${recurso.titulo}" class="max-w-full max-h-96 rounded-lg object-contain">`;
+    }
+    else if (recurso.tipo === 'Audio') {
+      previewContenido.innerHTML = `
+        <div class="text-center">
+          <audio controls class="w-full max-w-md mb-4">
+            <source src="${recurso.url_recurso}" type="audio/mpeg">
+            Tu navegador no soporta audio HTML5
+          </audio>
+          <div class="mt-4">
+            <a href="${recurso.url_recurso}" target="_blank" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+              <i class="fas fa-download mr-2"></i>Descargar Audio
+            </a>
+          </div>
+        </div>
+      `;
+    }
+    else if (recurso.tipo === 'Enlace') {
+      previewContenido.innerHTML = `
+        <div class="text-center space-y-4">
+          <p class="text-lg text-gray-600">Este es un enlace externo</p>
+          <a href="${recurso.url_recurso}" target="_blank" class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-lg font-semibold">
+            <i class="fas fa-external-link-alt mr-2"></i>Abrir enlace
+          </a>
+          <p class="text-sm text-gray-500 break-all">${recurso.url_recurso}</p>
+        </div>
+      `;
+    }
+    else {
+      // Para otros tipos (Artículo, Libro, Documento, Presentación, etc)
+      previewContenido.innerHTML = `
+        <div class="max-w-2xl space-y-4">
+          <div class="bg-white p-6 rounded-lg border border-gray-200">
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">${recurso.titulo}</h3>
+            
+            ${recurso.autor ? `
+              <div class="flex items-center gap-2 mb-3 text-gray-700">
+                <i class="fas fa-user text-purple-500"></i>
+                <strong>Autor:</strong> ${recurso.autor}
+              </div>
+            ` : ''}
+
+            ${recurso.descripcion ? `
+              <div class="mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-purple-600">
+                <p class="text-gray-700 whitespace-pre-wrap">${recurso.descripcion}</p>
+              </div>
+            ` : ''}
+
+            <a href="${recurso.url_recurso}" target="_blank" class="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold">
+              <i class="fas fa-external-link-alt mr-2"></i>Ver recurso completo
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    document.getElementById('modal-preview').classList.remove('hidden');
+  };
+
+  window.cerrarModalPreview = function() {
+    document.getElementById('modal-preview').classList.add('hidden');
+  };
+
+  // Cerrar modales al hacer click fuera
+  window.addEventListener('click', (e) => {
+    const modalCrear = document.getElementById('modal-crear-recurso');
+    const modalPreview = document.getElementById('modal-preview');
+    
+    if (e.target === modalCrear) {
+      cerrarModalCrear();
+    }
+    if (e.target === modalPreview) {
+      cerrarModalPreview();
+    }
+  });
+</script>
+
+<style>
+  #modal-crear-recurso {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  #modal-crear-recurso.hidden {
+    display: none;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+</style>
+</AdminLayout>

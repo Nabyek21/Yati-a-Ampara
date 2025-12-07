@@ -1,0 +1,75 @@
+---
+---
+
+<header class="flex items-center justify-between p-4 bg-white border-b-2 border-gray-200">
+  <button class="text-gray-600 lg:hidden">
+    <i class="fas fa-bars text-xl"></i>
+  </button>
+  <h1 class="text-3xl font-semibold text-purple-800"><slot /></h1>
+  <div class="flex items-center space-x-4">
+    <div class="relative flex items-center space-x-2">
+      <span class="text-gray-700 font-medium" id="docente-name-display">Hola, Docente</span>
+      <button id="user-menu-button" class="focus:outline-none">
+        <i class="fas fa-user-circle text-2xl text-purple-600"></i>
+      </button>
+
+      <!-- Modal de perfil/logout -->
+      <div id="user-menu-modal" class="hidden absolute right-0 top-12 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+        <a href="/docente/perfil" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          <i class="fas fa-user mr-2"></i> Perfil
+        </a>
+        <button id="logout-button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Obtener y mostrar el nombre del usuario
+    const nameDisplay = document.getElementById('docente-name-display');
+    if (nameDisplay) {
+      const user = localStorage.getItem('user');
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          const nombreCompleto = userData.nombres + " " + userData.apellidos;
+          nameDisplay.textContent = `Hola, ${nombreCompleto}`;
+        } catch (error) {
+          console.error('Error al parsear datos del usuario:', error);
+          nameDisplay.textContent = 'Hola, Docente';
+        }
+      } else {
+        nameDisplay.textContent = 'Hola, Docente';
+      }
+    }
+
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userMenuModal = document.getElementById('user-menu-modal');
+    const logoutButton = document.getElementById('logout-button');
+
+    if (userMenuButton && userMenuModal) {
+      userMenuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userMenuModal.classList.toggle('hidden');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!userMenuButton.contains(e.target) && !userMenuModal.contains(e.target)) {
+          userMenuModal.classList.add('hidden');
+        }
+      });
+    }
+
+    if (logoutButton) {
+      logoutButton.addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      });
+    }
+  });
+</script>
+

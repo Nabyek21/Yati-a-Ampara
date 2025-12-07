@@ -1,0 +1,349 @@
+---
+// Componente para mostrar análisis de actividades generado por IA
+interface Props {
+  title?: string;
+  idCurso?: number;
+}
+
+const { title = 'Análisis de Actividades', idCurso } = Astro.props;
+---
+
+<div class="analisis-contenedor">
+  <div class="analisis-card">
+    <h2 class="analisis-titulo">{title}</h2>
+    
+    <div id="analisis-content" class="analisis-content">
+      <!-- El contenido se llenará con JavaScript -->
+      <p class="text-gray-500">Presiona el botón para analizar las actividades</p>
+    </div>
+
+    <div class="analisis-acciones">
+      <button 
+        id="btn-analizar-actividades" 
+        class="btn btn-primary"
+        data-id-curso={idCurso}
+      >
+        <i class="fas fa-chart-bar mr-2"></i>
+        Analizar Actividades
+      </button>
+      <button 
+        id="btn-preguntas-estudio" 
+        class="btn btn-info hidden"
+        data-id-curso={idCurso}
+      >
+        <i class="fas fa-question-circle mr-2"></i>
+        Generar Preguntas de Estudio
+      </button>
+    </div>
+
+    <div id="preguntas-container" class="preguntas-container hidden mt-6"></div>
+  </div>
+</div>
+
+<style is:global>
+.analisis-contenedor {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.analisis-card {
+  background: white;
+  border-radius: 12px;
+  border-left: 4px solid #10b981;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.analisis-titulo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.analisis-titulo::before {
+  content: '📊';
+  font-size: 1.3rem;
+}
+
+.analisis-content {
+  background: #f0fdf4;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.analisis-content h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #10b981;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analisis-content h3:first-child {
+  margin-top: 0;
+}
+
+.analisis-content ul,
+.analisis-content ol {
+  margin: 10px 0 10px 20px;
+}
+
+.analisis-content li {
+  margin: 6px 0;
+}
+
+.dificultad-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.dificultad-baja {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.dificultad-media {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.dificultad-alta {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.analisis-acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.btn-info:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.preguntas-container {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+}
+
+.pregunta-item {
+  background: white;
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  border-left: 3px solid #3b82f6;
+}
+
+.pregunta-texto {
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.pregunta-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.9rem;
+  color: #6b7280;
+  flex-wrap: wrap;
+}
+
+.pregunta-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pregunta-palabras {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.palabra-clave {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .analisis-card {
+    padding: 16px;
+  }
+
+  .analisis-acciones {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pregunta-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+</style>
+
+<script>
+  import { resumirActividades, generarPreguntas } from '../../services/iaService.js';
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const btnAnalizar = document.getElementById('btn-analizar-actividades');
+    const btnPreguntas = document.getElementById('btn-preguntas-estudio');
+    const analisisContent = document.getElementById('analisis-content');
+    const preguntasContainer = document.getElementById('preguntas-container');
+
+    if (!btnAnalizar) return;
+
+    btnAnalizar.addEventListener('click', async () => {
+      try {
+        const idCurso = parseInt(btnAnalizar.dataset.idCurso || window.location.pathname.split('/').pop());
+
+        if (!idCurso || isNaN(idCurso)) {
+          alert('No se puede determinar el curso actual');
+          return;
+        }
+
+        btnAnalizar.disabled = true;
+        btnAnalizar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analizando...';
+
+        const resultado = await resumirActividades(idCurso);
+        const analisis = resultado.resumen;
+
+        let html = '';
+
+        if (resultado.cantidad_actividades > 0) {
+          html += `<p><strong>Se encontraron ${resultado.cantidad_actividades} actividades</strong> en este curso.</p>`;
+        }
+
+        if (analisis.resumenGeneral) {
+          html += `<h3>Resumen General</h3><p>${analisis.resumenGeneral}</p>`;
+        }
+
+        if (analisis.actividadesKey && analisis.actividadesKey.length > 0) {
+          html += '<h3>Actividades Clave</h3><ul>';
+          analisis.actividadesKey.forEach(act => {
+            html += `<li>${act}</li>`;
+          });
+          html += '</ul>';
+        }
+
+        if (analisis.dificultadEstimada) {
+          const clasesDificultad = {
+            'baja': 'dificultad-baja',
+            'media': 'dificultad-media',
+            'alta': 'dificultad-alta'
+          };
+          const clase = clasesDificultad[analisis.dificultadEstimada] || 'dificultad-media';
+          html += `<h3>Dificultad Estimada</h3><p><span class="dificultad-badge ${clase}">${analisis.dificultadEstimada.charAt(0).toUpperCase() + analisis.dificultadEstimada.slice(1)}</span></p>`;
+        }
+
+        if (analisis.tiempoTotalEstimado) {
+          html += `<h3>⏱️ Tiempo Total Estimado</h3><p>${analisis.tiempoTotalEstimado}</p>`;
+        }
+
+        if (analisis.skillsDesarrollados && analisis.skillsDesarrollados.length > 0) {
+          html += '<h3>💪 Skills a Desarrollar</h3><ul>';
+          analisis.skillsDesarrollados.forEach(skill => {
+            html += `<li>${skill}</li>`;
+          });
+          html += '</ul>';
+        }
+
+        if (analisis.sugerencias && analisis.sugerencias.length > 0) {
+          html += '<h3>💡 Sugerencias</h3><ul>';
+          analisis.sugerencias.forEach(sug => {
+            html += `<li>${sug}</li>`;
+          });
+          html += '</ul>';
+        }
+
+        analisisContent.innerHTML = html;
+        btnPreguntas.classList.remove('hidden');
+
+        btnAnalizar.innerHTML = '<i class="fas fa-chart-bar mr-2"></i>Reanálizar';
+      } catch (error) {
+        console.error('Error:', error);
+        analisisContent.innerHTML = `<p class="text-red-500">Error al analizar: ${error.message}</p>`;
+      } finally {
+        btnAnalizar.disabled = false;
+      }
+    });
+
+    btnPreguntas.addEventListener('click', async () => {
+      try {
+        const idCurso = parseInt(btnAnalizar.dataset.idCurso || window.location.pathname.split('/').pop());
+
+        btnPreguntas.disabled = true;
+        btnPreguntas.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generando preguntas...';
+
+        const resultado = await generarPreguntas(idCurso, 5);
+        const preguntas = resultado.preguntas || [];
+
+        if (preguntas.length === 0) {
+          preguntasContainer.innerHTML = '<p class="text-gray-500">No se pudieron generar preguntas en este momento</p>';
+          preguntasContainer.classList.remove('hidden');
+          return;
+        }
+
+        let html = '<h3 style="margin-top: 0; color: #1f2937;">Preguntas de Estudio Generadas</h3>';
+        preguntas.forEach((preg, index) => {
+          html += `
+            <div class="pregunta-item">
+              <div class="pregunta-texto">${index + 1}. ${preg.pregunta}</div>
+              <div class="pregunta-meta">
+                <span><i class="fas fa-tag"></i> Tipo: ${preg.tipo || 'Abierta'}</span>
+                <span><i class="fas fa-chart-pie"></i> Dificultad: ${preg.dificultad || 'Media'}</span>
+              </div>
+              ${preg.palabras_clave ? `
+                <div class="pregunta-palabras">
+                  ${preg.palabras_clave.map(p => `<span class="palabra-clave">${p}</span>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        });
+
+        preguntasContainer.innerHTML = html;
+        preguntasContainer.classList.remove('hidden');
+      } catch (error) {
+        console.error('Error:', error);
+        preguntasContainer.innerHTML = `<p class="text-red-500">Error al generar preguntas: ${error.message}</p>`;
+        preguntasContainer.classList.remove('hidden');
+      } finally {
+        btnPreguntas.disabled = false;
+        btnPreguntas.innerHTML = '<i class="fas fa-question-circle mr-2"></i>Generar Preguntas de Estudio';
+      }
+    });
+  });
+</script>

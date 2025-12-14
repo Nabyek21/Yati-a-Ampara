@@ -1,0 +1,248 @@
+# Archivo de Pruebas de API para Microservicios
+# Uso: Copiar ejemplos al cliente HTTP favorito (Postman, REST Client de VSCode, etc.)
+
+@baseUrl = http://localhost:3000
+@authBaseUrl = http://localhost:3001
+@courseBaseUrl = http://localhost:3002
+@contentBaseUrl = http://localhost:3003
+@iaBaseUrl = http://localhost:3004
+
+# Variables globales
+@token = 
+@userId = 1
+@courseId = 1
+@moduleId = 1
+
+# ==========================================
+# 1. AUTH SERVICE - Autenticación
+# ==========================================
+
+### 1.1 Registrar nuevo usuario
+POST {{authBaseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "nombre": "Carlos Nuevp",
+  "email": "carlos@example.com",
+  "password": "password123",
+  "rol": "estudiante"
+}
+
+### 1.2 Login - Obtener Token
+POST {{authBaseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "juan@example.com",
+  "password": "password123"
+}
+
+### 1.3 Verificar Token
+POST {{authBaseUrl}}/auth/verify
+Content-Type: application/json
+
+{
+  "token": "{{token}}"
+}
+
+### 1.4 Obtener Información del Usuario
+GET {{authBaseUrl}}/users/{{userId}}
+
+### 1.5 Actualizar Usuario
+PUT {{authBaseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{
+  "nombre": "Juan Pérez García",
+  "email": "juan.perez@example.com"
+}
+
+### 1.6 Cambiar Contraseña
+POST {{authBaseUrl}}/users/{{userId}}/change-password
+Content-Type: application/json
+
+{
+  "oldPassword": "password123",
+  "newPassword": "newpassword456"
+}
+
+### 1.7 Logout
+POST {{authBaseUrl}}/auth/logout
+Content-Type: application/json
+
+{
+  "token": "{{token}}"
+}
+
+### 1.8 Health Check - Auth Service
+GET {{authBaseUrl}}/health
+
+# ==========================================
+# 2. COURSE SERVICE - Cursos y Módulos
+# ==========================================
+
+### 2.1 Listar todos los cursos
+GET {{courseBaseUrl}}/courses
+
+### 2.2 Obtener un curso específico
+GET {{courseBaseUrl}}/courses/{{courseId}}
+
+### 2.3 Crear nuevo curso
+POST {{courseBaseUrl}}/courses
+Content-Type: application/json
+
+{
+  "nombre": "PHP Backend",
+  "descripcion": "Aprende a desarrollar backends con PHP",
+  "id_docente": "101"
+}
+
+### 2.4 Actualizar curso
+PUT {{courseBaseUrl}}/courses/{{courseId}}
+Content-Type: application/json
+
+{
+  "nombre": "JavaScript Avanzado - Actualizado",
+  "descripcion": "Curso mejorado sobre JavaScript",
+  "estado": "activo"
+}
+
+### 2.5 Obtener módulos de un curso
+GET {{courseBaseUrl}}/courses/{{courseId}}/modules
+
+### 2.6 Obtener módulo específico
+GET {{courseBaseUrl}}/modules/{{moduleId}}
+
+### 2.7 Crear nuevo módulo en un curso
+POST {{courseBaseUrl}}/courses/{{courseId}}/modules
+Content-Type: application/json
+
+{
+  "titulo": "Async/Await",
+  "descripcion": "Manejo de Promises y async/await en JavaScript",
+  "orden": 5
+}
+
+### 2.8 Actualizar módulo
+PUT {{courseBaseUrl}}/modules/{{moduleId}}
+Content-Type: application/json
+
+{
+  "titulo": "Variables y Tipos de Datos - Actualizado",
+  "descripcion": "Conceptos fundamentales de variables - Versión mejorada",
+  "estado": "activo"
+}
+
+### 2.9 Obtener estadísticas
+GET {{courseBaseUrl}}/statistics
+
+### 2.10 Eliminar curso
+DELETE {{courseBaseUrl}}/courses/{{courseId}}
+
+### 2.11 Eliminar módulo
+DELETE {{courseBaseUrl}}/modules/{{moduleId}}
+
+### 2.12 Health Check - Course Service
+GET {{courseBaseUrl}}/health
+
+# ==========================================
+# 3. CONTENT SERVICE - Gestión de Contenido
+# ==========================================
+
+### 3.1 Obtener todo el contenido de un módulo
+GET {{contentBaseUrl}}/modules/{{moduleId}}/content
+
+### 3.2 Obtener solo archivos del módulo
+GET {{contentBaseUrl}}/modules/{{moduleId}}/content/files
+
+### 3.3 Obtener solo enlaces del módulo
+GET {{contentBaseUrl}}/modules/{{moduleId}}/content/links
+
+### 3.4 Agregar enlace al módulo
+POST {{contentBaseUrl}}/modules/{{moduleId}}/content/link
+Content-Type: application/json
+
+{
+  "url": "https://mdn.mozilla.org/es/docs/Web/JavaScript",
+  "titulo": "MDN - Guía de JavaScript",
+  "descripcion": "Referencia completa de JavaScript de Mozilla"
+}
+
+### 3.5 Obtener tamaño total del contenido
+GET {{contentBaseUrl}}/modules/{{moduleId}}/content/size
+
+### 3.6 Health Check - Content Service
+GET {{contentBaseUrl}}/health
+
+# ==========================================
+# 4. IA SERVICE - Resúmenes y Análisis
+# ==========================================
+
+### 4.1 Generar resumen de módulo
+GET {{iaBaseUrl}}/modules/{{moduleId}}/summary?id_curso={{courseId}}
+Authorization: Bearer {{token}}
+
+### 4.2 Generar resumen con audio
+POST {{iaBaseUrl}}/modules/{{moduleId}}/summary-audio
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "id_curso": "{{courseId}}",
+  "incluirAudio": true
+}
+
+### 4.3 Chat para hacer preguntas sobre módulo
+POST {{iaBaseUrl}}/modules/summary-chat
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "id_modulo": "{{moduleId}}",
+  "id_curso": "{{courseId}}",
+  "mensaje": "¿Cuáles son los conceptos clave de este módulo?"
+}
+
+### 4.4 Health Check - IA Service
+GET {{iaBaseUrl}}/health
+
+# ==========================================
+# 5. API GATEWAY - Punto de entrada central
+# ==========================================
+
+### 5.1 Health Check - API Gateway
+GET {{baseUrl}}/health
+
+### 5.2 Login a través del Gateway
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "juan@example.com",
+  "password": "password123"
+}
+
+### 5.3 Obtener cursos a través del Gateway
+GET {{baseUrl}}/api/courses
+
+### 5.4 Obtener resumen de módulo a través del Gateway
+GET {{baseUrl}}/api/ia/modules/{{moduleId}}/summary?id_curso={{courseId}}
+Authorization: Bearer {{token}}
+
+# ==========================================
+# FLUJO COMPLETO DE PRUEBA
+# ==========================================
+
+# 1. Ejecutar: 1.2 Login - Obtener Token
+# 2. Copiar el token del response y asignarlo a @token
+# 3. Ejecutar: 4.1 Generar resumen de módulo
+# 4. Ejecutar: 4.3 Chat para hacer preguntas sobre módulo
+
+# ==========================================
+# NOTAS
+# ==========================================
+
+# - Reemplazar {{token}}, {{userId}}, {{courseId}}, {{moduleId}} con valores reales
+# - Para subir archivos, usar herramienta con soporte multipart/form-data
+# - Todos los servicios deben estar ejecutándose en los puertos especificados
+# - Ver README.md para más detalles sobre cada endpoint

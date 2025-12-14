@@ -113,9 +113,9 @@ export async function getStaticPaths() {
         <label for="actividad-tipo" class="block text-sm font-medium text-gray-700">Tipo de Actividad</label>
         <select id="actividad-tipo" name="tipo" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
           <option value="">Selecciona un tipo</option>
-          <option value="tarea">Tarea</option>
-          <option value="examen">Examen</option>
-          <option value="quiz">Quiz</option>
+          <option value="práctica">✏️ Práctica Calificada</option>
+          <option value="examen">📋 Examen</option>
+          <option value="examen_final">🏆 Examen Final</option>
         </select>
       </div>
 
@@ -319,22 +319,25 @@ export async function getStaticPaths() {
 <!-- Modal de Previsualización de Archivos -->
 <div id="preview-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
   <div class="relative w-full max-w-4xl mx-auto p-5">
-    <button onclick="document.getElementById('preview-modal').classList.add('hidden')" class="absolute top-4 right-4 text-white bg-gray-700 hover:bg-gray-600 rounded-full w-8 h-8 flex items-center justify-center z-10">
-      <i class="fas fa-times"></i>
-    </button>
+    <div class="bg-gray-800 rounded-t-lg p-4 flex justify-between items-center">
+      <h3 class="text-white font-semibold text-lg" id="preview-title">Visualizar contenido</h3>
+      <button onclick="document.getElementById('preview-modal').classList.add('hidden')" class="text-white hover:text-gray-300">
+        <i class="fas fa-times text-2xl"></i>
+      </button>
+    </div>
     
     <!-- Contenedor para PDF -->
-    <div id="pdf-container" class="hidden">
+    <div id="pdf-container" class="hidden bg-gray-900 rounded-b-lg">
       <iframe id="pdf-viewer" width="100%" height="600" frameborder="0"></iframe>
     </div>
     
     <!-- Contenedor para imágenes -->
-    <div id="image-container" class="hidden">
-      <img id="image-viewer" src="" alt="Previsualización" class="max-w-full max-h-96 mx-auto rounded">
+    <div id="image-container" class="hidden bg-gray-900 rounded-b-lg p-4 flex items-center justify-center">
+      <img id="image-viewer" src="" alt="Previsualización" class="max-w-full max-h-[600px] rounded">
     </div>
     
     <!-- Contenedor para otros archivos -->
-    <div id="other-container" class="hidden bg-white rounded p-6 text-center">
+    <div id="other-container" class="hidden bg-white rounded-b-lg p-6 text-center">
       <i class="fas fa-file text-6xl text-gray-400 mb-4"></i>
       <p class="text-gray-600 mb-4">No se puede previsualizar este tipo de archivo</p>
       <a id="download-link" href="#" download class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
@@ -682,22 +685,20 @@ export async function getStaticPaths() {
         'texto': 'fa-file-alt'
       }[item.tipo] || 'fa-file';
 
-      // Link de previsualización/descarga si hay archivo
+      // Link de previsualización/descarga si hay archivo o URL
       let actionLink = '';
+      let viewUrl = null;
+      
       if (item.archivo) {
-        const fileUrl = `http://localhost:5678/uploads/actividades/${item.archivo}`;
-        const isPreviewable = item.archivo.toLowerCase().endsWith('.pdf') || 
-                             item.archivo.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/i);
-        
-        if (isPreviewable) {
-          actionLink = `<button onclick="previewFile('${fileUrl}', '${item.archivo}')" class="text-green-600 hover:text-green-800 text-sm" title="Previsualizar archivo">
-            <i class="fas fa-eye"></i>
-          </button>`;
-        } else {
-          actionLink = `<a href="${fileUrl}" download class="text-green-600 hover:text-green-800 text-sm" title="Descargar archivo">
-            <i class="fas fa-download"></i>
-          </a>`;
-        }
+        viewUrl = `http://localhost:4000/uploads/actividades/${item.archivo}`;
+        // Siempre mostrar botón de visualización
+        actionLink = `<button onclick="viewContent('${item.id_contenido}', 'archivo', '${viewUrl}', '${item.titulo}')" class="text-blue-600 hover:text-blue-800 text-sm" title="Ver o descargar archivo">
+          <i class="fas fa-eye"></i>
+        </button>`;
+      } else if (item.url_contenido) {
+        actionLink = `<button onclick="viewContent('${item.id_contenido}', 'url', '${item.url_contenido}', '${item.titulo}')" class="text-blue-600 hover:text-blue-800 text-sm" title="Visualizar contenido externo">
+          <i class="fas fa-eye"></i>
+        </button>`;
       }
 
       return `
@@ -707,15 +708,17 @@ export async function getStaticPaths() {
             <div>
               <p class="font-medium text-sm">${item.titulo}</p>
               <p class="text-xs text-gray-500">${item.tipo} • Orden: ${item.orden}</p>
+              ${item.descripcion ? `<p class="text-xs text-gray-600 mt-1">${item.descripcion}</p>` : ''}
               ${item.archivo ? `<p class="text-xs text-gray-400 mt-1">📄 ${item.archivo}</p>` : ''}
+              ${item.url_contenido ? `<p class="text-xs text-blue-500 mt-1">🔗 Enlace externo</p>` : ''}
             </div>
           </div>
           <div class="flex space-x-2">
             ${actionLink}
-            <button onclick="editContenido(${item.id_contenido}, ${moduloId}, ${seccionId})" class="text-blue-600 hover:text-blue-800">
+            <button onclick="editContenido(${item.id_contenido}, ${moduloId}, ${seccionId})" class="text-blue-600 hover:text-blue-800" title="Editar">
               <i class="fas fa-edit"></i>
             </button>
-            <button onclick="deleteContenidoItem(${item.id_contenido}, ${moduloId}, ${seccionId})" class="text-red-600 hover:text-red-800">
+            <button onclick="deleteContenidoItem(${item.id_contenido}, ${moduloId}, ${seccionId})" class="text-red-600 hover:text-red-800" title="Eliminar">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -876,11 +879,9 @@ export async function getStaticPaths() {
             </div>
           </div>
           <div class="flex space-x-2">
-            ${actividad.tipo === 'examen' ? `
-              <button onclick="gestionarPreguntas(${actividad.id_actividad})" class="text-green-600 hover:text-green-800" title="Gestionar preguntas">
-                <i class="fas fa-question-circle"></i>
-              </button>
-            ` : ''}
+            <button onclick="gestionarPreguntas(${actividad.id_actividad})" class="text-green-600 hover:text-green-800 font-semibold" title="Gestionar preguntas">
+              <i class="fas fa-question-circle"></i> Preguntas
+            </button>
             <button onclick="abrirCalificarActividad(${actividad.id_actividad})" class="text-purple-600 hover:text-purple-800 font-semibold" title="Calificar respuestas">
               <i class="fas fa-graduation-cap"></i> Calificar
             </button>
@@ -1394,7 +1395,7 @@ export async function getStaticPaths() {
         formData.append('id_modulo', idModulo);  // ← incluir id_modulo en FormData
         
         // Subir archivo - PASAR id_modulo como query parameter también
-        const uploadResponse = await fetch(`http://localhost:5678/api/upload/contenido?id_modulo=${idModulo}`, {
+        const uploadResponse = await fetch(`http://localhost:4000/api/upload/contenido?id_modulo=${idModulo}`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -1463,6 +1464,102 @@ export async function getStaticPaths() {
     }
     
     modal.classList.remove('hidden');
+  };
+
+  // Función genérica para visualizar contenido (archivos, URLs, etc)
+  window.viewContent = function(idContenido, tipo, url, titulo) {
+    const modal = document.getElementById('preview-modal');
+    const pdfContainer = document.getElementById('pdf-container');
+    const imageContainer = document.getElementById('image-container');
+    const otherContainer = document.getElementById('other-container');
+    const titleElement = document.getElementById('preview-title');
+    
+    // Actualizar título del modal
+    if (titleElement) {
+      titleElement.textContent = titulo || 'Visualizar contenido';
+    }
+    
+    // Limpiar contenedores
+    pdfContainer.classList.add('hidden');
+    imageContainer.classList.add('hidden');
+    otherContainer.classList.add('hidden');
+    
+    if (tipo === 'archivo') {
+      // Es un archivo local
+      const fileExt = url.toLowerCase().split('.').pop();
+      
+      if (fileExt === 'pdf') {
+        document.getElementById('pdf-viewer').src = url;
+        pdfContainer.classList.remove('hidden');
+      } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+        document.getElementById('image-viewer').src = url;
+        imageContainer.classList.remove('hidden');
+      } else {
+        document.getElementById('download-link').href = url;
+        document.getElementById('download-link').download = titulo;
+        otherContainer.classList.remove('hidden');
+      }
+    } else if (tipo === 'url') {
+      // Es una URL externa (video, iframe, etc)
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname;
+      
+      // Detectar si es YouTube
+      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+        const videoId = url.includes('youtu.be') 
+          ? url.split('/').pop() 
+          : new URLSearchParams(urlObj.search).get('v');
+        
+        pdfContainer.classList.remove('hidden');
+        pdfContainer.innerHTML = `
+          <iframe 
+            width="100%" 
+            height="600" 
+            src="https://www.youtube.com/embed/${videoId}" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen>
+          </iframe>
+        `;
+      } else if (hostname.includes('vimeo.com')) {
+        const videoId = url.split('/').pop();
+        pdfContainer.classList.remove('hidden');
+        pdfContainer.innerHTML = `
+          <iframe 
+            width="100%" 
+            height="600" 
+            src="https://player.vimeo.com/video/${videoId}" 
+            frameborder="0" 
+            allow="autoplay; fullscreen; picture-in-picture" 
+            allowfullscreen>
+          </iframe>
+        `;
+      } else {
+        // Para otras URLs, mostrar un enlace
+        otherContainer.classList.remove('hidden');
+        otherContainer.innerHTML = `
+          <div class="bg-white rounded p-6 text-center">
+            <i class="fas fa-external-link-alt text-6xl text-blue-400 mb-4"></i>
+            <p class="text-gray-600 mb-2">Contenido externo</p>
+            <p class="text-sm text-gray-500 mb-4 break-all">${url}</p>
+            <a href="${url}" target="_blank" rel="noopener noreferrer" class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              <i class="fas fa-external-link-alt mr-2"></i>Abrir en nueva pestaña
+            </a>
+          </div>
+        `;
+      }
+    }
+    
+    modal.classList.remove('hidden');
+  };
+
+  // Función para gestionar preguntas de una actividad
+  window.gestionarPreguntas = function(idActividad) {
+    if (!idActividad) {
+      alert('No se especificó ID de actividad');
+      return;
+    }
+    window.location.href = `/docente/preguntas/${idActividad}`;
   };
 </script>
 

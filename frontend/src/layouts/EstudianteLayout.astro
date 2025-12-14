@@ -1,7 +1,7 @@
 ---
 // EstudianteLayout.astro
 import '../styles/global.css';
-import IAHeaderButton from '../components/IAHeaderButton.astro';
+import AmparIAChat from '../components/AmparIAChat.astro';
 
 interface Props {
   title: string;
@@ -69,8 +69,8 @@ const { title } = Astro.props;
       </div>
     </div>
 
-    <!-- Botón del Agente IA (Esquina Superior Derecha) -->
-    <IAHeaderButton />
+    <!-- Asistente Educativo AmparIA -->
+    <AmparIAChat />
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {

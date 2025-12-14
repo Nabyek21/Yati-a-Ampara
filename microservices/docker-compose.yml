@@ -1,0 +1,229 @@
+version: '3.8'
+
+services:
+  # API Gateway - Punto de entrada central
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: soa-api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: development
+      AUTH_SERVICE_URL: http://auth-service:3001
+      COURSE_SERVICE_URL: http://course-service:3002
+      CONTENT_SERVICE_URL: http://content-service:3003
+      IA_SERVICE_URL: http://ia-service:3004
+      EVALUATION_SERVICE_URL: http://evaluation-service:3005
+      STUDENT_SERVICE_URL: http://student-service:3006
+      NOTIFICATION_SERVICE_URL: http://notification-service:3007
+    depends_on:
+      - auth-service
+      - course-service
+      - content-service
+      - ia-service
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Auth Service - Autenticación y gestión de usuarios
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: soa-auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      NODE_ENV: development
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Course Service - Cursos y módulos
+  course-service:
+    build:
+      context: ./course-service
+      dockerfile: Dockerfile
+    container_name: soa-course-service
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      NODE_ENV: development
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Content Service - Gestión de contenido
+  content-service:
+    build:
+      context: ./content-service
+      dockerfile: Dockerfile
+    container_name: soa-content-service
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      NODE_ENV: development
+    volumes:
+      - content-uploads:/app/uploads
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # IA Service - Resúmenes y análisis con IA
+  ia-service:
+    build:
+      context: ./ia-service
+      dockerfile: Dockerfile
+    container_name: soa-ia-service
+    ports:
+      - "3004:3004"
+    environment:
+      PORT: 3004
+      NODE_ENV: development
+      CONTENT_SERVICE_URL: http://content-service:3003
+      COURSE_SERVICE_URL: http://course-service:3002
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-test}
+    depends_on:
+      - content-service
+      - course-service
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Evaluation Service - Evaluaciones y calificaciones (placeholder)
+  # evaluation-service:
+  #   build:
+  #     context: ./evaluation-service
+  #   container_name: soa-evaluation-service
+  #   ports:
+  #     - "3005:3005"
+  #   environment:
+  #     PORT: 3005
+  #     NODE_ENV: development
+  #   networks:
+  #     - microservices-network
+
+  # Student Service - Perfiles de estudiantes (placeholder)
+  # student-service:
+  #   build:
+  #     context: ./student-service
+  #   container_name: soa-student-service
+  #   ports:
+  #     - "3006:3006"
+  #   environment:
+  #     PORT: 3006
+  #     NODE_ENV: development
+  #   networks:
+  #     - microservices-network
+
+  # Notification Service - Notificaciones (placeholder)
+  # notification-service:
+  #   build:
+  #     context: ./notification-service
+  #   container_name: soa-notification-service
+  #   ports:
+  #     - "3007:3007"
+  #   environment:
+  #     PORT: 3007
+  #     NODE_ENV: development
+  #   networks:
+  #     - microservices-network
+
+  # OPCIONAL: Base de datos MySQL compartida
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: soa-mysql
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: root_password
+  #     MYSQL_DATABASE: yatinna
+  #     MYSQL_USER: yatinna_user
+  #     MYSQL_PASSWORD: yatinna_pass
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   networks:
+  #     - microservices-network
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # OPCIONAL: Redis para cache y sesiones
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: soa-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   networks:
+  #     - microservices-network
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # OPCIONAL: RabbitMQ para message queue
+  # rabbitmq:
+  #   image: rabbitmq:3.12-management-alpine
+  #   container_name: soa-rabbitmq
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: user
+  #     RABBITMQ_DEFAULT_PASS: password
+  #   ports:
+  #     - "5672:5672"
+  #     - "15672:15672"
+  #   volumes:
+  #     - rabbitmq-data:/var/lib/rabbitmq
+  #   networks:
+  #     - microservices-network
+  #   healthcheck:
+  #     test: ["CMD", "rabbitmq-diagnostics", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+# Volúmenes compartidos
+volumes:
+  content-uploads:
+    driver: local
+  # mysql-data:
+  #   driver: local
+  # redis-data:
+  #   driver: local
+  # rabbitmq-data:
+  #   driver: local
+
+# Red de microservicios
+networks:
+  microservices-network:
+    driver: bridge

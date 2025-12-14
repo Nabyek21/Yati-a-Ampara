@@ -42,10 +42,16 @@ function obtenerContenidoDeUploads(id_modulo = null) {
     const carpetasABuscar = [];
     
     if (id_modulo) {
-      // Buscar específicamente en carpeta del módulo
-      carpetasABuscar.push(path.join(UPLOADS_DIR, 'modulos', `modulo_${id_modulo}`));
+      // Buscar ESPECÍFICAMENTE en carpeta del módulo - NUNCA incluir carpetas generales
+      const moduloDir = path.join(UPLOADS_DIR, 'modulos', `modulo_${id_modulo}`);
+      console.log(`🔍 Buscando contenido SOLO en módulo: ${moduloDir}`);
+      if (fs.existsSync(moduloDir)) {
+        carpetasABuscar.push(moduloDir);
+      } else {
+        console.warn(`⚠️ No existe la carpeta del módulo: ${moduloDir}`);
+      }
     } else {
-      // Buscar en todos los módulos
+      // Buscar en todos los módulos y carpeta genérica solo si no hay módulo
       const modulosDir = path.join(UPLOADS_DIR, 'modulos');
       if (fs.existsSync(modulosDir)) {
         const modulos = fs.readdirSync(modulosDir);
@@ -53,18 +59,19 @@ function obtenerContenidoDeUploads(id_modulo = null) {
           carpetasABuscar.push(path.join(modulosDir, modulo));
         });
       }
+      // Solo agregar carpeta genérica si no se especifica módulo
+      carpetasABuscar.push(path.join(UPLOADS_DIR, 'actividades'));
     }
-    
-    // También buscar en carpeta genérica (uploads/actividades) para compatibilidad
-    carpetasABuscar.push(path.join(UPLOADS_DIR, 'actividades'));
 
     for (const carpeta of carpetasABuscar) {
       if (!fs.existsSync(carpeta)) {
+        console.warn(`⚠️ Carpeta no existe: ${carpeta}`);
         continue;
       }
 
       try {
         const archivos = fs.readdirSync(carpeta);
+        console.log(`📂 Leyendo ${archivos.length} archivos de: ${carpeta}`);
 
         for (const archivo of archivos) {
           const rutaArchivo = path.join(carpeta, archivo);
@@ -77,19 +84,8 @@ function obtenerContenidoDeUploads(id_modulo = null) {
 
             const ext = path.parse(archivo).ext.toLowerCase();
 
-            if (ext === '.pdf') {
-              // Para PDFs, creamos una referencia
-              documentos.push({
-                tipo: 'documento-pdf',
-                titulo: archivo,
-                descripcion: `DOCUMENTO PDF SUBIDO: "${archivo}". Este archivo contiene material importante del curso.`,
-                ruta: rutaArchivo,
-                formato: 'pdf',
-                tamano: stats.size,
-                carpeta: carpeta.includes('modulos') ? 'módulo' : 'general'
-              });
-            } else if (['.txt', '.md', '.docx', '.doc'].includes(ext)) {
-              // Leer archivos de texto
+            // Solo procesar archivos de texto cuando hay módulo específico
+            if (id_modulo && ['.txt', '.md', '.docx', '.doc'].includes(ext)) {
               try {
                 const contenido = fs.readFileSync(rutaArchivo, 'utf-8');
                 
@@ -106,22 +102,59 @@ function obtenerContenidoDeUploads(id_modulo = null) {
                   ruta: rutaArchivo,
                   formato: ext.substring(1),
                   tamano: stats.size,
-                  carpeta: carpeta.includes('modulos') ? 'módulo' : 'general'
+                  carpeta: 'módulo',
+                  id_modulo: id_modulo
                 });
+                
+                console.log(`✓ Cargado: ${archivo} (${(stats.size/1024).toFixed(2)} KB)`);
               } catch (readErr) {
                 console.error(`Error al leer ${archivo}:`, readErr.message);
               }
             }
+            // Si no hay módulo especificado, cargar todo tipo de archivos
+            else if (!id_modulo) {
+              if (ext === '.pdf') {
+                documentos.push({
+                  tipo: 'documento-pdf',
+                  titulo: archivo,
+                  descripcion: `DOCUMENTO PDF: "${archivo}". Este archivo contiene material importante del curso.`,
+                  ruta: rutaArchivo,
+                  formato: 'pdf',
+                  tamano: stats.size,
+                  carpeta: 'general'
+                });
+              } else if (['.txt', '.md', '.docx', '.doc'].includes(ext)) {
+                try {
+                  const contenido = fs.readFileSync(rutaArchivo, 'utf-8');
+                  const contenidoTruncado = contenido.length > 3000 
+                    ? contenido.substring(0, 3000) + '\n\n[... más contenido disponible]'
+                    : contenido;
+
+                  documentos.push({
+                    tipo: 'documento-texto',
+                    titulo: archivo,
+                    descripcion: contenidoTruncado,
+                    contenido: contenidoTruncado,
+                    ruta: rutaArchivo,
+                    formato: ext.substring(1),
+                    tamano: stats.size,
+                    carpeta: 'general'
+                  });
+                } catch (readErr) {
+                  console.error(`Error al leer ${archivo}:`, readErr.message);
+                }
+              }
+            }
           } catch (err) {
-            console.error(`Error al leer archivo ${archivo}:`, err.message);
+            console.error(`Error al procesar ${archivo}:`, err.message);
           }
         }
       } catch (err) {
-        // Silencioso si la carpeta no existe o hay error
+        console.error(`Error al leer carpeta ${carpeta}:`, err.message);
       }
     }
 
-    console.log(`✓ Documentos cargados: ${documentos.length} archivos encontrados`);
+    console.log(`✓ Documentos finales cargados: ${documentos.length} archivos`);
     documentos.forEach(d => console.log(`  - [${d.carpeta}] ${d.tipo}: ${d.titulo}`));
     return documentos;
   } catch (error) {
@@ -537,6 +570,83 @@ function delay(ms) {
  * @param {Object} opciones - Opciones adicionales
  * @returns {Promise<Object>} - { respuesta, tipo, sugerencias }
  */
+
+/**
+ * Detectar si el mensaje es académico (relacionado con temas del curso)
+ * Retorna { esAcademico: boolean, razon?: string }
+ */
+function detectarPreguntaAcademica(mensaje, contenido = []) {
+  const mensajeLower = mensaje.toLowerCase().trim();
+  
+  // Palabras clave no-académicas que debe rechazar
+  const palabrasNoAcademicas = [
+    'chiste', 'meme', 'película', 'música', 'juego', 'videojuego',
+    'receta', 'cocina', 'deportes', 'fútbol', 'basquetbol', 'béisbol',
+    'política', 'religión', 'noticias', 'horóscopo', 'tarot', 'astrología',
+    'consejo personal', 'relaciones amorosas', 'novio', 'novia',
+    'chisme', 'cotilleo', 'rumor', 'ánimos', 'motivación personal',
+    'qué tal tu día', 'cómo estás', 'quién eres', 'de dónde vienes',
+    'puedes hacer código', 'escríbeme código', 'hackea', 'cifrado'
+  ];
+
+  // Verificar si contiene palabras no-académicas
+  for (const palabra of palabrasNoAcademicas) {
+    if (mensajeLower.includes(palabra)) {
+      return {
+        esAcademico: false,
+        razon: `No puedo ayudarte con temas sobre "${palabra}". Solo respondo preguntas académicas relacionadas con el contenido del curso.`
+      };
+    }
+  }
+
+  // Palabras clave académicas que CONFIRMAN que es académico
+  const palabrasAcademicas = [
+    'explica', 'define', 'qué es', 'cómo funciona', 'concepto', 'tema',
+    'materia', 'lección', 'tarea', 'actividad', 'examen', 'pregunta',
+    'resumen', 'contenido', 'aprender', 'entender', 'duda', 'problema',
+    'fórmula', 'teoría', 'método', 'procedimiento', 'análisis',
+    'diferencia entre', 'ventaja', 'desventaja', 'aplicación',
+    'ejemplo', 'caso de uso', 'ejercicio', 'paso a paso'
+  ];
+
+  const tieneAcademico = palabrasAcademicas.some(p => mensajeLower.includes(p));
+  
+  if (tieneAcademico) {
+    return { esAcademico: true };
+  }
+
+  // Si hay contenido del curso disponible, permitir preguntas que parezcan relacionadas
+  if (contenido && contenido.length > 0) {
+    // Extraer palabras principales del contenido
+    const palabrasContenido = contenido
+      .map(c => (c.titulo || c.descripcion || '').toLowerCase())
+      .join(' ')
+      .split(/\s+/)
+      .filter(p => p.length > 3);
+
+    // Si la pregunta comparte palabras con el contenido, probablemente es académica
+    const palabrasMensaje = mensajeLower.split(/\s+/).filter(p => p.length > 3);
+    const coincidencias = palabrasMensaje.filter(p => 
+      palabrasContenido.includes(p)
+    ).length;
+
+    if (coincidencias >= 2) {
+      return { esAcademico: true };
+    }
+  }
+
+  // Si la pregunta es muy corta o vaga, probablemente no es académica
+  if (mensajeLower.length < 5) {
+    return {
+      esAcademico: false,
+      razon: 'Tu pregunta es muy corta. Por favor, formula una pregunta académica clara sobre los temas del curso.'
+    };
+  }
+
+  // Si llegó aquí, podría ser académica (dar el beneficio de la duda)
+  return { esAcademico: true };
+}
+
 /**
  * Detectar si el mensaje es una solicitud de resumen de módulo
  * Ej: "Resumen del módulo 1", "Dime sobre el módulo de Introducción"
@@ -665,6 +775,20 @@ async function obtenerContenidoDeModulo(id_modulo) {
 
 export async function chatContenido(sessionId, mensaje, contenido, opciones = {}) {
   try {
+    // ✅ PRIMERO: Validar que la pregunta sea académica
+    const validacionAcademica = detectarPreguntaAcademica(mensaje, contenido);
+    
+    if (!validacionAcademica.esAcademico) {
+      console.log(`⚠️  Pregunta no académica detectada: ${validacionAcademica.razon}`);
+      return {
+        texto: validacionAcademica.razon || 'Solo puedo responder preguntas académicas sobre los temas del curso.',
+        tipo: 'rechazo',
+        es_academico: false
+      };
+    }
+    
+    console.log('✅ Pregunta académica validada');
+    
     // Detectar si es solicitud de resumen de módulo
     const deteccion = detectarSolicitudResumenModulo(mensaje);
     
@@ -698,22 +822,40 @@ export async function chatContenido(sessionId, mensaje, contenido, opciones = {}
           texto: contenidoModulo.filter(c => c.tipo === 'documento-texto').length
         };
         
-        instruccionEspecial = `\n\n⭐ INSTRUCCIÓN ESPECIAL: El usuario pidió un RESUMEN DEL MÓDULO "${modulo.titulo || modulo.nombre}".
+        instruccionEspecial = `\n\n⭐ INSTRUCCIÓN ESPECIAL: El usuario pidió un RESUMEN del módulo "${modulo.titulo || modulo.nombre}".
 
-RECURSOS DISPONIBLES:
+IMPORTANTE: Proporciona un resumen ÚNICAMENTE basado en estos materiales disponibles:
 - Contenido de la BD: ${contadores.bd} items
-- Archivos PDF: ${contadores.pdf} documentos
+- Archivos PDF: ${contadores.pdf} documentos  
 - Archivos de Texto (TXT/MD): ${contadores.texto} documentos
 
-Proporciona un resumen ESTRUCTURADO que incluya:
-1. Descripción general del módulo
-2. Temas principales cubiertos (basados en los contenidos disponibles)
-3. Conceptos clave
-4. Objetivos de aprendizaje
-5. Recursos disponibles
-6. Duración estimada
+ESTRUCTURA REQUERIDA (sé conciso pero completo):
 
-Sé detallado pero mantén brevedad (máx 4 párrafos). Asegúrate de incluir referencias a los materiales disponibles.`;
+=== RESUMEN EJECUTIVO ===
+[1-2 párrafos describiendo qué se aprenderá en este módulo]
+
+=== CONCEPTOS CLAVE ===
+- Concepto 1
+- Concepto 2
+- Concepto 3
+[etc, máximo 8 conceptos]
+
+=== TEMAS PRINCIPALES ===
+1. Tema 1: [descripción breve]
+2. Tema 2: [descripción breve]
+[etc]
+
+=== APLICACIONES PRÁCTICAS ===
+- Aplicación 1
+- Aplicación 2
+[etc]
+
+=== RECOMENDACIONES ===
+- Recomendación 1
+- Recomendación 2
+[etc]
+
+NO inventes contenido. Si falta información, indícalo claramente.`;
       } else {
         console.log(`⚠️  No se encontró módulo en BD, pero continuaremos con contenido de archivos subidos`);
         
@@ -734,7 +876,17 @@ Sé detallado pero mantén brevedad (máx 4 párrafos). Asegúrate de incluir re
     }
 
     // Agregar documentos de uploads al contenido
-    let documentosUploads = obtenerContenidoDeUploads(opciones.id_seccion);
+    // ⚠️ IMPORTANTE: Si es una solicitud de resumen de módulo, NO agregar documentos generales
+    let documentosUploads = [];
+    
+    if (deteccion.esResumen) {
+      // Para resumen de módulo: usar SOLO documentos del módulo, no agregar generales
+      console.log('📝 Resumen de módulo detectado: usando SOLO documentos del módulo');
+      documentosUploads = [];
+    } else {
+      // Para chat normal: agregar documentos de uploads generales
+      documentosUploads = obtenerContenidoDeUploads(opciones.id_seccion);
+    }
     
     // Procesar PDFs de forma asincrónica
     documentosUploads = await procesarPDFs(documentosUploads);
@@ -745,15 +897,18 @@ Sé detallado pero mantén brevedad (máx 4 párrafos). Asegúrate de incluir re
     
     let respuesta;
     try {
-      if (IA_API_KEY && IA_PROVIDER === 'openai') {
+      // Usar OpenAI como proveedor principal
+      if (IA_API_KEY && (IA_PROVIDER === 'openai' || !IA_PROVIDER)) {
+        console.log('🔗 Usando OpenAI como proveedor...');
         respuesta = await consultarOpenAIChat(prompt, contextoConversacion);
       } else if (IA_API_KEY && IA_PROVIDER === 'anthropic') {
+        console.log('🔗 Usando Anthropic...');
         respuesta = await consultarAnthropicChat(prompt, contextoConversacion);
       } else if (IA_API_KEY && IA_PROVIDER === 'gemini') {
         console.log('📡 Consultando Gemini...');
         respuesta = await consultarGeminiChat(prompt, contextoConversacion);
-        console.log('✅ Respuesta de Gemini recibida');
       } else {
+        console.log('📝 Usando respuesta local (sin API)');
         respuesta = generarRespuestaLocal(mensaje, contenidoCompleto);
       }
     } catch (apiError) {
@@ -1017,13 +1172,20 @@ function construirPromptChat(mensaje, contenido, historial = [], opciones = {}) 
     }
   }
 
-  let prompt = `Eres AmparIA, asistente educativo inteligente de la plataforma Yatiña. Tu objetivo es ayudar a las estudiantes a aprender.
+  let prompt = `Eres AmparIA, asistente educativo de la plataforma Yatiña. Tu ÚNICA función es ayudar a los estudiantes a APRENDER sobre los temas del curso.
+
+⚠️ RESTRICCIONES IMPORTANTES:
+- SOLO responde preguntas académicas sobre el CONTENIDO DEL CURSO
+- NO hagas comentarios personales, chistes, o información general
+- Si la pregunta NO está relacionada con los temas, responde: "Solo puedo ayudarte con preguntas sobre los temas del curso"
+- Usa ÚNICAMENTE el contenido proporcionado como referencia
+- No inventes información que no está en los materiales
 
 INSTRUCCIONES:
-1. Responde de forma BREVE y clara en máximo 2-3 párrafos
+1. Responde de forma BREVE y clara (máximo 2-3 párrafos)
 2. Usa los materiales disponibles como referencia principal
-3. Si hay documentos subidos, léelos y úsalos como base para tu respuesta
-4. Sé empático, paciente y motivador
+3. Sé empático, paciente y educativo
+4. Cita los materiales cuando uses información de ellos
 5. Responde siempre en español
 
 ${documentosTexto}${otroContenido}
@@ -1037,55 +1199,6 @@ RESPONDE AQUÍ:`;
   }
 
   return prompt;
-}
-
-async function consultarOpenAIChat(prompt, historial = []) {
-  const url = 'https://api.openai.com/v1/chat/completions';
-  
-  const messages = [
-    {
-      role: 'system',
-      content: 'Eres AmparIA, asistente educativo de la plataforma Yatiña. Eres experto, paciente, motivador y empático. Tu objetivo es ayudar a las estudiantes a comprender mejor el contenido del curso. Siempre proporciona respuestas claras, con ejemplos cuando sea posible. Responde en español de manera conversacional y amigable.'
-    },
-    ...historial.slice(-5), // Últimos 5 mensajes
-    {
-      role: 'user',
-      content: prompt
-    }
-  ];
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${IA_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: IA_MODEL,
-        messages: messages,
-        temperature: 0.7,
-        max_tokens: 1500
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('OpenAI Error Response:', errorData);
-      throw new Error(`OpenAI Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await response.json();
-    const respuesta = data.choices[0].message.content;
-
-    return {
-      texto: respuesta,
-      tipo: 'respuesta'
-    };
-  } catch (error) {
-    console.error('Error OpenAI Chat:', error);
-    throw error;
-  }
 }
 
 async function consultarAnthropicChat(prompt, historial = []) {
@@ -1213,94 +1326,90 @@ function generateLocalStudyGuide(tema, contenidos, profundidad) {
 }
 
 async function consultarGeminiChat(prompt, historial = []) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${IA_MODEL}:generateContent?key=${IA_API_KEY}`;
+  // FALLBACK: Usar OpenAI en lugar de Gemini (API key de Gemini comprometida)
+  console.log('🔄 Gemini no disponible, usando OpenAI como fallback...');
+  return await consultarOpenAIChat(prompt, historial);
+}
+
+async function consultarOpenAIChat(prompt, historial = []) {
+  const url = 'https://api.openai.com/v1/chat/completions';
   
-  console.log(`🔗 URL Gemini: ${url.substring(0, 80)}...`);
+  console.log(`🔗 URL OpenAI: ${url}`);
   console.log(`📊 Modelo: ${IA_MODEL}`);
   console.log(`📝 Prompt length: ${prompt.length} caracteres`);
-  
-  try {
-    const body = {
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: prompt
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2000
-      },
-      safetySettings: [
-        {
-          category: 'HARM_CATEGORY_HARASSMENT',
-          threshold: 'BLOCK_NONE'
-        },
-        {
-          category: 'HARM_CATEGORY_HATE_SPEECH',
-          threshold: 'BLOCK_NONE'
-        },
-        {
-          category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-          threshold: 'BLOCK_NONE'
-        },
-        {
-          category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-          threshold: 'BLOCK_NONE'
-        }
-      ]
-    };
 
-    console.log('📤 Enviando solicitud a Gemini...');
+  try {
+    // Construir historial para OpenAI
+    const messages = [];
+    
+    // Agregar historial anterior
+    if (historial && Array.isArray(historial)) {
+      historial.forEach(msg => {
+        messages.push({
+          role: msg.role || 'user',
+          content: msg.content || msg.text || String(msg)
+        });
+      });
+    }
+
+    // Agregar nuevo mensaje
+    messages.push({
+      role: 'user',
+      content: prompt
+    });
+
+    console.log('📤 Enviando solicitud a OpenAI...');
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${IA_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        model: IA_MODEL,
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
     });
 
     console.log(`📥 Respuesta HTTP: ${response.status}`);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('❌ Gemini Error Response:', JSON.stringify(errorData, null, 2));
-      throw new Error(`Gemini HTTP ${response.status}: ${errorData.error?.message || JSON.stringify(errorData)}`);
+      console.error('❌ OpenAI Error Response:', JSON.stringify(errorData, null, 2));
+      throw new Error(`OpenAI HTTP ${response.status}: ${errorData.error?.message || JSON.stringify(errorData)}`);
     }
 
     const data = await response.json();
-    console.log('📦 Data recibida de Gemini:', JSON.stringify(data, null, 2).substring(0, 500));
-    
+    console.log('📦 Data recibida de OpenAI:', JSON.stringify(data, null, 2).substring(0, 500));
+
     // Validar estructura de respuesta
-    if (!data.candidates || data.candidates.length === 0) {
-      console.error('❌ No hay candidatos en respuesta Gemini');
-      throw new Error('Gemini: No candidates in response');
+    if (!data.choices || data.choices.length === 0) {
+      console.error('❌ No hay choices en respuesta OpenAI');
+      throw new Error('OpenAI: No choices in response');
     }
 
-    if (!data.candidates[0].content || !data.candidates[0].content.parts) {
-      console.error('❌ Estructura inválida en respuesta Gemini');
-      throw new Error('Gemini: Invalid response structure');
+    if (!data.choices[0].message || !data.choices[0].message.content) {
+      console.error('❌ Estructura inválida en respuesta OpenAI');
+      throw new Error('OpenAI: Invalid response structure');
     }
 
-    const respuesta = data.candidates[0].content.parts[0].text;
-    
+    const respuesta = data.choices[0].message.content;
+
     if (!respuesta) {
-      console.error('❌ Respuesta vacía de Gemini');
-      throw new Error('Gemini: Empty response');
+      console.error('❌ Respuesta vacía de OpenAI');
+      throw new Error('OpenAI: Empty response');
     }
 
-    console.log(`✅ Respuesta de Gemini: ${respuesta.substring(0, 100)}...`);
+    console.log(`✅ Respuesta de OpenAI: ${respuesta.substring(0, 100)}...`);
 
     return {
       texto: respuesta,
       tipo: 'respuesta'
     };
   } catch (error) {
-    console.error('❌ Error en consultarGeminiChat:', error.message);
+    console.error('❌ Error en consultarOpenAIChat:', error.message);
     console.error('Stack:', error.stack);
     throw error;
   }

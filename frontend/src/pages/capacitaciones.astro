@@ -1,0 +1,310 @@
+---
+import Layout from '../layouts/Layout.astro';
+import '../styles/capacitaciones.css';
+
+// Datos de ejemplo de capacitaciones
+const capacitaciones = [
+  {
+    id: 1,
+    titulo: "Introducción a Node.js",
+    descripcion: "Aprende los fundamentos de Node.js y cómo crear servidores backend",
+    instructor: "Carlos García",
+    duracion: "4 semanas",
+    estudiantes: 24,
+    nivel: "Principiante",
+    progreso: 65,
+    fechaInicio: "15 ago 25",
+    fechaFin: "12 sep 25",
+    imagen: "🚀"
+  },
+  {
+    id: 2,
+    titulo: "React Avanzado",
+    descripcion: "Domina componentes complejos, hooks personalizados y state management",
+    instructor: "María López",
+    duracion: "6 semanas",
+    estudiantes: 18,
+    nivel: "Intermedio",
+    progreso: 42,
+    fechaInicio: "01 ago 25",
+    fechaFin: "12 sep 25",
+    imagen: "⚛️"
+  },
+  {
+    id: 3,
+    titulo: "Bases de Datos SQL",
+    descripcion: "SQL desde cero: consultas, índices, optimización y buenas prácticas",
+    instructor: "Juan Rodríguez",
+    duracion: "5 semanas",
+    estudiantes: 32,
+    nivel: "Principiante",
+    progreso: 28,
+    fechaInicio: "20 ago 25",
+    fechaFin: "24 sep 25",
+    imagen: "🗄️"
+  },
+  {
+    id: 4,
+    titulo: "Arquitectura de Microservicios",
+    descripcion: "Diseña sistemas escalables con patrones de microservicios",
+    instructor: "Carlos García",
+    duracion: "8 semanas",
+    estudiantes: 12,
+    nivel: "Avanzado",
+    progreso: 15,
+    fechaInicio: "10 sep 25",
+    fechaFin: "05 nov 25",
+    imagen: "🏗️"
+  },
+  {
+    id: 5,
+    titulo: "DevOps Fundamentals",
+    descripcion: "Aprende Docker, Kubernetes y CI/CD para automatizar tu workflow",
+    instructor: "Elena González",
+    duracion: "6 semanas",
+    estudiantes: 16,
+    nivel: "Intermedio",
+    progreso: 0,
+    fechaInicio: "15 sep 25",
+    fechaFin: "27 oct 25",
+    imagen: "🐳"
+  },
+  {
+    id: 6,
+    titulo: "Testing Automatizado",
+    descripcion: "Jest, Mocha y testing end-to-end para código confiable",
+    instructor: "Roberto López",
+    duracion: "4 semanas",
+    estudiantes: 20,
+    nivel: "Intermedio",
+    progreso: 80,
+    fechaInicio: "01 ago 25",
+    fechaFin: "29 ago 25",
+    imagen: "✅"
+  }
+];
+
+const estadisticas = {
+  totalCapacitaciones: 6,
+  enCurso: 4,
+  completadas: 1,
+  proximasA: 1
+};
+---
+
+<Layout title="Capacitaciones - YatinAmpara">
+  <div class="capacitaciones-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="logo">
+        <img src="/logo.svg" alt="YatinAmpara" />
+      </div>
+      
+      <nav class="nav-menu">
+        <a href="/cursos" class="nav-item">
+          <span class="icon">📚</span>
+          <span>Mis Cursos</span>
+        </a>
+        <a href="/estudiantes" class="nav-item">
+          <span class="icon">👥</span>
+          <span>Estudiantes</span>
+        </a>
+        <a href="/foros" class="nav-item">
+          <span class="icon">💬</span>
+          <span>Foros</span>
+        </a>
+        <a href="/capacitaciones" class="nav-item active">
+          <span class="icon">🎓</span>
+          <span>Capacitaciones</span>
+        </a>
+        <a href="/analiticas" class="nav-item">
+          <span class="icon">📊</span>
+          <span>Analíticas</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <h1>Capacitaciones</h1>
+        <div class="user-section">
+          <span>Hola, Carlos Oliva</span>
+          <div class="user-avatar">CO</div>
+        </div>
+      </header>
+
+      <!-- Stats Cards -->
+      <section class="stats-section">
+        <div class="stat-card">
+          <div class="stat-icon">🎓</div>
+          <div class="stat-content">
+            <div class="stat-number">{estadisticas.totalCapacitaciones}</div>
+            <div class="stat-label">Capacitaciones</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">▶️</div>
+          <div class="stat-content">
+            <div class="stat-number">{estadisticas.enCurso}</div>
+            <div class="stat-label">En Curso</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-content">
+            <div class="stat-number">{estadisticas.completadas}</div>
+            <div class="stat-label">Completada</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏰</div>
+          <div class="stat-content">
+            <div class="stat-number">{estadisticas.proximasA}</div>
+            <div class="stat-label">Próximas</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Filters and Search -->
+      <section class="controls-section">
+        <div class="search-box">
+          <input 
+            type="text" 
+            placeholder="Buscar capacitación..." 
+            class="search-input"
+          />
+          <span class="search-icon">🔍</span>
+        </div>
+        <div class="filters">
+          <button class="filter-btn active">Todas</button>
+          <button class="filter-btn">Principiante</button>
+          <button class="filter-btn">Intermedio</button>
+          <button class="filter-btn">Avanzado</button>
+        </div>
+      </section>
+
+      <!-- Capacitaciones Grid -->
+      <section class="capacitaciones-grid">
+        {capacitaciones.map((cap) => (
+          <div class="capacitacion-card">
+            <div class="card-header">
+              <div class="card-icon">{cap.imagen}</div>
+              <div class="card-level">{cap.nivel}</div>
+            </div>
+
+            <div class="card-body">
+              <h3 class="card-title">{cap.titulo}</h3>
+              <p class="card-description">{cap.descripcion}</p>
+
+              <div class="card-meta">
+                <div class="meta-item">
+                  <span class="meta-icon">👨‍🏫</span>
+                  <span>{cap.instructor}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-icon">⏱️</span>
+                  <span>{cap.duracion}</span>
+                </div>
+              </div>
+
+              <div class="progress-section">
+                <div class="progress-header">
+                  <span>Progreso</span>
+                  <span class="progress-percent">{cap.progreso}%</span>
+                </div>
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill" 
+                    style={`width: ${cap.progreso}%`}
+                  ></div>
+                </div>
+              </div>
+
+              <div class="card-dates">
+                <div class="date-item">
+                  <span class="date-label">Inicio</span>
+                  <span class="date-value">📅 {cap.fechaInicio}</span>
+                </div>
+                <div class="date-item">
+                  <span class="date-label">Fin</span>
+                  <span class="date-value">📅 {cap.fechaFin}</span>
+                </div>
+              </div>
+
+              <div class="card-stats">
+                <div class="stat">
+                  <div class="stat-value">{cap.estudiantes}</div>
+                  <div class="stat-name">Estudiantes</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-value">✓</div>
+                  <div class="stat-name">Activa</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button class="btn btn-primary">
+                📖 Ver Contenido
+              </button>
+              <button class="btn btn-secondary">
+                👥 Estudiantes
+              </button>
+            </div>
+          </div>
+        ))}
+      </section>
+    </main>
+
+    <!-- AmparIA Chatbot -->
+    <aside class="chatbot-sidebar">
+      <div class="chatbot-header">
+        <div class="chatbot-avatar">🤖</div>
+        <span class="chatbot-close">✕</span>
+      </div>
+      <div class="chatbot-title">¡Hola! Soy AmparIA</div>
+      <p class="chatbot-subtitle">Tu asistente educativo</p>
+      
+      <div class="chatbot-message">
+        <p>¿Necesitas ayuda para crear una nueva capacitación o tienes preguntas sobre las existentes?</p>
+      </div>
+
+      <div class="chatbot-input">
+        <input 
+          type="text" 
+          placeholder="Escribe tu pregunta..."
+          class="chatbot-text"
+        />
+        <button class="chatbot-send">📤</button>
+      </div>
+
+      <div class="chatbot-help">
+        <p>💡 ¿Qué puedo hacer?</p>
+      </div>
+    </aside>
+  </div>
+</Layout>
+
+<script>
+  // Interactividad
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const searchInput = document.querySelector('.search-input');
+  
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+    });
+  });
+
+  searchInput?.addEventListener('input', (e) => {
+    const value = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.capacitacion-card');
+    cards.forEach(card => {
+      const title = card.querySelector('.card-title').textContent.toLowerCase();
+      card.style.display = title.includes(value) ? 'flex' : 'none';
+    });
+  });
+</script>

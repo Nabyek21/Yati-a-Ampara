@@ -21,15 +21,23 @@ export const createPregunta = async (req, res) => {
       });
     }
 
-    // Verificar que la actividad existe y es tipo "examen"
+    // Verificar que la actividad existe
     const actividad = await ActividadModel.findById(id_actividad);
     if (!actividad) {
       return res.status(404).json({ message: "Actividad no encontrada" });
     }
-    if (actividad.tipo !== 'examen') {
-      return res.status(400).json({ 
-        message: "Solo se pueden agregar preguntas a actividades tipo 'examen'" 
-      });
+    
+    // Permitir agregar preguntas a cualquier tipo de actividad
+    console.log(`✅ Agregando pregunta a actividad de tipo: ${actividad.tipo}`);
+    
+    // Si es tipo "opcion", validar que tenga al menos una opción correcta
+    if (tipo === 'opcion' && opciones && Array.isArray(opciones)) {
+      const tieneCorrecta = opciones.some(op => op.es_correcta);
+      if (!tieneCorrecta) {
+        return res.status(400).json({ 
+          message: "Las preguntas tipo 'opción' deben tener al menos una opción marcada como correcta"
+        });
+      }
     }
 
     // Crear la pregunta

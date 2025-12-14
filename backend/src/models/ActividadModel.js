@@ -167,11 +167,15 @@ export class ActividadModel {
     try {
       // 1. Paso 1: ELIMINAR TODAS LAS RESPUESTAS DE ALUMNOS DE ESTA ACTIVIDAD
       console.log(`[DELETE] Paso 1: Eliminando respuestas_alumnos...`);
-      const [respuestasDeleted] = await pool.query(
-        "DELETE FROM respuestas_alumnos WHERE id_actividad = ?",
-        [id_actividad]
-      );
-      console.log(`[DELETE]   ✓ Eliminadas ${respuestasDeleted.affectedRows} respuestas`);
+      try {
+        const [respuestasDeleted] = await pool.query(
+          "DELETE FROM respuestas_alumnos WHERE id_actividad = ?",
+          [id_actividad]
+        );
+        console.log(`[DELETE]   ✓ Eliminadas ${respuestasDeleted.affectedRows} respuestas`);
+      } catch (err) {
+        console.log(`[DELETE]   ℹ️ No hay respuestas para eliminar (${err.message})`);
+      }
 
       // 2. Paso 2: OBTENER IDS DE PREGUNTAS
       console.log(`[DELETE] Paso 2: Obteniendo IDs de preguntas...`);
@@ -182,34 +186,57 @@ export class ActividadModel {
       console.log(`[DELETE]   ✓ Encontradas ${preguntas.length} preguntas`);
 
       // 3. Paso 3: ELIMINAR OPCIONES DE RESPUESTA
-      console.log(`[DELETE] Paso 3: Eliminando respuestas_opciones...`);
-      const [opcionesDeleted] = await pool.query(
-        "DELETE FROM respuestas_opciones WHERE id_pregunta IN (SELECT id_pregunta FROM preguntas WHERE id_actividad = ?)",
-        [id_actividad]
-      );
-      console.log(`[DELETE]   ✓ Eliminadas ${opcionesDeleted.affectedRows} opciones`);
+      if (preguntas.length > 0) {
+        console.log(`[DELETE] Paso 3: Eliminando respuestas_opciones...`);
+        try {
+          const [opcionesDeleted] = await pool.query(
+            "DELETE FROM respuestas_opciones WHERE id_pregunta IN (SELECT id_pregunta FROM preguntas WHERE id_actividad = ?)",
+            [id_actividad]
+          );
+          console.log(`[DELETE]   ✓ Eliminadas ${opcionesDeleted.affectedRows} opciones`);
+        } catch (err) {
+          console.log(`[DELETE]   ℹ️ No hay opciones para eliminar (${err.message})`);
+        }
 
-      // 4. Paso 4: ELIMINAR PREGUNTAS
-      console.log(`[DELETE] Paso 4: Eliminando preguntas...`);
-      const [preguntasDeleted] = await pool.query(
-        "DELETE FROM preguntas WHERE id_actividad = ?",
-        [id_actividad]
-      );
-      console.log(`[DELETE]   ✓ Eliminadas ${preguntasDeleted.affectedRows} preguntas`);
+        // 4. Paso 4: ELIMINAR PREGUNTAS
+        console.log(`[DELETE] Paso 4: Eliminando preguntas...`);
+        const [preguntasDeleted] = await pool.query(
+          "DELETE FROM preguntas WHERE id_actividad = ?",
+          [id_actividad]
+        );
+        console.log(`[DELETE]   ✓ Eliminadas ${preguntasDeleted.affectedRows} preguntas`);
+      }
 
-      // 5. Paso 5: ELIMINAR ACTIVIDAD
-      console.log(`[DELETE] Paso 5: Eliminando actividad...`);
+      // 5. Paso 5: ELIMINAR NOTAS ASOCIADAS
+      console.log(`[DELETE] Paso 5: Eliminando notas asociadas...`);
+      try {
+        const [notasDeleted] = await pool.query(
+          "DELETE FROM notas WHERE id_actividad = ?",
+          [id_actividad]
+        );
+        console.log(`[DELETE]   ✓ Eliminadas ${notasDeleted.affectedRows} notas`);
+      } catch (err) {
+        console.log(`[DELETE]   ℹ️ No hay notas para eliminar (${err.message})`);
+      }
+
+      // 6. Paso 6: ELIMINAR ACTIVIDAD
+      console.log(`[DELETE] Paso 6: Eliminando actividad...`);
       const [result] = await pool.query(
         "DELETE FROM actividades WHERE id_actividad = ?",
         [id_actividad]
       );
+      
+      if (result.affectedRows === 0) {
+        throw new Error(`Actividad con ID ${id_actividad} no encontrada`);
+      }
+      
       console.log(`[DELETE]   ✓ Actividad eliminada. Filas: ${result.affectedRows}`);
       console.log(`[DELETE] ✅ COMPLETADO EXITOSAMENTE`);
       
       return result;
     } catch (error) {
       console.error("[DELETE] ❌ ERROR:", error.message);
-      throw error;
+      throw new Error(`Error al eliminar actividad: ${error.message}`);
     }
   }
 }

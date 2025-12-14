@@ -493,7 +493,7 @@ export async function obtenerConfiguracionPesos(id_seccion) {
       return getConfiguracionPesosDefault();
     }
 
-    const response = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:4000/api'}/pesos/resumen/${id_seccion}`, {
+    const response = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:4000/api'}/ponderaciones/resumen/${id_seccion}`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -505,9 +505,9 @@ export async function obtenerConfiguracionPesos(id_seccion) {
       return getConfiguracionPesosDefault();
     }
 
-    const config = await response.json();
-    console.log('✅ Configuración de pesos obtenida:', config);
-    return config;
+    const result = await response.json();
+    console.log('✅ Configuración de pesos obtenida:', result);
+    return result.data || result;
   } catch (error) {
     console.warn('⚠️ Error obteniendo configuración de pesos:', error);
     return getConfiguracionPesosDefault();
@@ -579,13 +579,15 @@ export function calcularPromedioPonderadoDinamico(notas, config = null) {
     let puntajeObt = parseFloat(nota.puntaje_obtenido) || 0;
     let puntajeMax = parseFloat(nota.puntaje_maximo) || 0;
 
-    // Arreglar datos invertidos
+    // Arreglar datos invertidos: si puntajeMax es 0 pero puntajeObt > 0, están invertidos
     if (puntajeMax === 0 && puntajeObt > 0) {
+      console.warn(`⚠️ Datos invertidos detectados en: ${nota.nombre_actividad} (obtuviste ${puntajeObt}, máximo debería ser ${puntajeMax})`);
       [puntajeObt, puntajeMax] = [puntajeMax, puntajeObt];
-      console.warn('⚠️ Datos invertidos detectados y corregidos en:', nota.nombre_actividad);
+      console.log(`   ✓ Corregido: obtuviste ${puntajeObt}, máximo ${puntajeMax}`);
     }
 
-    if (puntajeMax === 0) puntajeMax = 1; // Evitar división por cero
+    // Si ambos son 0, usar 100 como máximo
+    if (puntajeMax === 0) puntajeMax = 100;
 
     const porcentaje = (puntajeObt / puntajeMax) * 100;
     const tipo = (nota.tipo || '').toLowerCase().trim();

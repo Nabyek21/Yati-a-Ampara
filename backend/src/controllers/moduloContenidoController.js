@@ -1,4 +1,6 @@
 import { ModuloContenidoModel } from "../models/ModuloContenidoModel.js";
+import path from 'path';
+import fs from 'fs';
 
 export const getContenidoByModulo = async (req, res) => {
   try {
@@ -165,6 +167,26 @@ export const deleteContenido = async (req, res) => {
       return res.status(400).json({ message: "Se requiere id_contenido" });
     }
 
+    // Obtener contenido antes de eliminarlo para poder borrar el archivo
+    const contenido = await ModuloContenidoModel.findById(parseInt(id_contenido));
+    
+    if (contenido && contenido.archivo) {
+      // Intentar eliminar el archivo físico
+      try {
+        const uploadsDir = path.join(process.cwd(), 'src', 'uploads');
+        const filePath = path.join(uploadsDir, 'modulos', `modulo_${contenido.id_modulo}`, contenido.archivo);
+        
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log(`✅ Archivo eliminado: ${filePath}`);
+        }
+      } catch (fileErr) {
+        console.warn(`⚠️ No se pudo eliminar el archivo: ${fileErr.message}`);
+        // Continuar con la eliminación de la BD aunque no se pueda eliminar el archivo
+      }
+    }
+
+    // Eliminar contenido de la BD
     await ModuloContenidoModel.delete(parseInt(id_contenido));
     res.json({ message: "Contenido eliminado correctamente" });
   } catch (err) {

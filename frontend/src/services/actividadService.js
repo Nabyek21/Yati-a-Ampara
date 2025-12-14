@@ -65,6 +65,28 @@ export async function getActividades(filters = {}) {
   }
 }
 
+/**
+ * Obtener una actividad específica por ID
+ */
+export async function getActividadById(id_actividad) {
+  try {
+    const response = await fetch(`${API_URL}/actividades/${id_actividad}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Actividad no encontrada');
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error en getActividadById:', error);
+    throw error;
+  }
+}
+
 export async function createActividad(actividadData) {
   try {
     const response = await fetch(`${API_URL}/actividades`, {

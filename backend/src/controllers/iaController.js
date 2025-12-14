@@ -394,6 +394,7 @@ export const generarReporteCurso = async (req, res) => {
 export const chatConIA = async (req, res) => {
   try {
     const { sessionId, mensaje, id_modulo, id_seccion, id_curso } = req.body;
+    const id_usuario = req.user?.id_usuario;
 
     if (!sessionId || !mensaje) {
       return res.status(400).json({
@@ -401,6 +402,67 @@ export const chatConIA = async (req, res) => {
       });
     }
 
+    // ✅ DETECTAR SI ES UNA SOLICITUD DE RESUMEN
+    const esResumen = /resumen\s+del?\s+m[oó]dulo\s+(\d+)/i.test(mensaje);
+    
+    if (esResumen) {
+      // Extraer el ID del módulo del mensaje
+      const match = mensaje.match(/resumen\s+del?\s+m[oó]dulo\s+(\d+)/i);
+      const moduloIdFromMsg = match ? parseInt(match[1]) : id_modulo;
+
+      console.log(`📚 Detectado resumen de módulo #${moduloIdFromMsg}`);
+
+      // Si no hay id_curso en el body, devolver error
+      if (!id_curso) {
+        return res.status(400).json({
+          success: false,
+          message: 'Se requiere id_curso para generar resumen'
+        });
+      }
+
+      // Importar el servicio de resumen
+      const ModuleSummaryService = (await import('../services/moduleSummaryService.js')).default;
+      const summaryService = new ModuleSummaryService(process.env.IA_API_KEY);
+
+      // Generar resumen del módulo
+      const result = await summaryService.generateModuleSummary(
+        moduloIdFromMsg,
+        parseInt(id_curso),
+        id_usuario
+      );
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: result.error || 'No se pudo generar el resumen'
+        });
+      }
+
+      // Generar audio del resumen
+      let audioUrl = null;
+      try {
+        const textContent = summaryService.convertStructuredToText(result.summary.contenido);
+        const audioResult = await summaryService.generateAudio(textContent);
+        
+        if (audioResult && audioResult.success) {
+          audioUrl = audioResult.url;
+          console.log('🔊 Audio generado:', audioUrl);
+        }
+      } catch (audioError) {
+        console.warn('⚠️ Advertencia al generar audio:', audioError.message);
+        // Continuar sin audio si falla
+      }
+
+      return res.json({
+        success: true,
+        resumen: result.summary,
+        audioUrl: audioUrl,
+        modulo: result.moduleInfo,
+        message: '✅ Resumen generado correctamente'
+      });
+    }
+
+    // ✅ SI NO ES RESUMEN, USAR CHAT NORMAL CON CONTENIDO
     // Obtener contenido relevante (simplificado para evitar errores de tablas)
     let contenidos = [];
     try {
@@ -477,7 +539,7 @@ export const resumirModuloEndpoint = async (req, res) => {
 
     // Obtener módulo
     const [modulos] = await pool.query(
-      'SELECT * FROM modulo WHERE id_modulo = ?',
+      'SELECT * FROM modulos WHERE id_modulo = ?',
       [id_modulo]
     );
 

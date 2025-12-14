@@ -1,53 +1,88 @@
-# YATIÑA AMPARA - LMS con IA
+# 🎓 YATIÑA AMPARA - LMS con IA
+
+**Learning Management System con integración de inteligencia artificial para generar resúmenes automáticos de contenido**
 
 Backend + Frontend en desarrollo local.
+
+---
+
+## 📚 Documentación
+
+- **[ESTRUCTURA_PROYECTO.md](ESTRUCTURA_PROYECTO.md)** - Mapa completo del proyecto
+- **[INDICE_COMPLETO.md](INDICE_COMPLETO.md)** - Índice navegable
+- **[contenido-cursos/](contenido-cursos/)** - Carpeta para contenido de profesores
+- **[contenido-cursos/FLUJO_COMPLETO_CARGA_CONTENIDO.md](contenido-cursos/FLUJO_COMPLETO_CARGA_CONTENIDO.md)** - ⭐ Flujo de carga
+
+---
 
 ## 🚀 Inicio Rápido
 
 ### Requisitos
 - Node.js 18+
 - MySQL corriendo (localhost:3306)
+- Base de datos `yati` configurada
 
-### Opción 1: Script automático (recomendado)
+### Instalación
+
+**Backend:**
 ```powershell
-cd C:\Proyectos\SoaYatinya
-.\start-services-dev.ps1 -Mode all
+cd backend
+npm install        # o pnpm install
+npm start          # Inicia en puerto 3000
 ```
-Se abrirán 2 ventanas: Backend (4000) + Frontend (4321)
 
-### Opción 2: Manual (lo que hace el script)
-Terminal 1:
+**Frontend:**
 ```powershell
-cd C:\Proyectos\SoaYatinya\backend
-pnpm run dev
+cd frontend
+npm install        # o pnpm install
+npm run dev        # Inicia en puerto 3000 (o asignado)
 ```
 
-Terminal 2:
-```powershell
-cd C:\Proyectos\SoaYatinya\frontend
-pnpm run dev
-```
+### URLs Locales
+- **Backend API:** http://localhost:3000/api
+- **Frontend:** http://localhost:3000 (o puesto asignado)
 
-## 📍 URLs
+---
 
-- Frontend: http://localhost:4321
-- Backend API: http://localhost:4000/api
-
-## 📁 Estructura
+## 📁 Estructura Principal
 
 ```
-backend/
-  ├── src/
-  │   ├── controllers/        ← Aquí están todos los controladores
-  │   ├── routes/             ← Todas las rutas
-  │   ├── models/
-  │   ├── middleware/
-  │   ├── app.js
-  │   └── server.js
-  ├── package.json
-  └── .env
-
-frontend/
+SoaYatinya/
+├── 📄 README.md                    ← Estás aquí
+├── 📄 ESTRUCTURA_PROYECTO.md       ← Mapa del proyecto
+├── 📄 INDICE_COMPLETO.md          ← Índice navegable
+│
+├── 📁 backend/
+│   ├── src/
+│   │   ├── controllers/            ← 30+ controladores
+│   │   ├── routes/                 ← Todas las rutas API
+│   │   ├── services/               ← CalificacionesService, ContenidoUploadService, etc
+│   │   ├── models/                 ← Modelos de datos
+│   │   ├── middleware/             ← Auth, upload, error handling
+│   │   └── config/
+│   ├── scripts/                    ← Verificación y mantenimiento
+│   ├── setup/                      ← Migraciones y datos de prueba
+│   └── database/                   ← Scripts SQL
+│
+├── 📁 frontend/
+│   ├── src/
+│   │   ├── components/             ← Componentes Astro
+│   │   ├── pages/                  ← Páginas (ruteo automático)
+│   │   ├── services/               ← Llamadas a API
+│   │   └── styles/                 ← Tailwind CSS
+│   └── public/
+│
+└── 📁 contenido-cursos/            ⭐ NUEVO - Carpeta para profesores
+    ├── 📄 README.md                ← Guía de uso
+    ├── 📄 FLUJO_COMPLETO_CARGA_CONTENIDO.md
+    └── 📁 Matemáticas-Básicas/
+        ├── 📁 Módulo-1-Álgebra/
+        │   ├── clase-01-introduccion-algebra.md
+        │   ├── clase-02-ecuaciones-cuadrticas.md
+        │   └── RESUMEN_IA_EJEMPLO.md
+        └── 📁 Módulo-2-Trigonometría/
+            └── ...
+```
   ├── src/
   ├── package.json
   └── .env

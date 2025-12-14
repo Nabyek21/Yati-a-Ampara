@@ -5,10 +5,14 @@ import {
   getPonderacionById,
   getPonderacionByCurso,
   updatePonderacion,
-  deletePonderacion
+  deletePonderacion,
+  obtenerResumenPesos
 } from '../controllers/ponderacionController.js';
 
 const router = express.Router();
+
+// Obtener resumen de pesos de una sección
+router.get('/resumen/:id_seccion', obtenerResumenPesos);
 
 // Obtener todas las ponderaciones
 router.get('/', getAllPonderaciones);

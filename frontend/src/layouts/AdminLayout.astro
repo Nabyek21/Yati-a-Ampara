@@ -2,7 +2,7 @@
 import '../styles/global.css'; // Asegúrate de tener un archivo global.css o similar
 // Importar Tailwind CSS si no está globalmente
 // import '../styles/tailwind.css';
-import IAHeaderButton from '../components/IAHeaderButton.astro';
+import AmparIAChat from '../components/AmparIAChat.astro';
 
 interface Props {
   title?: string;
@@ -73,8 +73,8 @@ const { title = "Admin Dashboard" } = Astro.props;
       </div>
     </div>
 
-    <!-- IA Header Button -->
-    <IAHeaderButton />
+    <!-- Asistente Educativo AmparIA -->
+    <AmparIAChat />
 
     <script>
       const sidebar = document.getElementById('sidebar');

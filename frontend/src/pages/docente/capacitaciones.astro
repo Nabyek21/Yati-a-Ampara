@@ -1,0 +1,574 @@
+---
+import DocenteLayout from '../../layouts/DocenteLayout.astro';
+import DocenteHeader from '../../components/DocenteHeader.astro';
+
+// Datos de ejemplo de capacitaciones
+const capacitaciones = [
+  {
+    id: 1,
+    titulo: "Introducción a Node.js",
+    descripcion: "Aprende los fundamentos de Node.js y cómo crear servidores backend",
+    instructor: "Carlos García",
+    duracion: "4 semanas",
+    estudiantes: 24,
+    nivel: "Principiante",
+    progreso: 65,
+    fechaInicio: "15 ago 25",
+    fechaFin: "12 sep 25",
+    imagen: "🚀"
+  },
+  {
+    id: 2,
+    titulo: "React Avanzado",
+    descripcion: "Domina componentes complejos, hooks personalizados y state management",
+    instructor: "María López",
+    duracion: "6 semanas",
+    estudiantes: 18,
+    nivel: "Intermedio",
+    progreso: 42,
+    fechaInicio: "01 ago 25",
+    fechaFin: "12 sep 25",
+    imagen: "⚛️"
+  },
+  {
+    id: 3,
+    titulo: "Bases de Datos SQL",
+    descripcion: "SQL desde cero: consultas, índices, optimización y buenas prácticas",
+    instructor: "Juan Rodríguez",
+    duracion: "5 semanas",
+    estudiantes: 32,
+    nivel: "Principiante",
+    progreso: 28,
+    fechaInicio: "20 ago 25",
+    fechaFin: "24 sep 25",
+    imagen: "🗄️"
+  },
+  {
+    id: 4,
+    titulo: "Arquitectura de Microservicios",
+    descripcion: "Diseña sistemas escalables con patrones de microservicios",
+    instructor: "Carlos García",
+    duracion: "8 semanas",
+    estudiantes: 12,
+    nivel: "Avanzado",
+    progreso: 15,
+    fechaInicio: "10 sep 25",
+    fechaFin: "05 nov 25",
+    imagen: "🏗️"
+  },
+  {
+    id: 5,
+    titulo: "DevOps Fundamentals",
+    descripcion: "Aprende Docker, Kubernetes y CI/CD para automatizar tu workflow",
+    instructor: "Elena González",
+    duracion: "6 semanas",
+    estudiantes: 16,
+    nivel: "Intermedio",
+    progreso: 0,
+    fechaInicio: "15 sep 25",
+    fechaFin: "27 oct 25",
+    imagen: "🐳"
+  },
+  {
+    id: 6,
+    titulo: "Testing Automatizado",
+    descripcion: "Jest, Mocha y testing end-to-end para código confiable",
+    instructor: "Roberto López",
+    duracion: "4 semanas",
+    estudiantes: 20,
+    nivel: "Intermedio",
+    progreso: 80,
+    fechaInicio: "01 ago 25",
+    fechaFin: "29 ago 25",
+    imagen: "✅"
+  }
+];
+
+const estadisticas = {
+  totalCapacitaciones: 6,
+  enCurso: 4,
+  completadas: 1,
+  proximasA: 1
+};
+---
+
+<DocenteLayout title="Capacitaciones - Docente">
+  <DocenteHeader>Capacitaciones</DocenteHeader>
+
+  <div class="flex-1 overflow-auto p-6">
+    <!-- Stats Cards -->
+    <section class="stats-section mb-8">
+      <div class="stat-card">
+        <div class="stat-icon">🎓</div>
+        <div class="stat-content">
+          <div class="stat-number">{estadisticas.totalCapacitaciones}</div>
+          <div class="stat-label">Capacitaciones</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">▶️</div>
+        <div class="stat-content">
+          <div class="stat-number">{estadisticas.enCurso}</div>
+          <div class="stat-label">En Curso</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <div class="stat-number">{estadisticas.completadas}</div>
+          <div class="stat-label">Completada</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏰</div>
+        <div class="stat-content">
+          <div class="stat-number">{estadisticas.proximasA}</div>
+          <div class="stat-label">Próximas</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filters and Search -->
+    <section class="controls-section mb-8">
+      <div class="search-box">
+        <input 
+          type="text" 
+          placeholder="Buscar capacitación..." 
+          class="search-input"
+        />
+        <span class="search-icon">🔍</span>
+      </div>
+      <div class="filters">
+        <button class="filter-btn active">Todas</button>
+        <button class="filter-btn">Principiante</button>
+        <button class="filter-btn">Intermedio</button>
+        <button class="filter-btn">Avanzado</button>
+      </div>
+    </section>
+
+    <!-- Capacitaciones Grid -->
+    <section class="capacitaciones-grid">
+      {capacitaciones.map((cap) => (
+        <div class="capacitacion-card">
+          <div class="card-header">
+            <div class="card-icon">{cap.imagen}</div>
+            <div class="card-level">{cap.nivel}</div>
+          </div>
+
+          <div class="card-body">
+            <h3 class="card-title">{cap.titulo}</h3>
+            <p class="card-description">{cap.descripcion}</p>
+
+            <div class="card-meta">
+              <div class="meta-item">
+                <span class="meta-icon">👨‍🏫</span>
+                <span>{cap.instructor}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">⏱️</span>
+                <span>{cap.duracion}</span>
+              </div>
+            </div>
+
+            <div class="progress-section">
+              <div class="progress-header">
+                <span>Progreso</span>
+                <span class="progress-percent">{cap.progreso}%</span>
+              </div>
+              <div class="progress-bar">
+                <div 
+                  class="progress-fill" 
+                  style={`width: ${cap.progreso}%`}
+                ></div>
+              </div>
+            </div>
+
+            <div class="card-dates">
+              <div class="date-item">
+                <span class="date-label">Inicio</span>
+                <span class="date-value">📅 {cap.fechaInicio}</span>
+              </div>
+              <div class="date-item">
+                <span class="date-label">Fin</span>
+                <span class="date-value">📅 {cap.fechaFin}</span>
+              </div>
+            </div>
+
+            <div class="card-stats">
+              <div class="stat">
+                <div class="stat-value">{cap.estudiantes}</div>
+                <div class="stat-name">Estudiantes</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">✓</div>
+                <div class="stat-name">Activa</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn btn-primary">
+              📖 Ver Contenido
+            </button>
+            <button class="btn btn-secondary">
+              👥 Estudiantes
+            </button>
+          </div>
+        </div>
+      ))}
+    </section>
+  </div>
+</DocenteLayout>
+
+<script>
+  // Interactividad
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const searchInput = document.querySelector('.search-input');
+  
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+    });
+  });
+
+  searchInput?.addEventListener('input', (e) => {
+    const value = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.capacitacion-card');
+    cards.forEach(card => {
+      const title = card.querySelector('.card-title').textContent.toLowerCase();
+      card.style.display = title.includes(value) ? 'flex' : 'none';
+    });
+  });
+</script>
+
+<style>
+  /* Stats Section */
+  .stats-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    padding: 15px;
+    border-radius: 12px;
+    color: white;
+  }
+
+  .stat-icon {
+    font-size: 24px;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .stat-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-number {
+    font-size: 24px;
+    font-weight: bold;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    opacity: 0.8;
+  }
+
+  /* Controls */
+  .controls-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 250px;
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 10px 15px 10px 35px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 8px 14px;
+    border: 1px solid #d1d5db;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s ease;
+  }
+
+  .filter-btn:hover {
+    border-color: #7c3aed;
+    color: #7c3aed;
+  }
+
+  .filter-btn.active {
+    background: #7c3aed;
+    color: white;
+    border-color: #7c3aed;
+  }
+
+  /* Grid */
+  .capacitaciones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .capacitacion-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #f3f4f6;
+  }
+
+  .capacitacion-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+  }
+
+  .card-icon {
+    font-size: 32px;
+  }
+
+  .card-level {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .card-body {
+    flex: 1;
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 6px 0;
+  }
+
+  .card-description {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 10px 0;
+    border-top: 1px solid #f3f4f6;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 12px;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #6b7280;
+  }
+
+  .meta-icon {
+    font-size: 13px;
+  }
+
+  .progress-section {
+    margin: 12px 0;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+
+  .progress-percent {
+    color: #7c3aed;
+    font-weight: bold;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 5px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7c3aed 0%, #8b5cf6 100%);
+    border-radius: 3px;
+  }
+
+  .card-dates {
+    display: flex;
+    gap: 12px;
+    margin: 12px 0;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 12px;
+  }
+
+  .date-item {
+    flex: 1;
+  }
+
+  .date-label {
+    font-size: 10px;
+    color: #9ca3af;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .date-value {
+    font-size: 12px;
+    color: #1f2937;
+  }
+
+  .card-stats {
+    display: flex;
+    gap: 20px;
+    margin: 12px 0;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: center;
+  }
+
+  .stat {
+    flex: 1;
+  }
+
+  .stat-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #7c3aed;
+  }
+
+  .stat-name {
+    font-size: 10px;
+    color: #9ca3af;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+  }
+
+  .btn-primary {
+    background: #7c3aed;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #6d28d9;
+  }
+
+  .btn-secondary {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: #2563eb;
+  }
+
+  @media (max-width: 768px) {
+    .capacitaciones-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .controls-section {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .search-box {
+      min-width: 100%;
+    }
+
+    .filters {
+      width: 100%;
+    }
+
+    .stats-section {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

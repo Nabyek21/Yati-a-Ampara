@@ -336,8 +336,8 @@ export const prerender = false;
               candidates.push(fileUrl);
               // try versiones comunes
               const filename = fileUrl.split('/').pop();
-              candidates.push(`http://localhost:5678/uploads/actividades/${filename}`);
-              candidates.push(`http://localhost:5678/uploads/${filename}`);
+              candidates.push(`http://localhost:4000/uploads/actividades/${filename}`);
+              candidates.push(`http://localhost:4000/uploads/${filename}`);
 
               let found = null;
               for (const cand of candidates) {

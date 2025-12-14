@@ -21,11 +21,13 @@ export const createActividad = async (req, res) => {
       });
     }
 
-    // Validar que el tipo sea uno de los valores permitidos
-    const tiposPermitidos = ['pc', 'tarea', 'examen', 'quiz', 'evaluacion', 'trabajo'];
-    if (!tiposPermitidos.includes(tipo.toLowerCase())) {
+    // Validar y normalizar el tipo (según ENUM en BD: práctica, examen, examen_final)
+    const tiposPermitidos = ['práctica', 'examen', 'examen_final'];
+    const tipoNormalizado = tipo.toLowerCase().trim();
+    
+    if (!tiposPermitidos.includes(tipoNormalizado)) {
       return res.status(400).json({ 
-        message: `El tipo debe ser uno de: ${tiposPermitidos.join(', ')}` 
+        message: `El tipo debe ser uno de: ${tiposPermitidos.join(', ')}. Recibido: "${tipo}"` 
       });
     }
 
@@ -34,7 +36,7 @@ export const createActividad = async (req, res) => {
       id_seccion: parseInt(id_seccion),
       id_docente_perfil: parseInt(id_docente_perfil),
       titulo,
-      tipo,
+      tipo: tipoNormalizado,
       descripcion: descripcion || null,
       fecha_entrega: fecha_entrega || null,
       puntaje_max: puntaje_max ? parseInt(puntaje_max) : 20,
@@ -83,14 +85,19 @@ export const updateActividad = async (req, res) => {
     const { id_actividad } = req.params;
     const data = req.body;
 
-    // Si se está actualizando el tipo, validarlo
+    // Si se está actualizando el tipo, validarlo y normalizarlo
     if (data.tipo) {
-      const tiposPermitidos = ['pc', 'tarea', 'examen', 'quiz', 'evaluacion', 'trabajo'];
-      if (!tiposPermitidos.includes(data.tipo.toLowerCase())) {
+      const tiposPermitidos = ['práctica', 'examen', 'examen_final'];
+      const tipoNormalizado = data.tipo.toLowerCase().trim();
+      
+      if (!tiposPermitidos.includes(tipoNormalizado)) {
         return res.status(400).json({ 
-          message: `El tipo debe ser uno de: ${tiposPermitidos.join(', ')}` 
+          message: `El tipo debe ser uno de: ${tiposPermitidos.join(', ')}. Recibido: "${data.tipo}"` 
         });
       }
+      
+      // Asignar el tipo normalizado
+      data.tipo = tipoNormalizado;
     }
 
     // Convertir campos numéricos si están presentes
@@ -114,10 +121,33 @@ export const updateActividad = async (req, res) => {
 export const deleteActividad = async (req, res) => {
   try {
     const { id_actividad } = req.params;
-    const deleted = await ActividadModel.delete(parseInt(id_actividad));
-    if (deleted.affectedRows === 0) {
-      return res.status(404).json({ message: "Actividad no encontrada" });
+    
+    if (!id_actividad) {
+      return res.status(400).json({ 
+        message: "Se requiere id_actividad" 
+      });
     }
+    
+    // Verificar que la actividad existe
+    const [actividad] = await pool.query(
+      "SELECT id_actividad FROM actividades WHERE id_actividad = ?",
+      [parseInt(id_actividad)]
+    );
+    
+    if (actividad.length === 0) {
+      return res.status(404).json({ 
+        message: "Actividad no encontrada" 
+      });
+    }
+    
+    const deleted = await ActividadModel.delete(parseInt(id_actividad));
+    
+    if (deleted.affectedRows === 0) {
+      return res.status(404).json({ 
+        message: "No se pudo eliminar la actividad" 
+      });
+    }
+    
     res.json({ 
       message: "Actividad eliminada correctamente",
       deleted: deleted.affectedRows
@@ -125,7 +155,7 @@ export const deleteActividad = async (req, res) => {
   } catch (err) {
     console.error("ERROR eliminando actividad:", err);
     res.status(500).json({ 
-      message: "Error interno al eliminar actividad",
+      message: err.message || "Error interno al eliminar actividad",
       details: err.message 
     });
   }

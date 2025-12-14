@@ -327,17 +327,46 @@ export const prerender = false;
       btn.disabled = true;
       btn.textContent = 'Guardando...';
       
-      // Obtener la nota (asumimos que existe)
-      // En una implementación real, deberíamos primero obtener el id_nota
-      // Por ahora creamos una nota si no existe
+      const token = localStorage.getItem('token');
+      const API_URL = 'http://localhost:4000/api';
       
-      // TODO: Obtener id_nota de la base de datos
-      // Simulamos guardando con un console.log por ahora
-      console.log(`Guardando: Matrícula ${id_matricula}, Actividad ${id_actividad}, Puntaje ${puntaje}`);
+      // Enviar al API para guardar
+      const response = await fetch(`${API_URL}/respuestas-alumnos/calificar-actividad`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id_actividad: parseInt(id_actividad),
+          id_matricula: parseInt(id_matricula),
+          puntaje_obtenido: puntaje
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Error al guardar');
+      }
+
+      const data = await response.json();
+      console.log('✅ Calificación guardada:', data);
+      
+      // Limpiar caché del navegador
+      if ('caches' in window) {
+        caches.keys().then(cacheNames => {
+          cacheNames.forEach(cacheName => {
+            caches.delete(cacheName);
+          });
+        });
+      }
       
       // Mostrar éxito
       btn.textContent = '✓ Guardado';
       input.style.borderColor = '#10b981';
+      
+      // Notificar que debe refrescar analíticas
+      mostrarNotificacion('Calificación guardada. ⬆️ Ve a Analíticas y recarga para ver los cambios', 'success');
       
       setTimeout(() => {
         btn.textContent = 'Guardar';
@@ -347,7 +376,7 @@ export const prerender = false;
 
     } catch (error) {
       console.error('Error al guardar:', error);
-      alert('Error al guardar la calificación');
+      alert(`Error al guardar la calificación: ${error.message}`);
       btn.disabled = false;
       btn.textContent = 'Guardar';
     }
@@ -361,22 +390,71 @@ export const prerender = false;
       btn.disabled = true;
       btn.textContent = 'Guardando...';
 
+      const token = localStorage.getItem('token');
+      const API_URL = 'http://localhost:4000/api';
+      
       let count = 0;
+      let errors = 0;
+      
+      // Guardar cada calificación
       for (const input of inputs) {
         const puntaje = parseFloat(input.value);
+        
         if (!isNaN(puntaje)) {
           const id_matricula = input.dataset.idMatricula;
           const id_actividad = input.dataset.idActividad;
-          console.log(`Guardando: Matrícula ${id_matricula}, Actividad ${id_actividad}, Puntaje ${puntaje}`);
-          count++;
+          
+          try {
+            const response = await fetch(`${API_URL}/respuestas-alumnos/calificar-actividad`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                id_actividad: parseInt(id_actividad),
+                id_matricula: parseInt(id_matricula),
+                puntaje_obtenido: puntaje
+              })
+            });
+
+            if (response.ok) {
+              count++;
+              input.style.borderColor = '#10b981';
+            } else {
+              errors++;
+              input.style.borderColor = '#ef4444';
+            }
+          } catch (err) {
+            console.error('Error guardando individual:', err);
+            errors++;
+            input.style.borderColor = '#ef4444';
+          }
         }
       }
 
-      btn.textContent = `✓ ${count} calificaciones guardadas`;
+      // Limpiar caché del navegador
+      if ('caches' in window) {
+        caches.keys().then(cacheNames => {
+          cacheNames.forEach(cacheName => {
+            caches.delete(cacheName);
+          });
+        });
+      }
+
+      // Mostrar resultado
+      if (errors === 0) {
+        btn.textContent = `✓ ${count} calificaciones guardadas`;
+        mostrarNotificacion(`${count} calificaciones guardadas. ⬆️ Ve a Analíticas y recarga para ver los cambios`, 'success');
+      } else {
+        btn.textContent = `⚠️ ${count} guardadas, ${errors} errores`;
+        mostrarNotificacion(`${count} calificaciones guardadas, ${errors} errores. ⬆️ Ve a Analíticas y recarga para ver los cambios`, 'warning');
+      }
+      
       setTimeout(() => {
         btn.textContent = 'Guardar Todos';
         btn.disabled = false;
-      }, 2000);
+      }, 3000);
 
     } catch (error) {
       console.error('Error al guardar:', error);
@@ -384,5 +462,23 @@ export const prerender = false;
       btn.disabled = false;
       btn.textContent = 'Guardar Todos';
     }
+  }
+
+  // Función para mostrar notificaciones
+  function mostrarNotificacion(mensaje, tipo = 'info') {
+    // Crear elemento de notificación
+    const notif = document.createElement('div');
+    notif.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 animate-slide-in ${
+      tipo === 'success' ? 'bg-green-500' : 
+      tipo === 'warning' ? 'bg-yellow-500' : 
+      'bg-blue-500'
+    }`;
+    notif.textContent = mensaje;
+    document.body.appendChild(notif);
+    
+    // Eliminar después de 5 segundos
+    setTimeout(() => {
+      notif.remove();
+    }, 5000);
   }
 </script>

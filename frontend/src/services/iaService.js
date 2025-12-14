@@ -4,18 +4,35 @@
 
 const API_BASE = 'http://localhost:4000/api/ia';
 
+// Importar función de resumen de módulos para detectar y redirigir
+import { resumeModuleInChat } from './moduleSummaryService.js';
+
 export async function chatConIA(mensaje, sessionId = null, contexto = null, idModulo = null) {
   try {
     // Generar sessionId si no existe
     const finalSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    // Detectar si es una solicitud de resumen de módulo
+    const esResumen = /resumen\s+del?\s+m[oó]dulo\s+(\d+)/i.test(mensaje);
+    
+    // Si es resumen, usar el endpoint especializado que genera audio
+    if (esResumen) {
+      console.log('📚 Detectado resumen de módulo, usando endpoint especializado...');
+      const match = mensaje.match(/resumen\s+del?\s+m[oó]dulo\s+(\d+)/i);
+      const moduloId = match ? match[1] : idModulo;
+      
+      // Llamar a resumeModuleInChat que genera audio
+      return resumeModuleInChat(moduloId, contexto?.id_curso);
+    }
+    
+    // Else: chat normal
     const body = {
       sessionId: finalSessionId,
       mensaje,
       contexto
     };
     
-    // Incluir id_modulo si está disponible (para búsqueda de contenido específico del módulo)
+    // Incluir id_modulo si está disponible
     if (idModulo) {
       body.id_modulo = idModulo;
     }

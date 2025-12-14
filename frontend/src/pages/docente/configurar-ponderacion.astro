@@ -1,0 +1,366 @@
+---
+import DocenteLayout from '../../layouts/DocenteLayout.astro';
+---
+
+<DocenteLayout title="Configuración de Ponderación">
+  <main class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 p-8">
+    <div class="max-w-6xl mx-auto">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">⚖️ Configuración de Ponderación</h1>
+        <p class="text-gray-600">Define cómo se calcula el promedio ponderado de tus estudiantes</p>
+      </div>
+
+      <!-- Selector de Sección -->
+      <div class="mb-8 bg-white rounded-lg shadow-sm border-l-4 border-purple-500 p-6">
+        <label for="selector-seccion" class="block text-sm font-medium text-gray-700 mb-2">
+          Seleccionar Sección
+        </label>
+        <div class="flex gap-4">
+          <select 
+            id="selector-seccion" 
+            class="flex-1 px-4 py-2 bg-white border-2 border-purple-300 rounded-lg text-gray-700 focus:outline-none focus:border-purple-500 transition-colors"
+          >
+            <option value="">Cargando secciones...</option>
+          </select>
+          <button 
+            id="guardar-btn" 
+            class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+            disabled
+          >
+            💾 Guardar Configuración
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid de Configuración -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="tipos-container">
+        <!-- Se llena con JS -->
+      </div>
+
+      <!-- Tabla de Resumen -->
+      <div class="bg-white rounded-lg shadow-sm border-l-4 border-indigo-500 p-6 mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 Resumen de Ponderación</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 border-b-2 border-gray-200">
+                <th class="px-4 py-3 text-left font-semibold text-gray-700">Tipo de Evaluación</th>
+                <th class="px-4 py-3 text-center font-semibold text-gray-700">Porcentaje</th>
+                <th class="px-4 py-3 text-center font-semibold text-gray-700">Cantidad Máxima</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700">Descripción</th>
+              </tr>
+            </thead>
+            <tbody id="resumen-tabla" class="divide-y divide-gray-200">
+              <!-- Se llena con JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <p class="text-sm text-blue-800">
+            ℹ️ <strong>Total:</strong> <span id="total-ponderacion">0</span>% 
+            <span id="estado-total" class="ml-2"></span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Información útil -->
+      <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg shadow-sm border-l-4 border-purple-500 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">📚 Cómo Funciona</h3>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <h4 class="font-medium text-gray-800 mb-2">Fórmula de Cálculo</h4>
+            <p class="text-sm text-gray-700 mb-3">
+              El promedio de cada estudiante se calcula como:
+            </p>
+            <code class="block bg-white p-3 rounded text-xs text-gray-800 border border-gray-200 overflow-x-auto">
+Promedio = (PC₁×0.10 + PC₂×0.10 + ... 
+          + Examen×0.30 + EF×0.40)
+            </code>
+          </div>
+          <div>
+            <h4 class="font-medium text-gray-800 mb-2">Tipos de Evaluación</h4>
+            <ul class="text-sm text-gray-700 space-y-2">
+              <li><strong>Práctica:</strong> Evaluaciones cortas y frecuentes</li>
+              <li><strong>Examen:</strong> Evaluaciones normales del curso</li>
+              <li><strong>Examen Final:</strong> Evaluación final del período</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</DocenteLayout>
+
+<style>
+  .tipo-card {
+    transition: all 0.3s ease;
+  }
+  
+  .tipo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  }
+  
+  .peso-input {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+  }
+</style>
+
+<script type="module">
+  import { getSecciones } from '../../services/seccionService.js';
+
+  let seccionesData = {};
+  let ponderacionActual = {};
+  let idSeccionActual = null;
+
+  // Cargar secciones al iniciar
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      // Obtener secciones del docente
+      const user = localStorage.getItem('user');
+      let id_docente_perfil = null;
+      
+      if (user) {
+        const userData = JSON.parse(user);
+        id_docente_perfil = userData.id_docente_perfil;
+      }
+
+      const secciones = id_docente_perfil
+        ? await getSecciones({ id_docente_perfil })
+        : [];
+
+      // Llenar selector
+      const selector = document.getElementById('selector-seccion');
+      selector.innerHTML = '<option value="">-- Selecciona una sección --</option>';
+      
+      secciones.forEach(seccion => {
+        seccionesData[seccion.id_seccion] = seccion;
+        const option = document.createElement('option');
+        option.value = seccion.id_seccion;
+        option.textContent = `${seccion.nombre_curso} - Sección ${seccion.id_seccion}`;
+        selector.appendChild(option);
+      });
+
+      selector.addEventListener('change', onSeccionChange);
+
+    } catch (error) {
+      console.error('Error cargando secciones:', error);
+      alert('Error al cargar secciones');
+    }
+  });
+
+  async function onSeccionChange(e) {
+    idSeccionActual = e.target.value;
+    
+    if (!idSeccionActual) {
+      document.getElementById('tipos-container').innerHTML = '';
+      document.getElementById('resumen-tabla').innerHTML = '';
+      return;
+    }
+
+    try {
+      // Cargar configuración actual
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:4000/api/secciones/${idSeccionActual}/ponderaciones`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error cargando configuración');
+      }
+
+      const ponderaciones = await response.json();
+      ponderacionActual = {};
+
+      // Organizar por tipo
+      ponderaciones.forEach(p => {
+        ponderacionActual[p.tipo_evaluacion] = p;
+      });
+
+      renderizarConfiguracion();
+
+    } catch (error) {
+      console.error('Error:', error);
+      // Usar valores por defecto si no carga
+      ponderacionActual = {
+        'práctica': { tipo_evaluacion: 'práctica', peso_porcentaje: 10, descripcion: 'Práctica Calificada' },
+        'examen': { tipo_evaluacion: 'examen', peso_porcentaje: 30, descripcion: 'Examen Normal' },
+        'examen_final': { tipo_evaluacion: 'examen_final', peso_porcentaje: 40, descripcion: 'Examen Final' }
+      };
+      renderizarConfiguracion();
+    }
+  }
+
+  function renderizarConfiguracion() {
+    const container = document.getElementById('tipos-container');
+    const tiposInfo = [
+      {
+        tipo: 'práctica',
+        nombre: '✏️ Prácticas Calificadas',
+        color: 'bg-blue-50 border-blue-500',
+        info: 'Máximo 3 evaluaciones',
+        recomendado: 10
+      },
+      {
+        tipo: 'examen',
+        nombre: '📋 Exámenes',
+        color: 'bg-amber-50 border-amber-500',
+        info: 'Evaluaciones normales',
+        recomendado: 30
+      },
+      {
+        tipo: 'examen_final',
+        nombre: '🏆 Examen Final',
+        color: 'bg-red-50 border-red-500',
+        info: 'Evaluación final del período',
+        recomendado: 40
+      }
+    ];
+
+    container.innerHTML = tiposInfo.map(tipo => {
+      const config = ponderacionActual[tipo.tipo] || {};
+      const peso = config.peso_porcentaje || tipo.recomendado;
+
+      return `
+        <div class="tipo-card bg-white rounded-lg shadow-sm border-l-4 ${tipo.color} p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">${tipo.nombre}</h3>
+          <p class="text-sm text-gray-600 mb-4">${tipo.info}</p>
+          
+          <div class="mb-4">
+            <label class="block text-xs font-medium text-gray-700 mb-2">Porcentaje (%)</label>
+            <input 
+              type="number" 
+              class="peso-input w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
+              data-tipo="${tipo.tipo}"
+              value="${peso}"
+              min="0"
+              max="100"
+              step="5"
+            />
+          </div>
+
+          <div class="bg-gray-50 p-3 rounded text-xs text-gray-700">
+            <strong>Descripción:</strong> ${config.descripcion || tipo.info}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Agregar event listeners
+    document.querySelectorAll('.peso-input').forEach(input => {
+      input.addEventListener('change', actualizarResumen);
+      input.addEventListener('input', actualizarResumen);
+    });
+
+    actualizarResumen();
+    renderizarResumen();
+  }
+
+  function actualizarResumen() {
+    const inputs = document.querySelectorAll('.peso-input');
+    let total = 0;
+
+    inputs.forEach(input => {
+      total += parseFloat(input.value) || 0;
+    });
+
+    const totalEl = document.getElementById('total-ponderacion');
+    const estadoEl = document.getElementById('estado-total');
+    totalEl.textContent = total.toFixed(1);
+
+    if (Math.abs(total - 100) < 0.01) {
+      estadoEl.innerHTML = '<span class="text-green-600 font-medium">✅ Correcto</span>';
+      document.getElementById('guardar-btn').disabled = false;
+    } else if (total < 100) {
+      estadoEl.innerHTML = `<span class="text-amber-600 font-medium">⚠️ Falta ${(100 - total).toFixed(1)}%</span>`;
+      document.getElementById('guardar-btn').disabled = false;
+    } else {
+      estadoEl.innerHTML = `<span class="text-red-600 font-medium">❌ Excede ${(total - 100).toFixed(1)}%</span>`;
+      document.getElementById('guardar-btn').disabled = true;
+    }
+  }
+
+  function renderizarResumen() {
+    const tabla = document.getElementById('resumen-tabla');
+    const tiposInfo = {
+      'práctica': { nombre: 'Práctica Calificada', max: '3 (10% c/u)' },
+      'examen': { nombre: 'Examen Normal', max: 'Ilimitado' },
+      'examen_final': { nombre: 'Examen Final', max: '1' }
+    };
+
+    tabla.innerHTML = Object.entries(tiposInfo).map(([tipo, info]) => {
+      const config = ponderacionActual[tipo] || {};
+      const peso = document.querySelector(`[data-tipo="${tipo}"]`)?.value || config.peso_porcentaje || 0;
+
+      return `
+        <tr>
+          <td class="px-4 py-3 font-medium text-gray-900">${info.nombre}</td>
+          <td class="px-4 py-3 text-center text-lg font-bold text-purple-600">${peso}%</td>
+          <td class="px-4 py-3 text-center text-gray-700">${info.max}</td>
+          <td class="px-4 py-3 text-gray-700">${config.descripcion || ''}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Guardar configuración
+  document.getElementById('guardar-btn').addEventListener('click', async () => {
+    if (!idSeccionActual) {
+      alert('Selecciona una sección');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const ponderaciones = [];
+
+      document.querySelectorAll('.peso-input').forEach(input => {
+        const tipo = input.dataset.tipo;
+        const peso = parseFloat(input.value) || 0;
+        
+        ponderaciones.push({
+          tipo_evaluacion: tipo,
+          peso_porcentaje: peso
+        });
+      });
+
+      const btn = document.getElementById('guardar-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Guardando...';
+
+      const response = await fetch(`http://localhost:4000/api/secciones/${idSeccionActual}/ponderaciones`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ponderaciones })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al guardar');
+      }
+
+      btn.textContent = '✅ Guardado';
+      setTimeout(() => {
+        btn.textContent = '💾 Guardar Configuración';
+        btn.disabled = false;
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error guardando:', error);
+      alert('Error al guardar configuración');
+      document.getElementById('guardar-btn').disabled = false;
+      document.getElementById('guardar-btn').textContent = '💾 Guardar Configuración';
+    }
+  });
+</script>

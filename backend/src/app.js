@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { pool } from "./config/database.js";
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { errorHandler, requestLogger } from "./middleware/errorHandler.js";
 import logger from "./utils/logger.js";
@@ -32,7 +33,7 @@ const app = express();
 
 // ========== CORS CONFIG ==========
 const corsOptions = {
-  origin: ['http://localhost:4321', 'http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:4321'],
+  origin: ['http://localhost:4321', 'http://localhost:3000', 'http://localhost:5173', 'http://localhost:5678', 'http://127.0.0.1:4321', 'http://127.0.0.1:5678'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -73,11 +74,41 @@ app.use((req, res, next) => {
 // ✅ Middleware de logging
 app.use(requestLogger);
 
-// Servir archivos estáticos subidos (uploads)
+// Servir archivos estáticos subidos (uploads) con CORS global
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadsDir = path.join(__dirname, 'uploads');
-app.use('/uploads', express.static(uploadsDir));
+
+// Middleware CORS para TODOS los archivos estáticos
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Max-Age', '3600');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  // Headers específicos para MP3
+  if (req.path.includes('.mp3')) {
+    res.header('Content-Type', 'audio/mpeg');
+    res.header('Cache-Control', 'public, max-age=3600');
+  }
+  
+  // Headers específicos para PDF
+  if (req.path.includes('.pdf')) {
+    res.header('Content-Type', 'application/pdf');
+    // Forzar descarga en lugar de abrir en el navegador
+    const filename = req.path.split('/').pop() || 'documento.pdf';
+    res.header('Content-Disposition', `attachment; filename="${filename}"`);
+  }
+  
+  next();
+}, express.static(uploadsDir, { 
+  maxAge: '1d',
+  etag: false 
+}));
 
 // Middleware de logging para debug
 app.use((req, res, next) => {
@@ -129,6 +160,9 @@ app.use("/api/notas", notaRoutes);
 import iaRoutes from "./routes/iaRoutes.js";
 app.use("/api/ia", iaRoutes); // ✅ Monta las rutas del Agente IA
 
+import moduleSummaryRoutes from "./routes/moduleSummaryRoutes.js";
+app.use("/api/modulos", moduleSummaryRoutes); // ✅ Monta las rutas de resumen de módulos
+
 import foroRoutes from "./routes/foroRoutes.js";
 app.use("/api/foro", foroRoutes); // ✅ Monta las rutas del foro
 
@@ -137,6 +171,9 @@ app.use("/api/pesos", configPesosRoutes); // ✅ Monta las rutas de configuraci�
 
 import bibliotecaRoutes from "./routes/bibliotecaRoutes.js";
 app.use("/api/biblioteca", bibliotecaRoutes); // ✅ Monta las rutas de la biblioteca
+
+import pdfRoutes from "./routes/pdfRoutes.js";
+app.use("/api/pdf", pdfRoutes); // ✅ Monta las rutas de PDF
 
 // Upload routes
 app.use("/api/upload", uploadRoutes); // ✅ Monta las rutas de upload

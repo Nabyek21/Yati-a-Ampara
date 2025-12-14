@@ -53,7 +53,7 @@ export class GradeContextBuilder {
 
     try {
       const [usuarios] = await pool.query(
-        `SELECT id_usuario, nombre, apellido, email FROM usuario WHERE id_usuario = ?`,
+        `SELECT id_usuario, nombres as nombre, apellidos as apellido, correo as email FROM usuarios WHERE id_usuario = ?`,
         [this.studentId]
       );
 
@@ -112,11 +112,11 @@ export class GradeContextBuilder {
     try {
       // Obtener todas las actividades del curso
       const [actividades] = await pool.query(
-        `SELECT a.id_actividad, a.nombre, a.descripcion, a.tipo, a.valor_maximo
-         FROM actividad a
-         JOIN seccion s ON a.id_seccion = s.id_seccion
+        `SELECT a.id_actividad, a.titulo as nombre, a.descripcion, a.tipo, a.puntaje_max as valor_maximo
+         FROM actividades a
+         JOIN secciones s ON a.id_seccion = s.id_seccion
          WHERE s.id_curso = ?
-         ORDER BY a.fecha_creacion ASC`,
+         ORDER BY a.fecha_publicacion ASC`,
         [this.courseId]
       );
 
@@ -124,10 +124,11 @@ export class GradeContextBuilder {
 
       // Para cada actividad, obtener la calificación del estudiante
       for (const actividad of actividades) {
-        const [respuestas] = await pool.query(
-          `SELECT calificacion FROM respuesta_alumno
-           WHERE id_usuario = ? AND id_actividad = ?
-           ORDER BY fecha_envio DESC LIMIT 1`,
+        const [notas] = await pool.query(
+          `SELECT puntaje_obtenido, puntaje_max FROM notas n
+           JOIN matriculas m ON n.id_matricula = m.id_matricula
+           WHERE m.id_usuario = ? AND n.id_actividad = ?
+           ORDER BY n.fecha_registro DESC LIMIT 1`,
           [this.studentId, actividad.id_actividad]
         );
 
@@ -136,8 +137,8 @@ export class GradeContextBuilder {
           name: actividad.nombre,
           type: actividad.tipo,
           maxValue: actividad.valor_maximo,
-          grade: respuestas.length > 0 ? respuestas[0].calificacion : 0,
-          submitted: respuestas.length > 0,
+          grade: notas.length > 0 ? notas[0].puntaje_obtenido : 0,
+          submitted: notas.length > 0,
         });
       }
 
@@ -157,31 +158,23 @@ export class GradeContextBuilder {
 
     try {
       const [configs] = await pool.query(
-        `SELECT tipo_actividad, peso_minimo, peso_maximo, cantidad_maxima
-         FROM configuracion_pesos_actividades
-         WHERE id_seccion IN (
-           SELECT id_seccion FROM seccion WHERE id_curso = ?
-         )`,
+        `SELECT peso_tareas, peso_examenes, peso_quices
+         FROM ponderaciones_actividades
+         WHERE id_curso = ?`,
         [this.courseId]
       );
 
       const weights = {};
-      configs.forEach(config => {
-        weights[config.tipo_actividad] = {
-          min: config.peso_minimo,
-          max: config.peso_maximo,
-          max_quantity: config.cantidad_maxima,
-        };
-      });
-
-      // Defaults si no hay configuración
-      if (Object.keys(weights).length === 0) {
-        weights.default = {
-          pc: { weight: 30 },         // 3 PCs × 10%
-          examen: { weight: 40 },     // Examen final
-          tarea: { weight: 15 },      // Tareas
-          evaluacion: { weight: 15 }, // Evaluaciones
-        };
+      if (configs.length > 0) {
+        const config = configs[0];
+        weights.tareas = config.peso_tareas || 30;
+        weights.examenes = config.peso_examenes || 40;
+        weights.quices = config.peso_quices || 30;
+      } else {
+        // Defaults si no hay configuración
+        weights.tareas = 30;
+        weights.examenes = 40;
+        weights.quices = 30;
       }
 
       this.cache.weights = weights;

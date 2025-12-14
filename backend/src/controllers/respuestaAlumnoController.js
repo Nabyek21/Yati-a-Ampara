@@ -367,6 +367,66 @@ class RespuestaAlumnoController {
             });
         }
     }
+
+    // Calificar actividad completa (docente)
+    static async calificarActividad(req, res) {
+        try {
+            const { id_actividad, id_matricula, puntaje_obtenido } = req.body;
+
+            if (!id_actividad || !id_matricula || puntaje_obtenido === undefined) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Se requieren id_actividad, id_matricula y puntaje_obtenido'
+                });
+            }
+
+            // Validar que el puntaje sea numérico y positivo
+            if (isNaN(puntaje_obtenido) || puntaje_obtenido < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El puntaje debe ser un número positivo'
+                });
+            }
+
+            // Obtener todas las respuestas de esta actividad para esta matrícula
+            const respuestas = await RespuestaAlumno.getByActividadYMatricula(id_actividad, id_matricula);
+
+            if (!respuestas || respuestas.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No hay respuestas para esta actividad'
+                });
+            }
+
+            // Actualizar todas las respuestas con el nuevo puntaje
+            let actualizadas = 0;
+            for (const respuesta of respuestas) {
+                const actualizado = await RespuestaAlumno.update(respuesta.id_respuesta, {
+                    puntaje_obtenido: puntaje_obtenido
+                });
+                if (actualizado) actualizadas++;
+            }
+
+            // Obtener la calificación actualizada
+            const calificacion = await RespuestaAlumno.getCalificacionActividad(id_actividad, id_matricula);
+
+            console.log(`✅ Actividad ${id_actividad} calificada para matrícula ${id_matricula}. Puntaje: ${puntaje_obtenido}`);
+
+            res.json({
+                success: true,
+                message: `Actividad calificada correctamente (${actualizadas} respuestas actualizadas)`,
+                calificacion: calificacion
+            });
+
+        } catch (error) {
+            console.error('Error al calificar actividad:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al calificar actividad',
+                error: error.message
+            });
+        }
+    }
 }
 
 export default RespuestaAlumnoController;

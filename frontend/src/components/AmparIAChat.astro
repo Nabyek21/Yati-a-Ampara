@@ -1,0 +1,902 @@
+---
+// Componente: AmparIA Chat - Asistente Educativo
+// Funcionalidad: Chat interactivo con resumen de módulos y audio
+---
+
+<!-- Botón flotante para abrir el chat -->
+<button 
+  id="amparia-btn" 
+  class="amparia-button" 
+  title="Abrir AmparIA"
+  aria-label="AmparIA - Asistente Educativo"
+>
+  <i class="fas fa-robot"></i>
+</button>
+
+<!-- Panel del Chat -->
+<div id="amparia-chat-panel" class="amparia-panel">
+  <!-- Header -->
+  <div class="amparia-header">
+    <div class="amparia-title-section">
+      <i class="fas fa-robot amparia-icon"></i>
+      <div>
+        <h3>AmparIA</h3>
+        <p>Tu asistente educativo</p>
+      </div>
+    </div>
+    <button id="amparia-close" class="amparia-close-btn" title="Cerrar">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Área de Mensajes -->
+  <div id="amparia-messages" class="amparia-messages">
+    <div class="amparia-welcome">
+      <div class="amparia-welcome-icon">🤖</div>
+      <h4>¡Hola! Soy AmparIA</h4>
+      <p>Tu asistente educativo de Yatiña.</p>
+      <p class="amparia-tip">Escribe tu pregunta o solicita ayuda para conocer mis funcionalidades.</p>
+    </div>
+  </div>
+
+  <!-- Controles de Audio (ocultos por defecto) -->
+  <div id="amparia-audio-section" class="amparia-audio-section" style="display: none;">
+    <button id="amparia-play-btn" class="amparia-play-audio-btn" title="Reproducir audio">
+      <i class="fas fa-play"></i> Reproducir audio
+    </button>
+    <button id="amparia-pause-btn" class="amparia-pause-audio-btn" title="Pausar audio" style="display: none;">
+      <i class="fas fa-pause"></i> Pausar audio
+    </button>
+    <button id="amparia-download-btn" class="amparia-download-audio-btn" title="Descargar audio">
+      <i class="fas fa-download"></i> Descargar MP3
+    </button>
+    <button id="amparia-download-pdf-btn" class="amparia-download-pdf-btn" title="Descargar PDF extendido" style="display: none;">
+      <i class="fas fa-file-pdf"></i> Descargar PDF
+    </button>
+    <div class="amparia-progress-bar">
+      <div id="amparia-progress-fill" class="amparia-progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="amparia-input-area">
+    <form id="amparia-form" class="amparia-form">
+      <input
+        type="text"
+        id="amparia-input"
+        class="amparia-input"
+        placeholder="Escribe tu pregunta..."
+        autocomplete="off"
+      />
+      <button type="submit" class="amparia-send-btn" title="Enviar">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </form>
+    
+    <!-- Botón de Ayuda -->
+    <button id="amparia-help-btn" class="amparia-help-btn">
+      <i class="fas fa-question-circle"></i> ¿Qué puedo hacer?
+    </button>
+  </div>
+</div>
+
+<style>
+/* Botón Flotante */
+.amparia-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+  transition: all 0.3s ease;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.amparia-button:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 25px rgba(124, 58, 237, 0.6);
+}
+
+.amparia-button:active {
+  transform: scale(0.95);
+}
+
+/* Panel del Chat */
+.amparia-panel {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 420px;
+  max-height: 650px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 50px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  z-index: 9998;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.amparia-header {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.amparia-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.amparia-icon {
+  font-size: 32px;
+}
+
+.amparia-title-section h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.amparia-title-section p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.amparia-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 20px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.amparia-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* Área de Mensajes */
+.amparia-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.amparia-welcome {
+  text-align: center;
+  padding: 30px 10px;
+  color: #6b7280;
+  margin: auto;
+}
+
+.amparia-welcome-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.amparia-welcome h4 {
+  margin: 0 0 12px 0;
+  color: #1f2937;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.amparia-welcome p {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #6b7280;
+}
+
+.amparia-tip {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px solid #e5e7eb;
+  font-weight: 500;
+  color: #7c3aed;
+  font-size: 13px;
+}
+
+/* Mensajes */
+.amparia-message-user,
+.amparia-message-bot {
+  display: flex;
+  margin: 8px 0;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.amparia-message-user {
+  justify-content: flex-end;
+}
+
+.amparia-message-user .amparia-message-content {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: white;
+  border-radius: 16px 4px 16px 16px;
+}
+
+.amparia-message-bot {
+  justify-content: flex-start;
+}
+
+.amparia-message-bot .amparia-message-content {
+  background: #f3f4f6;
+  color: #1f2937;
+  border-radius: 4px 16px 16px 16px;
+}
+
+.amparia-message-content {
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 85%;
+  word-wrap: break-word;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Resumen Estructurado */
+.amparia-resumen {
+  background: #f9fafb;
+  border-left: 4px solid #7c3aed;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 85%;
+}
+
+.amparia-resumen-seccion {
+  margin-bottom: 12px;
+}
+
+.amparia-resumen-seccion:last-child {
+  margin-bottom: 0;
+}
+
+.amparia-resumen-seccion h4 {
+  margin: 0 0 8px 0;
+  color: #7c3aed;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.amparia-resumen-seccion p {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #374151;
+}
+
+.amparia-resumen-seccion ul,
+.amparia-resumen-seccion ol {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+
+.amparia-resumen-seccion li {
+  margin: 4px 0;
+  font-size: 12px;
+  color: #374151;
+}
+
+/* Audio Section */
+.amparia-audio-section {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  padding: 10px 14px;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.amparia-play-audio-btn,
+.amparia-pause-audio-btn,
+.amparia-download-audio-btn {
+  padding: 8px 12px;
+  background: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  color: #7c3aed;
+  height: 36px;
+}
+
+.amparia-play-audio-btn i,
+.amparia-pause-audio-btn i,
+.amparia-download-audio-btn i {
+  font-size: 14px;
+}
+
+.amparia-play-audio-btn:hover {
+  background: #d1fae5;
+  color: #10b981;
+  transform: translateY(-1px);
+}
+
+.amparia-pause-audio-btn:hover {
+  background: #fef3c7;
+  color: #f59e0b;
+  transform: translateY(-1px);
+}
+
+.amparia-download-audio-btn:hover {
+  background: #ede9fe;
+  color: #7c3aed;
+  transform: translateY(-1px);
+}
+
+.amparia-download-pdf-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.amparia-download-pdf-btn i {
+  font-size: 0.85rem;
+}
+
+.amparia-download-pdf-btn:hover {
+  background: #fecaca;
+  color: #991b1b;
+  transform: translateY(-1px);
+}
+
+.amparia-play-audio-btn:active,
+.amparia-pause-audio-btn:active,
+.amparia-download-audio-btn:active,
+.amparia-download-pdf-btn:active {
+  transform: translateY(0);
+}
+
+/* Progress Bar */
+.amparia-progress-bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.amparia-progress-fill {
+  height: 100%;
+  background: white;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+/* Input Area */
+.amparia-input-area {
+  padding: 14px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.amparia-form {
+  display: flex;
+  gap: 8px;
+}
+
+.amparia-input {
+  flex: 1;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.amparia-input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  background: white;
+}
+
+.amparia-send-btn {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+.amparia-send-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+}
+
+.amparia-send-btn:active {
+  transform: scale(0.95);
+}
+
+.amparia-help-btn {
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #7c3aed;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.amparia-help-btn:hover {
+  background: #f3f4f6;
+  border-color: #7c3aed;
+  color: #6d28d9;
+}
+
+/* Scrollbar */
+.amparia-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.amparia-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.amparia-messages::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.amparia-messages::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .amparia-panel {
+    width: calc(100% - 40px);
+    max-height: 70vh;
+    bottom: 80px;
+    right: 20px;
+  }
+  
+  .amparia-message-content {
+    max-width: 90%;
+  }
+  
+  .amparia-resumen {
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 480px) {
+  .amparia-button {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  .amparia-panel {
+    width: calc(100% - 20px);
+    border-radius: 12px;
+  }
+}
+</style>
+
+<script>
+  async function chatConIA(mensaje, sessionId = null, extraData = {}) {
+    const token = localStorage.getItem('token');
+    const finalSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch('http://localhost:4000/api/ia/chat', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        sessionId: finalSessionId,
+        mensaje,
+        ...extraData
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    const result = await response.json();
+    return {
+      ...result,
+      sessionId: finalSessionId
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('amparia-btn');
+    const panel = document.getElementById('amparia-chat-panel');
+    const closeBtn = document.getElementById('amparia-close');
+    const form = document.getElementById('amparia-form');
+    const input = document.getElementById('amparia-input');
+    const messagesDiv = document.getElementById('amparia-messages');
+    const playBtn = document.getElementById('amparia-play-btn');
+    const pauseBtn = document.getElementById('amparia-pause-btn');
+    const downloadBtn = document.getElementById('amparia-download-btn');
+    const downloadPdfBtn = document.getElementById('amparia-download-pdf-btn');
+    const audioSection = document.getElementById('amparia-audio-section');
+    const progressFill = document.getElementById('amparia-progress-fill');
+    const helpBtn = document.getElementById('amparia-help-btn');
+
+    let currentAudio = null;
+    let currentModuleId = null;
+    let currentCourseId = null;
+    let currentSessionId = null;
+    let isOpen = false;
+
+    // Obtener id_curso de la URL
+    const courseMatch = window.location.pathname.match(/\/curso\/(\d+)/);
+    if (courseMatch) {
+      currentCourseId = parseInt(courseMatch[1]);
+    }
+
+    // Abrir/Cerrar panel
+    btn.addEventListener('click', () => {
+      isOpen = !isOpen;
+      panel.style.display = isOpen ? 'flex' : 'none';
+      if (isOpen) {
+        input.focus();
+      }
+    });
+
+    closeBtn.addEventListener('click', () => {
+      isOpen = false;
+      panel.style.display = 'none';
+    });
+
+    // Botón Ayuda
+    helpBtn.addEventListener('click', () => {
+      const helpText = `
+        <div style="text-align: left; line-height: 1.6;">
+          <h4 style="color: #7c3aed; margin-bottom: 10px;">💡 ¿Qué puedo hacer?</h4>
+          <div style="font-size: 12px; color: #374151;">
+            <p><strong>📚 Resúmenes de módulos:</strong> Escribe "resumen del módulo 1" (o el número que necesites)</p>
+            <p><strong>🔊 Audio:</strong> Los resúmenes incluyen audio que puedes reproducir, pausar y descargar</p>
+            <p><strong>❓ Preguntas:</strong> Haz cualquier pregunta sobre tus cursos y módulos</p>
+            <p><strong>💬 Ayuda personalizada:</strong> Cuéntame qué necesitas y te ayudaré</p>
+          </div>
+        </div>
+      `;
+      addMessage(helpText, 'bot', true);
+    });
+
+    // Enviar mensaje
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mensaje = input.value.trim();
+      if (!mensaje) return;
+
+      addMessage(mensaje, 'user');
+      input.value = '';
+      input.disabled = true;
+
+      try {
+        addMessage('⏳ Procesando...', 'bot');
+        console.log('Enviando:', mensaje);
+
+        const respuesta = await chatConIA(mensaje, currentSessionId, { id_curso: currentCourseId });
+        currentSessionId = respuesta.sessionId;
+
+        console.log('Respuesta:', respuesta);
+
+        // Remover mensaje de espera
+        const lastMsg = messagesDiv.lastElementChild;
+        if (lastMsg?.textContent.includes('Procesando')) {
+          lastMsg.remove();
+        }
+
+        // Resumen con audio
+        if (respuesta.audioUrl && respuesta.resumen) {
+          addMessage(generateResumenHTML(respuesta.resumen.contenido), 'bot', true);
+          
+          currentAudio = new Audio(respuesta.audioUrl);
+          currentModuleId = respuesta.modulo?.id;
+          
+          // MOSTRAR controles de audio SOLO si hay audioUrl
+          audioSection.style.display = 'flex';
+          playBtn.style.display = 'flex';
+          pauseBtn.style.display = 'none';
+          downloadPdfBtn.style.display = 'flex'; // Mostrar botón PDF
+
+          currentAudio.addEventListener('timeupdate', () => {
+            const percent = (currentAudio.currentTime / currentAudio.duration) * 100;
+            progressFill.style.width = percent + '%';
+          });
+
+          currentAudio.addEventListener('ended', () => {
+            playBtn.style.display = 'flex';
+            pauseBtn.style.display = 'none';
+            progressFill.style.width = '0%';
+          });
+
+          // Mostrar mensaje con botón de audio
+          const audioMsg = document.createElement('div');
+          audioMsg.className = 'amparia-message-bot';
+          const audioContent = document.createElement('div');
+          audioContent.className = 'amparia-message-content';
+          audioContent.innerHTML = '🎵 <strong>Audio del resumen generado.</strong> Usa los botones de arriba para reproducir o descargar.';
+          audioMsg.appendChild(audioContent);
+          messagesDiv.appendChild(audioMsg);
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        } else if (respuesta.resumen) {
+          // Resumen SIN audio - mostrar solo el resumen
+          addMessage(generateResumenHTML(respuesta.resumen.contenido), 'bot', true);
+          
+          // OCULTAR controles de audio
+          audioSection.style.display = 'none';
+          downloadPdfBtn.style.display = 'none';
+          progressFill.style.width = '0%';
+          
+          addMessage('📋 Resumen generado correctamente.', 'bot');
+        } else if (respuesta.respuesta || respuesta.message) {
+          const texto = respuesta.respuesta || respuesta.message;
+          addMessage(texto, 'bot');
+        } else {
+          addMessage('Respuesta recibida: ' + JSON.stringify(respuesta).substring(0, 150), 'bot');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        const lastMsg = messagesDiv.lastElementChild;
+        if (lastMsg?.textContent.includes('Procesando')) {
+          lastMsg.remove();
+        }
+        addMessage('❌ ' + error.message, 'bot');
+      } finally {
+        input.disabled = false;
+        input.focus();
+      }
+    });
+
+    // Audio controls
+    playBtn.addEventListener('click', () => {
+      if (currentAudio) {
+        currentAudio.play();
+        playBtn.style.display = 'none';
+        pauseBtn.style.display = 'flex';
+      }
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      if (currentAudio) {
+        currentAudio.pause();
+        pauseBtn.style.display = 'none';
+        playBtn.style.display = 'flex';
+      }
+    });
+
+    downloadBtn.addEventListener('click', async () => {
+      if (currentAudio && currentModuleId) {
+        try {
+          downloadBtn.disabled = true;
+          const response = await fetch(
+            `http://localhost:4000/api/modulos/${currentModuleId}/descargar-audio-resumen?id_curso=${currentCourseId}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `resumen_modulo_${currentModuleId}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            addMessage('✅ Audio descargado correctamente', 'bot');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          addMessage('❌ Error al descargar', 'bot');
+        } finally {
+          downloadBtn.disabled = false;
+        }
+      }
+    });
+
+    // Manejador para descargar PDF extendido
+    downloadPdfBtn.addEventListener('click', async () => {
+      if (currentModuleId && currentCourseId) {
+        try {
+          downloadPdfBtn.disabled = true;
+          addMessage('📄 Generando PDF extendido... esto puede tomar unos momentos...', 'bot');
+          
+          const response = await fetch('http://localhost:4000/api/pdf/extended-summary', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+              moduleId: currentModuleId,
+              courseId: currentCourseId,
+              userId: localStorage.getItem('userId')
+            })
+          });
+
+          const data = await response.json();
+          
+          if (data.success && data.pdfUrl) {
+            // Descargar el PDF
+            const link = document.createElement('a');
+            link.href = data.pdfUrl;
+            link.download = data.fileName || `resumen_modulo_${currentModuleId}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            addMessage('✅ PDF descargado correctamente', 'bot');
+          } else {
+            addMessage('❌ Error al generar PDF: ' + (data.message || data.error), 'bot');
+          }
+        } catch (error) {
+          console.error('Error al descargar PDF:', error);
+          addMessage('❌ Error al descargar PDF', 'bot');
+        } finally {
+          downloadPdfBtn.disabled = false;
+        }
+      }
+    });
+
+    function addMessage(texto, tipo, isHTML = false) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `amparia-message-${tipo}`;
+      
+      const content = document.createElement('div');
+      content.className = 'amparia-message-content';
+      
+      if (isHTML) {
+        content.innerHTML = texto;
+      } else {
+        content.textContent = texto;
+      }
+      
+      msgDiv.appendChild(content);
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function generateResumenHTML(resumen) {
+      let html = '<div class="amparia-resumen">';
+      
+      if (resumen.resumenEjecutivo) {
+        html += `<div class="amparia-resumen-seccion">
+          <h4>📋 Resumen Ejecutivo</h4>
+          <p>${resumen.resumenEjecutivo}</p>
+        </div>`;
+      }
+      
+      if (resumen.conceptosClave?.length > 0) {
+        html += `<div class="amparia-resumen-seccion">
+          <h4>🔑 Conceptos Clave</h4>
+          <ul>${resumen.conceptosClave.map(c => `<li>${c}</li>`).join('')}</ul>
+        </div>`;
+      }
+      
+      if (resumen.temasPrincipales?.length > 0) {
+        html += `<div class="amparia-resumen-seccion">
+          <h4>📚 Temas Principales</h4>
+          <ol>${resumen.temasPrincipales.map(t => 
+            `<li><strong>${t.tema}:</strong> ${t.explicacion}</li>`
+          ).join('')}</ol>
+        </div>`;
+      }
+      
+      if (resumen.aplicacionesPracticas?.length > 0) {
+        html += `<div class="amparia-resumen-seccion">
+          <h4>💡 Aplicaciones Prácticas</h4>
+          <ul>${resumen.aplicacionesPracticas.map(a => `<li>${a}</li>`).join('')}</ul>
+        </div>`;
+      }
+      
+      if (resumen.conclusion) {
+        html += `<div class="amparia-resumen-seccion">
+          <h4>📌 Conclusión</h4>
+          <p>${resumen.conclusion}</p>
+        </div>`;
+      }
+      
+      html += '</div>';
+      return html;
+    }
+  });
+</script>

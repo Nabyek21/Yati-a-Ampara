@@ -27,6 +27,12 @@ router.post("/calificar/:id_respuesta",
     RespuestaAlumnoController.calificarPregunta
 );
 
+// POST - Calificar actividad completa (docente)
+router.post("/calificar-actividad",
+    verificarToken,
+    RespuestaAlumnoController.calificarActividad
+);
+
 // GET - Respuestas por pregunta
 router.get("/pregunta/:id_pregunta", 
     verificarToken,
